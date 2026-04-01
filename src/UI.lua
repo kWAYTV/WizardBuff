@@ -206,9 +206,11 @@ function ns.CreateMainFrame()
 end
 
 ---------------------------------------------------------------------------
--- Handle — invisible; ADD highlight only on hover (Decursive style)
+-- Handle — 20×20 corner button (Decursive style)
+-- Invisible until hovered, stock WoW highlight glow.
+-- Alt+LeftClick = drag, RightClick = config, Shift+Click = lock toggle
 ---------------------------------------------------------------------------
-local HANDLE_H = 6
+local HANDLE_SIZE = 20
 local autoLockTimer
 
 local function cancelAutoLock()
@@ -234,18 +236,16 @@ function ns.CreateHandle()
     local h = CreateFrame("Button", "WizardBuffHandle", mf)
     ns.handle = h
 
-    h:SetHeight(HANDLE_H)
+    h:SetSize(HANDLE_SIZE, HANDLE_SIZE)
     h:SetPoint("BOTTOMLEFT", mf, "TOPLEFT", 0, 0)
-    h:SetPoint("BOTTOMRIGHT", mf, "TOPRIGHT", 0, 0)
     h:SetFrameStrata("MEDIUM")
     h:SetFrameLevel(mf:GetFrameLevel() + 5)
     h:EnableMouse(true)
-    h:RegisterForDrag("LeftButton")
     h:RegisterForClicks("AnyUp")
 
     local hl = h:CreateTexture(nil, "HIGHLIGHT")
     hl:SetAllPoints()
-    hl:SetColorTexture(1, 1, 1, 0.12)
+    hl:SetTexture("Interface\\Buttons\\UI-Common-MouseHilight")
     hl:SetBlendMode("ADD")
 
     h:SetScript("OnEnter", function(self)
@@ -255,10 +255,11 @@ function ns.CreateHandle()
         GameTooltip:AddLine("Wizard Buff", 0.6, 0.8, 1)
         local locked = ns.db and ns.db.locked
         if locked then
+            GameTooltip:AddLine("Alt+drag \194\183 move", 0.55, 0.55, 0.55)
             GameTooltip:AddLine("Right-click \194\183 config", 0.55, 0.55, 0.55)
             GameTooltip:AddLine("Shift+click \194\183 unlock", 0.55, 0.55, 0.55)
         else
-            GameTooltip:AddLine("Drag to move", 0.55, 0.55, 0.55)
+            GameTooltip:AddLine("Alt+drag \194\183 move", 0.55, 0.55, 0.55)
             GameTooltip:AddLine("Right-click \194\183 config", 0.55, 0.55, 0.55)
             GameTooltip:AddLine("Shift+click \194\183 lock", 0.55, 0.55, 0.55)
         end
@@ -269,22 +270,24 @@ function ns.CreateHandle()
         scheduleHudLeaveCheck(mf)
     end)
 
-    h:SetScript("OnDragStart", function()
-        if not InCombatLockdown() and not (ns.db and ns.db.locked) then
+    h:SetScript("OnMouseDown", function(_, button)
+        if button == "LeftButton" and IsAltKeyDown() and not InCombatLockdown() then
+            h._isMoving = true
             cancelAutoLock()
             mf:StartMoving()
         end
     end)
-    h:SetScript("OnDragStop", function()
-        mf:StopMovingOrSizing()
-        if ns.db then
-            local point, _, relPoint, x, y = mf:GetPoint(1)
-            ns.db.hudPos = { point = point, relPoint = relPoint, x = x, y = y }
+    h:SetScript("OnMouseUp", function(_, button)
+        if h._isMoving then
+            mf:StopMovingOrSizing()
+            h._isMoving = false
+            if ns.db then
+                local point, _, relPoint, x, y = mf:GetPoint(1)
+                ns.db.hudPos = { point = point, relPoint = relPoint, x = x, y = y }
+            end
+            if ns.db and not ns.db.locked then scheduleAutoLock() end
+            return
         end
-        if ns.db and not ns.db.locked then scheduleAutoLock() end
-    end)
-
-    h:SetScript("OnClick", function(_, button)
         if IsShiftKeyDown() then
             if ns.db then
                 ns.db.locked = not ns.db.locked
@@ -298,6 +301,12 @@ function ns.CreateHandle()
             end
         elseif button == "RightButton" then
             if ns.OpenConfig then ns.OpenConfig() end
+        end
+    end)
+    h:SetScript("OnHide", function()
+        if h._isMoving then
+            mf:StopMovingOrSizing()
+            h._isMoving = false
         end
     end)
 end

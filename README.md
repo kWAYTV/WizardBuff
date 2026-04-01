@@ -14,7 +14,7 @@ Lightweight mage buff HUD for WoW Classic (TBC Anniversary). One-click buffing f
 - **Minimap icon** — LibDataBroker / LibDBIcon
 - **Keybinds** — standard Key Bindings menu
 - **Profiles** — AceDB with import/export
-- **Drag handle** — invisible bar above the HUD, appears on hover (right-click config, shift+click lock)
+- **Drag handle** — small corner button above the HUD, glows on hover (Alt+drag to move, right-click config, shift+click lock)
 
 ## Install
 
