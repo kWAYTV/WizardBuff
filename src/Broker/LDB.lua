@@ -7,7 +7,7 @@ function ns.RegisterLDB(addon)
     local function onEnter(frame)
         GameTooltip:SetOwner(frame, "ANCHOR_NONE")
         GameTooltip:SetPoint("TOPLEFT", frame, "BOTTOMLEFT")
-        GameTooltip:AddLine("Wizard Buff |cff666666v" .. ns.VERSION .. "|r", 1, 1, 1)
+        GameTooltip:AddLine("Wizard Buff |cff666666" .. ns.VERSION .. "|r", 1, 1, 1)
 
         local d = ns.db
         if d then

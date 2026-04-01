@@ -18,7 +18,7 @@ local rawVersion = GetAddOnMetadata(addonName, "Version")
 if not rawVersion or rawVersion:find("@") then
     ns.VERSION = "dev"
 else
-    ns.VERSION = rawVersion
+    ns.VERSION = "v" .. rawVersion
 end
 
 function ns.Print(msg)

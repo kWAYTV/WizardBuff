@@ -77,7 +77,7 @@ function WizardBuff:OnEnable()
     self:RegisterEvent("PLAYER_TARGET_CHANGED")
 
     ns.ScheduleUpdate()
-    ns.Print("|cff666666v" .. ns.VERSION .. "|r — /wbuff config · mage buff HUD")
+    ns.Print("|cff666666" .. ns.VERSION .. "|r — /wbuff config · mage buff HUD")
 end
 
 function WizardBuff:OnDisable()
