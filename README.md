@@ -1,6 +1,6 @@
 # Wizard Buff
 
-Mage group-buff HUD for Intellect, armor, and shields (Ice Barrier / Mana Shield). Uses Ace3 (AceDB, AceConfig) and optional LibDataBroker minimap button.
+Mage group-buff HUD for Intellect, armor, and shields (Ice Barrier / Mana Shield).
 
 ## Install
 
