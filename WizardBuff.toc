@@ -2,7 +2,7 @@
 ## Title: Wizard Buff
 ## Notes: Mage group buff HUD (Intellect, armor, shields). Bindings.xml must stay in addon root and NOT in this TOC (auto-loaded).
 ## Author: kWAYTV
-## Version: 1.2.15
+## Version: 1.2.16
 ## DefaultState: enabled
 ## X-Curse-Project-ID: 1501057
 ## SavedVariables: WizardBuffDB
