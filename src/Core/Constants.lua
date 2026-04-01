@@ -42,6 +42,7 @@ ns.AUTO_LOCK_SEC = 30
 -- Icons (texture paths)
 ---------------------------------------------------------------------------
 ns.ICON_PATHS = {
+    addon      = "Interface\\AddOns\\WizardBuff\\Media\\icon",
     armor      = "Interface\\Icons\\Spell_Frost_FrostArmor02",
     int        = "Interface\\Icons\\Spell_Holy_MagicalSentry",
     brill      = "Interface\\Icons\\Spell_Holy_ArcaneIntellect",

@@ -37,7 +37,7 @@ function ns.RegisterLDB(addon)
     local dataObj = LDB:NewDataObject("WizardBuff", {
         type  = "launcher",
         label = "Wizard Buff",
-        icon  = ns.ICON_PATHS.int,
+        icon  = ns.ICON_PATHS.addon,
 
         OnClick = function(_, button)
             if button == "LeftButton" then
