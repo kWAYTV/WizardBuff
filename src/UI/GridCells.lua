@@ -60,8 +60,17 @@ function ns.CreateGridCell(index)
             else
                 GameTooltip:AddLine("Needs Intellect", 1, 0.4, 0.4)
             end
+        elseif self.hasStrongerBrill then
+            GameTooltip:AddLine("Buffed by other mage", 0.5, 0.8, 0.5)
         else
-            GameTooltip:AddLine("Buffed", 0.4, 1, 0.4)
+            local rem = self.buffRemaining
+            if rem and rem > 0 then
+                local m = math.floor(rem / 60)
+                local s = math.floor(rem % 60)
+                GameTooltip:AddLine(("Buffed (%d:%02d)"):format(m, s), 0.4, 1, 0.4)
+            else
+                GameTooltip:AddLine("Buffed", 0.4, 1, 0.4)
+            end
         end
         GameTooltip:Show()
     end)

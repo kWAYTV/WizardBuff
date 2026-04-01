@@ -59,7 +59,7 @@ ns.ICON_PATHS = {
 BINDING_HEADER_WIZARDBUFF = "Wizard Buff"
 _G["BINDING_NAME_CLICK WizardBuffAutoBuffButton:LeftButton"]   = "Auto Buff (armor, intellect, pets)"
 _G["BINDING_NAME_CLICK WizardBuffBrillianceButton:LeftButton"] = "Group Buff (Int / Brilliance)"
-_G["BINDING_NAME_CLICK WizardBuffShieldButton:LeftButton"]     = "Shield (Ice Barrier / Mana Shield)"
+_G["BINDING_NAME_CLICK WizardBuffShieldButton:LeftButton"]     = "Self (Ice Barrier / Mana Shield)"
 
 ---------------------------------------------------------------------------
 -- Runtime state slots

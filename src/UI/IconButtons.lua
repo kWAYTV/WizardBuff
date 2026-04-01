@@ -25,6 +25,37 @@ local function hookSecureHover(btn, mf)
     btn:HookScript("OnLeave", function() ns.ScheduleHudLeaveCheck(mf) end)
 end
 
+local function showRichTooltip(self, title, titleR, titleG, titleB)
+    GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+    GameTooltip:AddLine(title, titleR, titleG, titleB)
+    if self.tooltipSpell then
+        GameTooltip:AddLine(self.tooltipSpell, 1, 1, 1)
+    end
+    if self.tooltipTarget then
+        local tgt = self.tooltipTarget
+        GameTooltip:AddLine("Target: " .. tgt, 0.7, 0.7, 0.7)
+    end
+    if self.tooltipStatus then
+        local sr, sg, sb = 0.6, 0.6, 0.6
+        local s = self.tooltipStatus
+        if s:find("Out of range") then
+            sr, sg, sb = 1, 0.5, 0.2
+        elseif s:find("move closer") then
+            sr, sg, sb = 1, 0.65, 0.3
+        elseif s:find("Needs cast") or s:find("HP below") then
+            sr, sg, sb = 1, 0.4, 0.4
+        elseif s:find("Active") or s:find("buffed") or s:find("In range") then
+            sr, sg, sb = 0.4, 1, 0.4
+        end
+        GameTooltip:AddLine(s, sr, sg, sb, true)
+    end
+    if self.tooltipMode then
+        GameTooltip:AddLine("Mode: " .. self.tooltipMode, 0.55, 0.55, 0.55)
+    end
+    GameTooltip:AddLine("Scroll to cycle spells", 0.4, 0.4, 0.4)
+    GameTooltip:Show()
+end
+
 local function makeIconButton(name, parent)
     local b = CreateFrame("Button", name, parent, "SecureActionButtonTemplate")
     b:SetSize(ICON_SIZE, ICON_SIZE)
@@ -66,13 +97,7 @@ function ns.CreateAutoBuffButton()
     b:EnableMouseWheel(true)
 
     b:SetScript("OnEnter", function(self)
-        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-        GameTooltip:AddLine("Self Buff", 0.85, 0.92, 1)
-        if self.tooltipLine2 and self.tooltipLine2 ~= "" then
-            GameTooltip:AddLine(self.tooltipLine2, 0.6, 0.6, 0.6, true)
-        end
-        GameTooltip:AddLine("Scroll to cycle spells", 0.45, 0.45, 0.45)
-        GameTooltip:Show()
+        showRichTooltip(self, "Self Buff", 0.85, 0.92, 1)
     end)
     b:SetScript("OnLeave", function() GameTooltip:Hide() end)
     b:SetScript("OnMouseWheel", function(_, delta)
@@ -104,13 +129,7 @@ function ns.CreateBrillianceButton()
     b:EnableMouseWheel(true)
 
     b:SetScript("OnEnter", function(self)
-        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-        GameTooltip:AddLine("Group", 0.9, 0.85, 1)
-        if self.tooltipLine2 and self.tooltipLine2 ~= "" then
-            GameTooltip:AddLine(self.tooltipLine2, 0.6, 0.6, 0.6, true)
-        end
-        GameTooltip:AddLine("Scroll to cycle spells", 0.45, 0.45, 0.45)
-        GameTooltip:Show()
+        showRichTooltip(self, "Group", 0.9, 0.85, 1)
     end)
     b:SetScript("OnLeave", function() GameTooltip:Hide() end)
     b:SetScript("OnMouseWheel", function(_, delta)
@@ -140,13 +159,7 @@ function ns.CreateShieldButton()
     b:EnableMouseWheel(true)
 
     b:SetScript("OnEnter", function(self)
-        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-        GameTooltip:AddLine("Shield", 0.85, 0.85, 1)
-        if self.tooltipLine2 and self.tooltipLine2 ~= "" then
-            GameTooltip:AddLine(self.tooltipLine2, 0.6, 0.6, 0.6, true)
-        end
-        GameTooltip:AddLine("Scroll to cycle spells", 0.45, 0.45, 0.45)
-        GameTooltip:Show()
+        showRichTooltip(self, "Self", 0.85, 0.85, 1)
     end)
     b:SetScript("OnLeave", function() GameTooltip:Hide() end)
     b:SetScript("OnMouseWheel", function(_, delta)

@@ -117,6 +117,13 @@ function ns.CreateHandle()
             h._isMoving = false
         end
     end)
+
+    local needLine = mf:CreateFontString(nil, "OVERLAY")
+    needLine:SetFont(STANDARD_TEXT_FONT, 8, "OUTLINE")
+    needLine:SetShadowOffset(1, -1)
+    needLine:SetPoint("LEFT", h, "RIGHT", 4, 0)
+    needLine:SetText("")
+    mf.needLine = needLine
 end
 
 function ns.UpdateHandleVisibility()

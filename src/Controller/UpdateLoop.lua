@@ -34,8 +34,8 @@ function ns.UpdateButtons()
     end
     local intToUse = (brillSpell and db.useArcaneBrilliance) and brillSpell or intSpell
 
-    local nextIntUnit,    nextIntName    = ns.GetNextIntTarget(false)
-    local nextIntPetUnit, nextIntPetName = ns.GetNextIntTarget(true)
+    local nextIntUnit,    nextIntName,    nextIntOOR    = ns.GetNextIntTarget(false)
+    local nextIntPetUnit, nextIntPetName, nextIntPetOOR = ns.GetNextIntTarget(true)
 
     local ctx = {
         armorSpell     = armorSpell,
@@ -46,8 +46,10 @@ function ns.UpdateButtons()
         brillSpell     = brillSpell,
         nextIntUnit    = nextIntUnit,
         nextIntName    = nextIntName,
+        nextIntOOR     = nextIntOOR,
         nextIntPetUnit = nextIntPetUnit,
         nextIntPetName = nextIntPetName,
+        nextIntPetOOR  = nextIntPetOOR,
     }
 
     local autoSpec  = ns.ResolveAutoSpec(ctx)
@@ -74,5 +76,6 @@ function ns.UpdateButtons()
 
     local needN       = ns.CountNeedingInt()
     local gridPlayers = ns.BuildGridPlayers()
-    ns.LayoutGrid(gridPlayers, intToUse, needN)
+    local allOOR      = needN > 0 and nextIntOOR and nextIntPetOOR
+    ns.LayoutGrid(gridPlayers, intToUse, needN, allOOR)
 end

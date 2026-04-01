@@ -34,14 +34,21 @@ function ns.BuildGridPlayers()
         local players = roster[class]
         if players then
             for _, p in ipairs(players) do
+                local buffRemaining
+                if not p.needsInt then
+                    buffRemaining = ns.GetBuffTimeRemaining(p.unit, ns.SpellNames.ArcaneBrilliance)
+                                 or ns.GetBuffTimeRemaining(p.unit, ns.SpellNames.ArcaneIntellect)
+                end
                 out[#out + 1] = {
-                    name      = p.name,
-                    unit      = p.unit,
-                    class     = class,
-                    needsInt  = p.needsInt,
-                    ownerName = p.ownerName,
-                    isDead    = p.isDead,
-                    isOffline = p.isOffline,
+                    name            = p.name,
+                    unit            = p.unit,
+                    class           = class,
+                    needsInt        = p.needsInt,
+                    ownerName       = p.ownerName,
+                    isDead          = p.isDead,
+                    isOffline       = p.isOffline,
+                    hasStrongerBrill = p.hasStrongerBrill,
+                    buffRemaining   = buffRemaining,
                 }
             end
         end
@@ -52,7 +59,7 @@ end
 ---------------------------------------------------------------------------
 -- Layout grid cells and resize main frame
 ---------------------------------------------------------------------------
-function ns.LayoutGrid(gridPlayers, intToUse, needN)
+function ns.LayoutGrid(gridPlayers, intToUse, needN, allOOR)
     local db        = ns.db
     local mainFrame = ns.mainFrame
     local BAR_H     = ns.UI_BAR_H
@@ -114,6 +121,8 @@ function ns.LayoutGrid(gridPlayers, intToUse, needN)
         cell.isDead     = p.isDead
         cell.isOffline  = p.isOffline
         cell.outOfRange = p.unit and not ns.IsUnitInBuffRange(p.unit) or false
+        cell.hasStrongerBrill = p.hasStrongerBrill
+        cell.buffRemaining    = p.buffRemaining
         cell.initial:SetText(p.name:sub(1, 1):upper())
 
         ns.ApplyGridCellColor(cell)
@@ -136,16 +145,15 @@ function ns.LayoutGrid(gridPlayers, intToUse, needN)
     local gridH  = rows > 0 and (rows * CH + (rows - 1) * CG) or 0
     yCursor = gridYStart - gridH
 
-    local statusH = 0
     if showNeed and mainFrame.needLine then
-        statusH = 12
-        mainFrame.needLine:ClearAllPoints()
-        mainFrame.needLine:SetPoint("TOP", mainFrame, "TOPLEFT", math.floor(FRAME_W / 2), yCursor - 2)
-
         local parts = {}
         local selfNeed = ns.SelfNeedsArmor and ns.SelfNeedsArmor()
         if needN > 0 then
-            parts[#parts + 1] = "|cffff7777" .. needN .. "|r |cff555555need|r"
+            if allOOR then
+                parts[#parts + 1] = "|cffffaa44" .. needN .. "|r |cff555555need (far)|r"
+            else
+                parts[#parts + 1] = "|cffff7777" .. needN .. "|r |cff555555need|r"
+            end
         elseif selfNeed then
             parts[#parts + 1] = "|cffffaa44self|r"
         else
@@ -161,7 +169,7 @@ function ns.LayoutGrid(gridPlayers, intToUse, needN)
         mainFrame.needLine:SetText("")
     end
 
-    local totalH = -yCursor + statusH + 4
+    local totalH = -yCursor + 4
     mainFrame:SetSize(FRAME_W, totalH)
     mainFrame:Show()
     ns.ApplyHudFade()

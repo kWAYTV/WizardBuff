@@ -126,30 +126,49 @@ end
 
 function ns.GetNextIntTarget(petsOnly)
     local roster = ns.roster
+
+    -- Priority 1: self (player) always in range
     if not petsOnly then
         for _, class in ipairs(CLASS_ORDER) do
             if class ~= "PET" and roster[class] then
                 for _, p in ipairs(roster[class]) do
                     if p.needsInt and UnitIsUnit(p.unit, "player") then
-                        return p.unit, p.name
+                        return p.unit, p.name, false
                     end
                 end
             end
         end
     end
+
+    -- Priority 2: in-range targets
     for _, class in ipairs(CLASS_ORDER) do
         local isPet = (class == "PET")
         if (petsOnly and isPet) or (not petsOnly and not isPet) then
             if roster[class] then
                 for _, p in ipairs(roster[class]) do
                     if p.needsInt and ns.IsUnitInBuffRange(p.unit) then
-                        return p.unit, p.name
+                        return p.unit, p.name, false
                     end
                 end
             end
         end
     end
-    return nil, nil
+
+    -- Priority 3: out-of-range fallback (first needing unit regardless of range)
+    for _, class in ipairs(CLASS_ORDER) do
+        local isPet = (class == "PET")
+        if (petsOnly and isPet) or (not petsOnly and not isPet) then
+            if roster[class] then
+                for _, p in ipairs(roster[class]) do
+                    if p.needsInt then
+                        return p.unit, p.name, true
+                    end
+                end
+            end
+        end
+    end
+
+    return nil, nil, false
 end
 
 ---------------------------------------------------------------------------

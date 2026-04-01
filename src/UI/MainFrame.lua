@@ -61,11 +61,5 @@ function ns.CreateMainFrame()
         if ns.brillianceButton then ns.RefreshTimerText(ns.brillianceButton) end
     end)
 
-    local needLine = mf:CreateFontString(nil, "OVERLAY")
-    needLine:SetFont(STANDARD_TEXT_FONT, 8, "OUTLINE")
-    needLine:SetShadowOffset(1, -1)
-    needLine:SetText("")
-    mf.needLine = needLine
-
     ns.ApplyHudScale()
 end
