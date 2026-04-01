@@ -5,39 +5,16 @@ assert(ns, "WizardBuff: load WizardBuff.lua before LDB.lua")
 function ns.RegisterLDB(addon)
     local LDB       = LibStub("LibDataBroker-1.1")
     local LibDBIcon = LibStub("LibDBIcon-1.0")
-    local LibQTip   = LibStub("LibQTip-1.0", true)
-
-    local tooltip
-
-    local function releaseTooltip()
-        if tooltip then
-            LibQTip:Release(tooltip)
-            tooltip = nil
-        end
-    end
 
     local function onEnter(frame)
-        if not LibQTip then
-            GameTooltip:SetOwner(frame, "ANCHOR_NONE")
-            GameTooltip:SetPoint("TOPLEFT", frame, "BOTTOMLEFT")
-            GameTooltip:AddLine("Wizard Buff", 1, 1, 1)
-            GameTooltip:AddLine("Left-click: toggle  |  Right-click: settings", 0.65, 0.65, 0.65, true)
-            GameTooltip:Show()
-            return
-        end
-
-        releaseTooltip()
-        tooltip = LibQTip:Acquire("WizardBuffLDB", 2, "LEFT", "RIGHT")
-        tooltip:SmartAnchorTo(frame)
-        tooltip:SetAutoHideDelay(0.15, frame)
-
-        tooltip:AddHeader("|cff8eb4d4Wizard Buff|r |cff666666v" .. ns.VERSION .. "|r")
-        tooltip:AddSeparator()
+        GameTooltip:SetOwner(frame, "ANCHOR_NONE")
+        GameTooltip:SetPoint("TOPLEFT", frame, "BOTTOMLEFT")
+        GameTooltip:AddLine("Wizard Buff |cff666666v" .. ns.VERSION .. "|r", 1, 1, 1)
 
         local d = ns.db
         if d then
             local status = d.enabled and "|cff66dd66On|r" or "|cffff5555Off|r"
-            tooltip:AddLine("Status", status)
+            GameTooltip:AddLine("Status: " .. status, 1, 1, 1)
 
             if ns.isMage and ns.roster then
                 local need = 0
@@ -50,30 +27,24 @@ function ns.RegisterLDB(addon)
                     end
                 end
                 if need > 0 then
-                    tooltip:AddLine("Need Int", "|cffff7777" .. need .. "|r")
-                else
-                    tooltip:AddLine("Need Int", "|cff66dd660|r")
+                    GameTooltip:AddLine("Need Int: |cffff7777" .. need .. "|r", 1, 1, 1)
                 end
             end
 
             local powder = ns.HasArcanePowder and ns.HasArcanePowder()
             if powder ~= nil then
-                tooltip:AddLine("Arcane Powder", powder and "|cff66dd66Yes|r" or "|cffff5555No|r")
+                GameTooltip:AddLine("Arcane Powder: " .. (powder and "|cff66dd66Yes|r" or "|cffff5555No|r"), 1, 1, 1)
             end
         end
 
-        tooltip:AddSeparator()
-        tooltip:AddLine("|cffccccccLeft-click|r", "|cff888888toggle on/off|r")
-        tooltip:AddLine("|cffccccccRight-click|r", "|cff888888open settings|r")
-        tooltip:AddLine("|cffccccccShift + click|r", "|cff888888lock / unlock|r")
-
-        tooltip:Show()
+        GameTooltip:AddLine(" ")
+        GameTooltip:AddLine("Left-click: toggle  |  Right-click: settings", 0.65, 0.65, 0.65, true)
+        GameTooltip:AddLine("Shift+click: lock/unlock", 0.65, 0.65, 0.65, true)
+        GameTooltip:Show()
     end
 
     local function onLeave(frame)
-        if not LibQTip then
-            GameTooltip:Hide()
-        end
+        GameTooltip:Hide()
     end
 
     local dataObj = LDB:NewDataObject("WizardBuff", {
@@ -100,7 +71,6 @@ function ns.RegisterLDB(addon)
             elseif button == "RightButton" then
                 if ns.OpenConfig then ns.OpenConfig() end
             end
-            releaseTooltip()
         end,
 
         OnEnter = onEnter,
