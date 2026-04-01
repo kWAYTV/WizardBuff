@@ -125,6 +125,10 @@ function ns.UnitHasBuff(unit, buffName)
                 return true, caster
             end
             local remaining = expirationTime - GetTime()
+            local floor = ns.db and ns.db.refreshFloorSec or 120
+            if remaining > floor then
+                return true, caster
+            end
             if remaining > duration * REFRESH_THRESHOLD then
                 return true, caster
             else
@@ -423,4 +427,36 @@ function ns.GetNextIntTarget(petsOnly)
         end
     end
     return nil, nil
+end
+
+function ns.GetBuffReport()
+    ns.ScanRoster()
+    local total, buffed = 0, 0
+    local needByClass = {}
+    for _, class in ipairs(CLASS_ORDER) do
+        if roster[class] then
+            for _, p in ipairs(roster[class]) do
+                total = total + 1
+                if not p.needsInt then
+                    buffed = buffed + 1
+                else
+                    if not needByClass[class] then needByClass[class] = {} end
+                    table.insert(needByClass[class], p.name)
+                end
+            end
+        end
+    end
+    if total == 0 then
+        return "WizardBuff: No group members found"
+    end
+    if buffed == total then
+        return "WizardBuff: " .. total .. "/" .. total .. " buffed -- all good!"
+    end
+    local parts = {}
+    for _, class in ipairs(CLASS_ORDER) do
+        if needByClass[class] then
+            table.insert(parts, class .. "(" .. table.concat(needByClass[class], ", ") .. ")")
+        end
+    end
+    return "WizardBuff: " .. buffed .. "/" .. total .. " buffed. Need: " .. table.concat(parts, ", ")
 end

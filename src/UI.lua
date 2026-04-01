@@ -194,6 +194,25 @@ function ns.CreateMainFrame()
 end
 
 local HANDLE_H = 10
+local autoLockTimer
+
+local function cancelAutoLock()
+    if autoLockTimer then autoLockTimer:Cancel(); autoLockTimer = nil end
+end
+
+local function scheduleAutoLock()
+    cancelAutoLock()
+    autoLockTimer = C_Timer.NewTimer(30, function()
+        autoLockTimer = nil
+        if ns.db and not ns.db.locked then
+            ns.db.locked = true
+            ns.Print("Auto-locked after 30s")
+        end
+    end)
+end
+
+ns.CancelAutoLock = cancelAutoLock
+ns.ScheduleAutoLock = scheduleAutoLock
 
 function ns.CreateHandle()
     local mf = ns.mainFrame
@@ -245,6 +264,7 @@ function ns.CreateHandle()
 
     h:SetScript("OnDragStart", function()
         if not InCombatLockdown() and not (ns.db and ns.db.locked) then
+            cancelAutoLock()
             mf:StartMoving()
         end
     end)
@@ -254,18 +274,36 @@ function ns.CreateHandle()
             local point, _, relPoint, x, y = mf:GetPoint(1)
             ns.db.hudPos = { point = point, relPoint = relPoint, x = x, y = y }
         end
+        if ns.db and not ns.db.locked then
+            scheduleAutoLock()
+        end
     end)
 
     h:SetScript("OnClick", function(_, button)
         if IsShiftKeyDown() then
             if ns.db then
                 ns.db.locked = not ns.db.locked
-                ns.Print(ns.db.locked and "Locked" or "Unlocked")
+                if ns.db.locked then
+                    cancelAutoLock()
+                    ns.Print("Locked")
+                else
+                    scheduleAutoLock()
+                    ns.Print("Unlocked (auto-locks in 30s)")
+                end
             end
         elseif button == "RightButton" then
             if ns.OpenConfig then ns.OpenConfig() end
         end
     end)
+end
+
+function ns.UpdateHandleVisibility()
+    if not ns.handle then return end
+    if ns.db and ns.db.showDragHandle == false then
+        ns.handle:Hide()
+    else
+        ns.handle:Show()
+    end
 end
 
 local function stripSecureActionChrome(b)
@@ -322,6 +360,7 @@ function ns.CreateAutoBuffButton()
         if self.tooltipLine2 and self.tooltipLine2 ~= "" then
             GameTooltip:AddLine(self.tooltipLine2, 0.6, 0.6, 0.6, true)
         end
+        GameTooltip:AddLine("/click WizardBuffAutoBuffButton", 0.4, 0.4, 0.4)
         GameTooltip:Show()
     end)
     b:SetScript("OnLeave", function(self)
@@ -346,6 +385,7 @@ function ns.CreateBrillianceButton()
         if self.tooltipLine2 and self.tooltipLine2 ~= "" then
             GameTooltip:AddLine(self.tooltipLine2, 0.6, 0.6, 0.6, true)
         end
+        GameTooltip:AddLine("/click WizardBuffBrillianceButton", 0.4, 0.4, 0.4)
         GameTooltip:Show()
     end)
     b:SetScript("OnLeave", function(self)

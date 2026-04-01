@@ -4,17 +4,21 @@ A lightweight mage buff HUD for WoW Classic (TBC Anniversary). Shows what needs 
 
 ## Features
 
-- **Two-button HUD** — left button auto-cycles through self-armor → shield → next Intellect target. Right button handles Arcane Brilliance (or falls back to Intellect when out of Arcane Powder).
+- **Two-button HUD** — left button handles self-buffs (armor, emergency shield). Right button handles group buffs (Intellect / Arcane Brilliance for party, pets, and friendly target).
 - **Glow alerts** — bright pulsing gold border on any button that needs attention.
 - **Buff timers** — remaining duration overlaid on each icon. Color shifts to orange when time is low.
-- **Sound reminder** — optional repeating alarm while buffs are missing (uses the WoW alarm clock sound, toggleable).
+- **Sound reminders** — optional distinct sounds for missing self-buffs vs group buffs (toggleable).
 - **Need counter** — small "2 need Int" line below the icons so you know how many group members are unbuffed.
 - **Class rows** — expandable per-class roster with individual cast buttons for each player and pet.
-- **Smart targeting** — prioritizes self (armor first), then players in range, then pets. Skips units that already have a stronger Brilliance from another mage.
+- **Smart targeting** — prioritizes self (armor first), then players in range, then pets. Skips units that already have a stronger Brilliance from another mage. Falls back to friendly target when group is fully buffed.
 - **Minimap button** — via LibDataBroker / LibDBIcon. Left-click toggles, Shift-click locks, right-click opens settings. Hover shows a LibQTip tooltip with status.
 - **Keybinds** — bind both buttons from the standard Key Bindings menu.
-- **Profile support** — full AceDB profiles with import/export via the settings panel.
+- **Profile support** — AceDB profiles with import/export via the settings panel.
 - **Position memory** — drag the HUD anywhere; position persists across reloads and relogs.
+- **Auto-lock** — when you unlock to reposition, the HUD re-locks automatically after 30 seconds.
+- **Drag handle toggle** — the top-edge drag handle can be hidden via settings if you prefer a cleaner look.
+- **Buff duration guard** — prevents wasting reagents by skipping rebuffs when the remaining duration exceeds a configurable floor (default 2 minutes).
+- **Report to chat** — `/wbuff report` sends a buff status summary to party/raid chat (or local chat when solo).
 - **Combat-aware** — fades in combat, prevents taint by skipping secure frame changes during lockdown.
 
 ## Installation
@@ -35,10 +39,12 @@ The HUD appears automatically for Mage characters. Drag it where you like, then 
 
 | Button | What it does |
 |--------|-------------|
-| **Left icon (Auto)** | Casts the highest-priority missing buff: self-armor → emergency shield (if HP below threshold) → next unbuffed player/pet |
-| **Right icon (Group)** | Casts Arcane Brilliance on the same target. Falls back to single-target Intellect if you're out of Arcane Powder or haven't trained Brilliance yet |
+| **Left icon (Self)** | Casts the highest-priority missing self-buff: armor → emergency shield (if HP below threshold) |
+| **Right icon (Group)** | Casts Intellect or Arcane Brilliance on the next unbuffed party/raid member or pet. When everyone is buffed, falls back to friendly target |
 
-Right-click the HUD to open settings.
+Hover over the drag handle at the top edge for quick actions:
+- **Right-click** — open settings
+- **Shift+click** — unlock/lock position (auto-locks after 30 seconds)
 
 ## Slash Commands
 
@@ -48,22 +54,40 @@ Right-click the HUD to open settings.
 |---------|--------|
 | *(none)* or `toggle` | Enable / disable the HUD |
 | `config` | Open the settings panel |
-| `lock` | Lock / unlock position |
+| `lock` | Lock / unlock position (auto-locks after 30s) |
 | `rows` | Toggle class rows |
 | `armor` | Toggle armor buffing |
 | `bubble` | Toggle emergency shield |
 | `int` | Toggle Intellect buffing |
 | `brilliance` | Toggle Arcane Brilliance preference |
 | `pets` | Toggle pet buffing |
+| `report` | Print buff status to party/raid chat |
+| `macro` | Show `/click` macro syntax for keybind addons |
+
+## Macros
+
+You can bind the HUD buttons to custom macros or action bars:
+
+```
+/click WizardBuffAutoBuffButton
+```
+
+Triggers the **Self** button (armor / shield).
+
+```
+/click WizardBuffBrillianceButton
+```
+
+Triggers the **Group** button (Intellect / Brilliance on next target).
 
 ## Settings
 
 Open with `/wbuff config` or right-click the HUD.
 
-- **General** — master toggle, lock, show solo, need count, buff timers, glow alerts, sound alert, class rows, minimap icon visibility.
-- **Appearance** — HUD scale, idle/hover opacity, combat fade, position reset.
-- **Buffs** — armor type (auto/ice/mage/frost), Intellect, Brilliance preference, pet buffing, emergency shield type and HP% threshold.
-- **Profiles** — standard AceDB profile management.
+- **General** — master toggle, lock, show solo, need count, buff timers, glow alerts, sound alerts (self / group), class rows, minimap icon visibility.
+- **Appearance** — HUD scale, idle/hover opacity, combat fade, drag handle toggle, position reset.
+- **Buffs** — armor type (auto/ice/mage/frost), Intellect, Brilliance preference, pet buffing, emergency shield type and HP% threshold, buff duration guard (min remaining seconds).
+- **Profiles** — AceDB profile management with import/export.
 
 ## Saved Variables
 

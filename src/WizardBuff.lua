@@ -74,6 +74,8 @@ ns.defaults = {
     buffIntellect = true,
     useArcaneBrilliance = true,
     buffPets = true,
+    showDragHandle = true,
+    refreshFloorSec = 120,
     keybind = "",
     hudPos = nil,
     minimap = { hide = false },
@@ -189,6 +191,7 @@ function WizardBuff:OnEnable()
     end
     ns.CreateMainFrame()
     ns.CreateHandle()
+    ns.UpdateHandleVisibility()
     ns.CreateAutoBuffButton()
     ns.CreateBrillianceButton()
     if ns.ApplyHudFade then
@@ -229,7 +232,13 @@ function WizardBuff:SlashHandler(input)
         ns.OpenConfig()
     elseif cmd == "lock" then
         db.locked = not db.locked
-        ns.Print(db.locked and "locked" or "unlocked")
+        if db.locked then
+            if ns.CancelAutoLock then ns.CancelAutoLock() end
+            ns.Print("Locked")
+        else
+            if ns.ScheduleAutoLock then ns.ScheduleAutoLock() end
+            ns.Print("Unlocked (auto-locks in 30s)")
+        end
     elseif cmd == "grid" or cmd == "rows" or cmd == "classrows" then
         db.showClassRows = not db.showClassRows
         ns.Print("Buff grid " .. (db.showClassRows and "on" or "off"))
@@ -254,8 +263,19 @@ function WizardBuff:SlashHandler(input)
         db.buffPets = not db.buffPets
         ns.Print("Pets " .. (db.buffPets and "on" or "off"))
         ns.ScheduleUpdate()
+    elseif cmd == "report" then
+        local report = ns.GetBuffReport()
+        local channel = IsInRaid() and "RAID" or IsInGroup() and "PARTY" or nil
+        if channel then
+            SendChatMessage(report, channel)
+        else
+            ns.Print(report)
+        end
+    elseif cmd == "macro" then
+        ns.Print("Self buff macro: /click WizardBuffAutoBuffButton")
+        ns.Print("Group buff macro: /click WizardBuffBrillianceButton")
     else
-        ns.Print("/wbuff toggle | config | lock | grid | armor | bubble | int | brilliance | pets")
+        ns.Print("/wbuff toggle | config | lock | grid | armor | bubble | int | brilliance | pets | report | macro")
     end
 end
 

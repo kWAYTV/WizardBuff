@@ -140,6 +140,14 @@ function ns.RegisterOptions(addon)
                             end
                         end,
                     },
+                    showDragHandle = {
+                        type = "toggle", name = "Show drag handle", order = 6,
+                        width = 1.0,
+                        set = function(_, v)
+                            addon.db.profile.showDragHandle = v
+                            if ns.UpdateHandleVisibility then ns.UpdateHandleVisibility() end
+                        end,
+                    },
                 },
             },
             buffs = {
@@ -187,6 +195,12 @@ function ns.RegisterOptions(addon)
                         width = 1.5,
                         min = 5, max = 100, step = 5,
                         disabled = function() return not addon.db.profile.enableBubble end,
+                    },
+                    refreshFloorSec = {
+                        type = "range", name = "Min remaining (sec)", order = 9,
+                        desc = "Don't refresh buffs with more than this many seconds remaining",
+                        width = 1.5,
+                        min = 0, max = 600, step = 30,
                     },
                 },
             },
