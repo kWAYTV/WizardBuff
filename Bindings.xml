@@ -1,0 +1,6 @@
+<Bindings>
+    <Binding name="CLICK WizardBuffAutoBuffButton:LeftButton" category="WIZARDBUFF">
+    </Binding>
+    <Binding name="CLICK WizardBuffBrillianceButton:LeftButton" category="WIZARDBUFF">
+    </Binding>
+</Bindings>

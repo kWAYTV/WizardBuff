@@ -1,0 +1,475 @@
+local _, ns = ...
+ns = ns or _G.WizardBuffAddon
+assert(ns, "WizardBuff: load WizardBuff.lua before Update.lua")
+
+local SpellIDs = ns.SpellIDs
+local SpellNames = ns.SpellNames
+local CLASS_ORDER = ns.CLASS_ORDER
+
+-- Distinct textures per role (idle "OK" used same INT art as Brill — looked identical in-game).
+local ICON = {
+    armor = "Interface\\Icons\\Spell_Frost_FrostArmor02",
+    int = "Interface\\Icons\\Spell_Holy_MagicalSentry",
+    brill = "Interface\\Icons\\Spell_Holy_ArcaneIntellect",
+    shield = "Interface\\Icons\\Spell_Ice_Lament",
+    -- UX fallbacks when Blizzard gives identical spell icons (common for INT vs Brill in Classic data).
+    autoIdle = "Interface\\Icons\\Spell_Frost_FrostArmor02",
+    brillIdle = "Interface\\Icons\\Spell_Nature_Regeneration",
+    -- Group slot when Brilliance is not trained yet (spellbook) — do not reuse INT art for this column.
+    notLearned = "Interface\\Icons\\INV_Misc_QuestionMark",
+}
+
+local ARCANE_POWDER_ITEM = 17020
+
+local COL = {
+    armor = {0.18, 0.32, 0.48, 0.92},
+    int = {0.22, 0.18, 0.35, 0.92},
+    shield = {0.15, 0.22, 0.38, 0.92},
+    ok = {0.12, 0.32, 0.12, 0.92},
+    brill = {0.26, 0.16, 0.38, 0.92},
+    intNoPowder = {0.28, 0.22, 0.14, 0.92},
+    disabled = {0.14, 0.1, 0.18, 0.92},
+}
+
+local function resolveSpellIcon(spellId, fallbackPath)
+    if not spellId then
+        return fallbackPath
+    end
+    if GetSpellTexture then
+        local tex = GetSpellTexture(spellId)
+        if tex and tex ~= "" then
+            return tex
+        end
+    end
+    local _, _, tex = GetSpellInfo(spellId)
+    if tex and tex ~= "" then
+        return tex
+    end
+    return fallbackPath
+end
+
+local function getItemIconPath(itemId, fallbackPath)
+    if GetItemIcon then
+        local tex = GetItemIcon(itemId)
+        if tex and tex ~= "" then
+            return tex
+        end
+    end
+    return fallbackPath
+end
+
+-- If both slots resolve to the same texture, distinguish the right (group/brill) slot first — never clobber both with idle art while casting Int on both.
+local function ensureDistinctHudIcons(autoSpec, brillSpec)
+    local a, b = autoSpec.icon, brillSpec.icon
+    if a and b and a ~= b then
+        return
+    end
+    brillSpec.icon = getItemIconPath(ARCANE_POWDER_ITEM, ICON.brill)
+    if brillSpec.icon == autoSpec.icon then
+        brillSpec.icon = ICON.brillIdle
+    end
+    if autoSpec.icon == brillSpec.icon then
+        autoSpec.icon = ICON.autoIdle
+    end
+end
+
+-- Right (group) slot always shows powder when we only cast Intellect there (no powder / no Brilliance yet) so it never mirrors the auto column.
+local function brillGroupSlotIcon()
+    return getItemIconPath(ARCANE_POWDER_ITEM, ICON.brillIdle)
+end
+
+local function applyButtonSpec(btn, spec)
+    btn:SetAttribute("macrotext", spec.macro)
+    btn.icon:SetTexture(spec.icon)
+    local c = spec.bg
+    btn.bg:SetColorTexture(c[1], c[2], c[3], c[4])
+    btn.tooltipLine2 = spec.tooltipLine2
+end
+
+local function formatHudTimer(sec)
+    if not sec or sec <= 0 then
+        return ""
+    end
+    if sec >= 3600 then
+        return string.format(" (%dh)", math.floor(sec / 3600))
+    elseif sec >= 60 then
+        return string.format(" (%dm)", math.floor(sec / 60))
+    end
+    return string.format(" (%ds)", math.floor(sec))
+end
+
+local function applyHudLabels(mf, autoSpec, brillSpec, d)
+    if not mf or not mf.autoStatus or not mf.brillStatus then return end
+    mf.autoStatus:Hide()
+    mf.brillStatus:Hide()
+end
+
+local function countNeedingInt(roster)
+    local n = 0
+    for _, class in ipairs(CLASS_ORDER) do
+        local pl = roster[class]
+        if pl then
+            for _, p in ipairs(pl) do
+                if p.needsInt then
+                    n = n + 1
+                end
+            end
+        end
+    end
+    return n
+end
+
+local function resolveAutoBuffSpec(ctx)
+    local armorSpell, bubbleSpell = ctx.armorSpell, ctx.bubbleSpell
+    local intToUse = ctx.intToUse
+    local nextIntUnit, nextIntName = ctx.nextIntUnit, ctx.nextIntName
+    local nextIntPetUnit, nextIntPetName = ctx.nextIntPetUnit, ctx.nextIntPetName
+
+    if ns.SelfNeedsArmor() and armorSpell then
+        local _, sid = ns.GetArmorSpell()
+        return {
+            macro = "/cast [@player] " .. armorSpell,
+            text = "|cff69ccf0Armor|r",
+            labelShort = "Armor",
+            icon = resolveSpellIcon(sid, ICON.armor),
+            bg = COL.armor,
+            tooltipLine2 = "Self-cast armor before buffing the group.",
+        }
+    end
+
+    if bubbleSpell and ns.NeedsBubble() and not ns.PlayerHasShieldBuff() then
+        local _, sid = ns.GetBubbleSpell()
+        return {
+            macro = ns.MakeSelfCastMacro(bubbleSpell),
+            text = "|cff99ccffShield|r",
+            labelShort = "Shield",
+            icon = resolveSpellIcon(sid, ICON.shield),
+            bg = COL.shield,
+            tooltipLine2 = "Emergency shield when your health is below the threshold.",
+        }
+    end
+
+    if nextIntUnit and intToUse then
+        local _, iid = ns.GetHighestRankSpell(SpellIDs.ArcaneIntellect)
+        return {
+            macro = ns.MakeBuffMacro(nextIntUnit, intToUse),
+            text = "|cffaaaaff" .. nextIntName .. "|r",
+            labelShort = (nextIntName and #nextIntName > 8) and (nextIntName:sub(1, 7) .. "…") or (nextIntName or "Int"),
+            icon = resolveSpellIcon(iid, ICON.int),
+            bg = COL.int,
+            tooltipLine2 = "Casts on the next roster member that needs Intellect (or Brilliance if configured).",
+        }
+    end
+
+    if nextIntPetUnit and intToUse then
+        local _, iid = ns.GetHighestRankSpell(SpellIDs.ArcaneIntellect)
+        return {
+            macro = ns.MakeBuffMacro(nextIntPetUnit, intToUse),
+            text = "|cffaaaaffPet|r",
+            labelShort = "Pet",
+            icon = resolveSpellIcon(iid, ICON.int),
+            bg = COL.int,
+            tooltipLine2 = "Casts on the next pet that needs Intellect.",
+        }
+    end
+
+    return {
+        macro = nil,
+        text = "|cff66dd66OK|r",
+        labelShort = "Queue",
+        icon = ICON.autoIdle,
+        bg = COL.ok,
+        tooltipLine2 = "Next target in queue: armor, shield (if low HP), then Int/Brilliance.",
+    }
+end
+
+local function resolveBrillianceSpec(ctx)
+    local brillTarget = ctx.brillTarget
+    local brillSpell, intSpell = ctx.brillSpell, ctx.intSpell
+    local hasPowder = ctx.hasPowder
+    local learnedBrill, brillSid = ns.GetHighestRankSpell(SpellIDs.ArcaneBrilliance)
+    local _, intSid = ns.GetHighestRankSpell(SpellIDs.ArcaneIntellect)
+
+    if brillSpell then
+        return brillTarget and {
+            macro = ns.MakeBuffMacro(brillTarget, brillSpell),
+            text = "|cffcc99ffBrilliance|r",
+            labelShort = "Brill",
+            icon = resolveSpellIcon(brillSid, ICON.brill),
+            bg = COL.brill,
+            timerSec = nil,
+            tooltipLine2 = "Casts Arcane Brilliance on the same target as Auto when possible.",
+        } or {
+            macro = nil,
+            text = "|cff66dd66Done|r",
+            labelShort = "Done",
+            icon = resolveSpellIcon(brillSid, ICON.brillIdle),
+            bg = COL.ok,
+            timerSec = SpellNames.ArcaneBrilliance and ns.GetBuffTimeRemaining("player", SpellNames.ArcaneBrilliance) or nil,
+            tooltipLine2 = "Group buff satisfied or no valid target.",
+        }
+    end
+
+    if learnedBrill and not hasPowder and intSpell then
+        return brillTarget and {
+            macro = ns.MakeBuffMacro(brillTarget, intSpell),
+            text = "|cffffcc66Int|r",
+            labelShort = "Int",
+            -- Same spell as Auto column, but this is the *group* slot: show powder (Brilliance reagent), not the INT icon.
+            icon = brillGroupSlotIcon(),
+            bg = COL.intNoPowder,
+            tooltipLine2 = "No Arcane Powder: this button still casts Intellect, but the icon is the group slot (powder = Arcane Brilliance when you have it).",
+        } or {
+            macro = nil,
+            text = "|cff66dd66OK|r",
+            labelShort = "Group",
+            icon = brillGroupSlotIcon(),
+            bg = COL.ok,
+            tooltipLine2 = "Buy Arcane Powder to cast Arcane Brilliance from this slot; until then it falls back to Int.",
+        }
+    end
+
+    return {
+        macro = nil,
+        text = "|cff666666—|r",
+        labelShort = "Train",
+        icon = ICON.notLearned,
+        bg = COL.disabled,
+        tooltipLine2 = "Arcane Brilliance is not in your spellbook yet. Train it to unlock the group buff on this slot.",
+    }
+end
+
+local function clearSecureSpell(btn)
+    if not btn then
+        return
+    end
+    btn:SetAttribute("type", nil)
+    btn:SetAttribute("spell", nil)
+    btn:SetAttribute("unit", nil)
+end
+
+local function hideAllClassRows(classButtons, playerButtons)
+    for classIndex = 1, #CLASS_ORDER do
+        local classBtn = classButtons[classIndex]
+        if classBtn then
+            clearSecureSpell(classBtn)
+            classBtn:Hide()
+        end
+        local pb = playerButtons[classIndex]
+        if pb then
+            for _, pBtn in pairs(pb) do
+                clearSecureSpell(pBtn)
+                pBtn.inUse = false
+                pBtn:Hide()
+            end
+        end
+    end
+end
+
+function ns.UpdateButtons()
+    local db = ns.db
+    local mainFrame = ns.mainFrame
+    local roster = ns.roster
+    local classButtons = ns.classButtons
+    local playerButtons = ns.playerButtons
+    local autoBuffButton = ns.autoBuffButton
+    local brillianceButton = ns.brillianceButton
+
+    if not mainFrame or not ns.isMage or not db.enabled then
+        if mainFrame then
+            mainFrame:Hide()
+        end
+        return
+    end
+    if InCombatLockdown() then
+        if ns.ApplyHudFade then
+            ns.ApplyHudFade()
+        end
+        return
+    end
+
+    ns.ScanRoster()
+
+    local armorSpell = ns.GetArmorSpell()
+    local intSpell = ns.GetHighestRankSpell(SpellIDs.ArcaneIntellect)
+    local hasPowder = ns.HasArcanePowder()
+    local brillSpell = hasPowder and ns.GetHighestRankSpell(SpellIDs.ArcaneBrilliance)
+    local intToUse = (brillSpell and db.useArcaneBrilliance) and brillSpell or intSpell
+
+    local nextIntUnit, nextIntName = ns.GetNextIntTarget(false)
+    local nextIntPetUnit, nextIntPetName = ns.GetNextIntTarget(true)
+
+    local autoSpec = resolveAutoBuffSpec({
+        armorSpell = armorSpell,
+        bubbleSpell = ns.GetBubbleSpell(),
+        intToUse = intToUse,
+        nextIntUnit = nextIntUnit,
+        nextIntName = nextIntName,
+        nextIntPetUnit = nextIntPetUnit,
+        nextIntPetName = nextIntPetName,
+    })
+    local brillSpec = resolveBrillianceSpec({
+        brillTarget = nextIntUnit or nextIntPetUnit,
+        brillSpell = brillSpell,
+        intSpell = intSpell,
+        hasPowder = hasPowder,
+    })
+    ensureDistinctHudIcons(autoSpec, brillSpec)
+    applyButtonSpec(autoBuffButton, autoSpec)
+    if brillianceButton then
+        applyButtonSpec(brillianceButton, brillSpec)
+        brillianceButton:Show()
+    end
+
+    applyHudLabels(mainFrame, autoSpec, brillSpec, db)
+    if ns.ApplySlotBadges then
+        ns.ApplySlotBadges()
+    end
+
+    local needN = countNeedingInt(roster)
+    if mainFrame.needLine then
+        if db.showHudNeedCount then
+            if needN > 0 then
+                mainFrame.needLine:SetText("|cffff7777" .. needN .. "|r |cff666666need Int|r")
+            else
+                mainFrame.needLine:SetText("|cff448844ok|r |cff555555Int|r")
+            end
+        else
+            mainFrame.needLine:SetText("")
+        end
+    end
+    if ns.RefreshHudChrome then
+        ns.RefreshHudChrome()
+    end
+
+    local ROW_H = ns.UI_ROW_H or 18
+    local CLASS_W = ns.UI_CLASS_ROW_W or 120
+    local PLAYER_W = ns.UI_PLAYER_BTN_W or 106
+    local FRAME_W = db.showClassRows and (6 + CLASS_W + 3 + PLAYER_W + 8) or (ns.UI_FRAME_W or 72)
+    local baseH = ns.UI_BAR_H or 38
+    if db.showHudNeedCount then baseH = baseH + 12 end
+    local ROW_TOP = -baseH
+
+    if not db.showClassRows then
+        hideAllClassRows(classButtons, playerButtons)
+        mainFrame:SetSize(FRAME_W, baseH)
+        mainFrame:Show()
+        if ns.ApplyHudFade then
+            ns.ApplyHudFade()
+        end
+        return
+    end
+
+    local yOffset = ROW_TOP
+    local totalRowH = 0
+
+    for classIndex, class in ipairs(CLASS_ORDER) do
+        local players = roster[class]
+        local needCount, totalCount = 0, 0
+        if players then
+            totalCount = #players
+            for _, p in ipairs(players) do
+                if p.needsInt then
+                    needCount = needCount + 1
+                end
+            end
+        end
+
+        if not classButtons[classIndex] then
+            classButtons[classIndex] = ns.CreateClassButton(classIndex)
+        end
+        if not playerButtons[classIndex] then
+            playerButtons[classIndex] = {}
+        end
+
+        local classBtn = classButtons[classIndex]
+
+        if not (players and totalCount > 0) then
+            classBtn:Hide()
+            for _, pBtn in pairs(playerButtons[classIndex]) do
+                pBtn.inUse = false
+                pBtn:Hide()
+            end
+        else
+            local pCount = totalCount
+            local blockH = math.max(ROW_H, pCount * ROW_H)
+
+            local firstUnit
+            for _, p in ipairs(players) do
+                if p.needsInt then
+                    firstUnit = p.unit
+                    break
+                end
+            end
+
+            if firstUnit and intSpell then
+                classBtn:SetAttribute("type", "spell")
+                classBtn:SetAttribute("spell", intSpell)
+                classBtn:SetAttribute("unit", firstUnit)
+            else
+                classBtn:SetAttribute("type", nil)
+                classBtn:SetAttribute("spell", nil)
+                classBtn:SetAttribute("unit", nil)
+            end
+
+            local className = (class == "PET") and "Pets" or (class:sub(1, 1) .. class:sub(2):lower())
+            classBtn.text:SetText(className)
+            classBtn.count:SetText(needCount > 0 and ("|cffff5555" .. needCount .. "|r/" .. totalCount) or ("|cff66dd66" .. totalCount .. "|r"))
+
+            classBtn:ClearAllPoints()
+            classBtn:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", 6, yOffset)
+            classBtn:Show()
+
+            local pIndex = 0
+            for _, p in ipairs(players) do
+                pIndex = pIndex + 1
+                if not playerButtons[classIndex][pIndex] then
+                    playerButtons[classIndex][pIndex] = ns.CreatePlayerButton(classIndex, pIndex)
+                end
+                local pBtn = playerButtons[classIndex][pIndex]
+                pBtn:ClearAllPoints()
+                pBtn:SetPoint("TOPLEFT", classBtn, "TOPRIGHT", 3, -(pIndex - 1) * ROW_H)
+                pBtn.playerName = p.name
+                pBtn.ownerName = p.ownerName
+                local displayName = p.name
+                if #displayName > 12 then
+                    displayName = displayName:sub(1, 11) .. ".."
+                end
+                pBtn.text:SetText(displayName)
+                if intSpell then
+                    pBtn:SetAttribute("type", "spell")
+                    pBtn:SetAttribute("spell", intSpell)
+                    pBtn:SetAttribute("unit", p.unit)
+                else
+                    pBtn:SetAttribute("type", nil)
+                    pBtn:SetAttribute("spell", nil)
+                    pBtn:SetAttribute("unit", nil)
+                end
+                if p.needsInt then
+                    pBtn.intIcon:SetVertexColor(1, 0.35, 0.35)
+                    pBtn.intIcon:SetAlpha(1)
+                else
+                    pBtn.intIcon:SetVertexColor(0.35, 1, 0.35)
+                    pBtn.intIcon:SetAlpha(0.65)
+                end
+                pBtn.inUse = true
+                pBtn:Hide()
+            end
+
+            local pbRow = playerButtons[classIndex]
+            for i = pIndex + 1, #pbRow do
+                pbRow[i].inUse = false
+                pbRow[i]:Hide()
+            end
+
+            yOffset = yOffset - blockH - 2
+            totalRowH = totalRowH + blockH + 2
+        end
+    end
+
+    mainFrame:SetSize(FRAME_W, baseH + totalRowH + 4)
+    mainFrame:Show()
+    if ns.ApplyHudFade then
+        ns.ApplyHudFade()
+    end
+end

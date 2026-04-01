@@ -1,0 +1,16 @@
+## Interface: 20505
+## Title: Wizard Buff
+## Notes: Mage group buff HUD (Intellect, armor, shields). Bindings.xml must stay in addon root and NOT in this TOC (auto-loaded).
+## Author: LazyLoafs
+## Version: 1.0.0
+## DefaultState: enabled
+## SavedVariables: WizardBuffDB
+
+embeds.xml
+src/WizardBuff.lua
+src/Options.lua
+src/Logic.lua
+src/UI.lua
+src/Update.lua
+src/Events.lua
+src/LDB.lua
