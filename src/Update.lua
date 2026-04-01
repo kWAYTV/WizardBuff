@@ -2,6 +2,8 @@ local _, ns = ...
 ns = ns or _G.WizardBuffAddon
 assert(ns, "WizardBuff: load WizardBuff.lua before Update.lua")
 
+local GetSpellInfo = ns.Compat and ns.Compat.GetSpellInfo or _G.GetSpellInfo
+
 local SpellIDs = ns.SpellIDs
 local SpellNames = ns.SpellNames
 local CLASS_ORDER = ns.CLASS_ORDER
@@ -288,14 +290,19 @@ local function hideAllClassRows(classButtons, playerButtons)
     end
 end
 
-local SOUND_FILE = "Sound\\Interface\\AlarmClockWarning3.ogg"
+local SOUND_SELF  = "Sound\\Interface\\AlarmClockWarning3.ogg"
+local SOUND_GROUP = "Sound\\Interface\\iQuestUpdate.ogg"
 local SOUND_INTERVAL = 15
 
 local function playBuffReminder()
-    PlaySoundFile(SOUND_FILE, "Master")
+    if ns._soundKind == "self" then
+        PlaySoundFile(SOUND_SELF, "Master")
+    else
+        PlaySoundFile(SOUND_GROUP, "Master")
+    end
 end
 
-local function updateSoundReminder(anyNeedsAction)
+local function updateSoundReminder(autoNeedsAction, brillNeedsAction, autoLabel)
     local d = ns.db
     if not d or not d.showSound then
         if ns._soundTicker then
@@ -306,11 +313,21 @@ local function updateSoundReminder(anyNeedsAction)
         return
     end
 
+    local anyNeedsAction = autoNeedsAction or brillNeedsAction
+    local kind
+    if autoNeedsAction and (autoLabel == "Armor" or autoLabel == "Shield") then
+        kind = "self"
+    else
+        kind = "group"
+    end
+
     local wasActive = ns._soundActive
+    local kindChanged = (ns._soundKind ~= kind)
     ns._soundActive = anyNeedsAction
+    ns._soundKind = kind
 
     if anyNeedsAction then
-        if not wasActive then
+        if not wasActive or kindChanged then
             playBuffReminder()
             if ns._soundTicker then ns._soundTicker:Cancel() end
             ns._soundTicker = C_Timer.NewTicker(SOUND_INTERVAL, playBuffReminder)
@@ -378,7 +395,7 @@ function ns.UpdateButtons()
         brillianceButton:Show()
     end
 
-    updateSoundReminder(autoSpec.needsAction or brillSpec.needsAction)
+    updateSoundReminder(autoSpec.needsAction, brillSpec.needsAction, autoSpec.labelShort)
 
     applyHudLabels(mainFrame, autoSpec, brillSpec, db)
     if ns.ApplySlotBadges then
@@ -402,12 +419,17 @@ function ns.UpdateButtons()
     end
 
     local ROW_H = ns.UI_ROW_H or 18
-    local CLASS_W = ns.UI_CLASS_ROW_W or 120
-    local PLAYER_W = ns.UI_PLAYER_BTN_W or 106
-    local FRAME_W = db.showClassRows and (6 + CLASS_W + 3 + PLAYER_W + 8) or (ns.UI_FRAME_W or 72)
+    local CLASS_W = ns.UI_CLASS_ROW_W or 100
+    local BAR_W = ns.UI_FRAME_W or 72
+    local FRAME_W = db.showClassRows and math.max(BAR_W, 6 + CLASS_W + 6) or BAR_W
     local baseH = ns.UI_BAR_H or 38
     if db.showHudNeedCount then baseH = baseH + 12 end
     local ROW_TOP = -baseH
+
+    local iconPairW = 32 * 2 + 2
+    local xPad = math.max(3, math.floor((FRAME_W - iconPairW) / 2))
+    autoBuffButton:ClearAllPoints()
+    autoBuffButton:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", xPad, -3)
 
     if not db.showClassRows then
         hideAllClassRows(classButtons, playerButtons)
@@ -450,9 +472,6 @@ function ns.UpdateButtons()
                 pBtn:Hide()
             end
         else
-            local pCount = totalCount
-            local blockH = math.max(ROW_H, pCount * ROW_H)
-
             local firstUnit
             for _, p in ipairs(players) do
                 if p.needsInt then
@@ -521,8 +540,8 @@ function ns.UpdateButtons()
                 pbRow[i]:Hide()
             end
 
-            yOffset = yOffset - blockH - 2
-            totalRowH = totalRowH + blockH + 2
+            yOffset = yOffset - ROW_H - 2
+            totalRowH = totalRowH + ROW_H + 2
         end
     end
 

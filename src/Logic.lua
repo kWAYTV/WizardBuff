@@ -2,6 +2,8 @@ local _, ns = ...
 ns = ns or _G.WizardBuffAddon
 assert(ns, "WizardBuff: load WizardBuff.lua before Logic.lua")
 
+local GetSpellInfo = ns.Compat and ns.Compat.GetSpellInfo or _G.GetSpellInfo
+
 local SpellIDs = ns.SpellIDs
 local SpellNames = ns.SpellNames
 local ArmorBuffNames = ns.ArmorBuffNames

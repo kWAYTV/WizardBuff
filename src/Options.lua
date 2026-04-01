@@ -63,10 +63,17 @@ function WizardBuff_RegisterOptions(addon)
                         width = 1.0,
                     },
                     testSound = {
-                        type = "execute", name = "Test sound", order = 7.5,
+                        type = "execute", name = "Test self sound", order = 7.5,
                         width = 0.7,
                         func = function()
                             PlaySoundFile("Sound\\Interface\\AlarmClockWarning3.ogg", "Master")
+                        end,
+                    },
+                    testSound2 = {
+                        type = "execute", name = "Test group sound", order = 7.6,
+                        width = 0.7,
+                        func = function()
+                            PlaySoundFile("Sound\\Interface\\iQuestUpdate.ogg", "Master")
                         end,
                     },
                     showClassRows = {

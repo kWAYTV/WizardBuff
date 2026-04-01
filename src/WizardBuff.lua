@@ -1,6 +1,25 @@
 local addonName, ns = ...
 ns.addonName = addonName
-ns.VERSION = GetAddOnMetadata(addonName, "Version") or "dev"
+
+local GetAddOnMetadata = _G.C_AddOns and _G.C_AddOns.GetAddOnMetadata or _G.GetAddOnMetadata
+
+local GetSpellInfo = _G.GetSpellInfo or function(spellID)
+    local info = _G.C_Spell and _G.C_Spell.GetSpellInfo(spellID)
+    if not info then return nil end
+    return info.name, nil, info.iconID, info.castTime, info.minRange, info.maxRange, info.spellID
+end
+
+ns.Compat = {
+    GetAddOnMetadata = GetAddOnMetadata,
+    GetSpellInfo     = GetSpellInfo,
+}
+
+local rawVersion = GetAddOnMetadata(addonName, "Version")
+if not rawVersion or rawVersion:find("@") then
+    ns.VERSION = "dev"
+else
+    ns.VERSION = rawVersion
+end
 
 ns.REFRESH_THRESHOLD = 0.33
 
@@ -131,13 +150,19 @@ function WizardBuff:OnInitialize()
     ns.db = self.db.profile
     ns.SetLogicContext(ns.db, ns.roster)
     ns.SetUIContext(ns.db)
-    WizardBuff_RegisterOptions(self)
+
+    local ok, err = pcall(WizardBuff_RegisterOptions, self)
+    if not ok then
+        print("|cffff6666Wizard Buff|r: options registration failed — " .. tostring(err))
+    end
+
     self:RegisterChatCommand("wizardbuff", "SlashHandler")
-    self:RegisterChatCommand("wb", "SlashHandler")
-    WizardBuff_RegisterLDB(self)
+    self:RegisterChatCommand("wbuff", "SlashHandler")
 end
 
 function WizardBuff:OnEnable()
+    WizardBuff_RegisterLDB(self)
+
     local _, class = UnitClass("player")
     ns.isMage = (class == "MAGE")
     if not ns.isMage then
@@ -166,7 +191,7 @@ function WizardBuff:OnEnable()
     self:RegisterEvent("UPDATE_BINDINGS")
     self:RegisterEvent("BAG_UPDATE")
     ns.ScheduleUpdate()
-    print("|cff9ab8d4Wizard Buff|r |cff666666v" .. ns.VERSION .. "|r — /wb config · mage buff HUD")
+    print("|cff9ab8d4Wizard Buff|r |cff666666v" .. ns.VERSION .. "|r — /wbuff config · mage buff HUD")
 end
 
 function WizardBuff:OnDisable()
@@ -216,7 +241,7 @@ function WizardBuff:SlashHandler(input)
         print("|cff9ab8d4Wizard Buff|r: Pets " .. (db.buffPets and "on" or "off"))
         ns.ScheduleUpdate()
     else
-        print("|cff9ab8d4Wizard Buff|r: /wb toggle | config | lock | rows | armor | bubble | int | brilliance | pets")
+        print("|cff9ab8d4Wizard Buff|r: /wbuff toggle | config | lock | rows | armor | bubble | int | brilliance | pets")
     end
 end
 

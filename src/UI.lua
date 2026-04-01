@@ -19,7 +19,7 @@ ns.UI_FRAME_W = PAD + ICON + GAP + ICON + PAD
 ns.UI_BAR_H   = PAD + ICON + PAD
 ns.UI_ROWS_TOP = -(PAD + ICON + PAD)
 ns.UI_ROW_H = 18
-ns.UI_CLASS_ROW_W = 120
+ns.UI_CLASS_ROW_W = 100
 ns.UI_PLAYER_BTN_W = 106
 
 function ns.ApplyHudScale()
@@ -354,7 +354,7 @@ function ns.CreateClassButton(classIndex)
 
     local btn = CreateFrame("Button", "WizardBuffClass" .. classIndex, mf, "SecureActionButtonTemplate")
     btn:SetSize(W, ns.UI_ROW_H)
-    btn:RegisterForClicks("LeftButtonUp")
+    btn:RegisterForClicks("AnyUp", "AnyDown")
     local r, g, b = unpack(CLASS_COLORS[class] or {0.5, 0.5, 0.5})
 
     local bg = btn:CreateTexture(nil, "BACKGROUND")
@@ -427,7 +427,7 @@ function ns.CreatePlayerButton(classIndex, playerIndex)
 
     local btn = CreateFrame("Button", "WizardBuffPlayer" .. classIndex .. "_" .. playerIndex, mf, "SecureActionButtonTemplate")
     btn:SetSize(ns.UI_PLAYER_BTN_W, ns.UI_ROW_H - 1)
-    btn:RegisterForClicks("LeftButtonUp")
+    btn:RegisterForClicks("AnyUp", "AnyDown")
     btn:SetFrameStrata("TOOLTIP")
     local r, g, b = unpack(CLASS_COLORS[class] or {1, 1, 1})
 

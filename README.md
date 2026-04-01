@@ -31,7 +31,7 @@ All libraries are embedded — no external dependencies required.
 
 ## Usage
 
-The HUD appears automatically for Mage characters. Drag it where you like, then `/wb lock` to pin it.
+The HUD appears automatically for Mage characters. Drag it where you like, then `/wbuff lock` to pin it.
 
 | Button | What it does |
 |--------|-------------|
@@ -42,7 +42,7 @@ Right-click the HUD to open settings.
 
 ## Slash Commands
 
-`/wb` or `/wizardbuff` followed by:
+`/wbuff` or `/wizardbuff` followed by:
 
 | Command | Action |
 |---------|--------|
@@ -58,7 +58,7 @@ Right-click the HUD to open settings.
 
 ## Settings
 
-Open with `/wb config` or right-click the HUD.
+Open with `/wbuff config` or right-click the HUD.
 
 - **General** — master toggle, lock, show solo, need count, buff timers, glow alerts, sound alert, class rows, minimap icon visibility.
 - **Appearance** — HUD scale, idle/hover opacity, combat fade, position reset.
