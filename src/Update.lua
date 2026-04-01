@@ -45,9 +45,9 @@ local function resolveSpellIcon(spellId, fallbackPath)
 end
 
 local function applyButtonSpec(btn, spec)
-    if spec.spellId then
+    if spec.spellName then
         btn:SetAttribute("type", "spell")
-        btn:SetAttribute("spell", spec.spellId)
+        btn:SetAttribute("spell", spec.spellName)
         btn:SetAttribute("unit", spec.unit or "player")
         btn:SetAttribute("macrotext", nil)
     elseif spec.macro then
@@ -92,7 +92,7 @@ local function resolveSelfSpec(ctx)
     if ns.SelfNeedsArmor() and armorSpell then
         local _, sid = ns.GetArmorSpell()
         return {
-            spellId = sid,
+            spellName = armorSpell,
             unit = "player",
             icon = resolveSpellIcon(sid, ICON.armor),
             bg = COL.armor,
@@ -105,7 +105,7 @@ local function resolveSelfSpec(ctx)
     if bubbleSpell and ns.NeedsBubble() and not ns.PlayerHasShieldBuff() then
         local _, sid = ns.GetBubbleSpell()
         return {
-            spellId = sid,
+            spellName = bubbleSpell,
             unit = "player",
             icon = resolveSpellIcon(sid, ICON.shield),
             bg = COL.shield,
@@ -126,7 +126,7 @@ end
 
 local function resolveGroupSpec(ctx)
     local brillSpell = ctx.brillSpell
-    local intSidToUse = ctx.intSidToUse
+    local intToUse = ctx.intToUse
     local intSid = ctx.intSid
     local brillSid = ctx.brillSid
     local nextIntUnit, nextIntName = ctx.nextIntUnit, ctx.nextIntName
@@ -140,7 +140,7 @@ local function resolveGroupSpec(ctx)
         selfIntTimer = ns.GetBuffTimeRemaining("player", SpellNames.ArcaneIntellect)
     end
 
-    if not intSid and not brillSid then
+    if not intToUse then
         return {
             icon = ICON.notLearned,
             bg = COL.disabled,
@@ -150,10 +150,10 @@ local function resolveGroupSpec(ctx)
         }
     end
 
-    if nextIntUnit and intSidToUse then
-        local isBrill = brillSid and (intSidToUse == brillSid)
+    if nextIntUnit then
+        local isBrill = brillSpell and (intToUse == brillSpell)
         return {
-            spellId = intSidToUse,
+            spellName = intToUse,
             unit = nextIntUnit,
             icon = isBrill and resolveSpellIcon(brillSid, ICON.brill) or resolveSpellIcon(intSid, ICON.int),
             bg = isBrill and COL.brill or COL.int,
@@ -163,9 +163,9 @@ local function resolveGroupSpec(ctx)
         }
     end
 
-    if nextIntPetUnit and intSidToUse then
+    if nextIntPetUnit then
         return {
-            spellId = intSidToUse,
+            spellName = intToUse,
             unit = nextIntPetUnit,
             icon = resolveSpellIcon(intSid, ICON.int),
             bg = COL.int,
@@ -182,9 +182,9 @@ local function resolveGroupSpec(ctx)
         idleIcon = resolveSpellIcon(intSid, ICON.int)
     end
 
-    if intSid and UnitExists("target") and UnitIsFriend("player", "target") and not UnitIsDeadOrGhost("target") then
+    if UnitExists("target") and UnitIsFriend("player", "target") and not UnitIsDeadOrGhost("target") then
         return {
-            spellId = intSid,
+            spellName = intToUse,
             unit = "target",
             icon = idleIcon,
             bg = COL.ok,
@@ -292,7 +292,7 @@ function ns.UpdateButtons()
     if hasPowder then
         brillSpell, brillSid = ns.GetHighestRankSpell(SpellIDs.ArcaneBrilliance)
     end
-    local intSidToUse = (brillSpell and db.useArcaneBrilliance) and brillSid or intSid
+    local intToUse = (brillSpell and db.useArcaneBrilliance) and brillSpell or intSpell
 
     local nextIntUnit, nextIntName = ns.GetNextIntTarget(false)
     local nextIntPetUnit, nextIntPetName = ns.GetNextIntTarget(true)
@@ -306,7 +306,7 @@ function ns.UpdateButtons()
         brillSpell = brillSpell,
         intSid = intSid,
         brillSid = brillSid,
-        intSidToUse = intSidToUse,
+        intToUse = intToUse,
         hasPowder = hasPowder,
         nextIntUnit = nextIntUnit,
         nextIntName = nextIntName,
@@ -416,9 +416,9 @@ function ns.UpdateButtons()
 
         ns.ApplyGridCellColor(cell)
 
-        if p.needsInt and intSidToUse then
+        if p.needsInt and intToUse then
             cell:SetAttribute("type", "spell")
-            cell:SetAttribute("spell", intSidToUse)
+            cell:SetAttribute("spell", intToUse)
             cell:SetAttribute("unit", p.unit)
             cell:SetAttribute("macrotext", nil)
         else
