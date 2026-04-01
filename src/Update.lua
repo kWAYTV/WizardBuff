@@ -98,6 +98,7 @@ local function resolveSelfSpec(ctx)
             bg = COL.armor,
             tooltipLine2 = "Self-cast armor.",
             needsAction = true,
+            soundKind = "self",
             timerSec = armorTimer,
         }
     end
@@ -111,6 +112,7 @@ local function resolveSelfSpec(ctx)
             bg = COL.shield,
             tooltipLine2 = "Emergency shield — HP below threshold.",
             needsAction = true,
+            soundKind = nil,
             timerSec = armorTimer,
         }
     end
@@ -120,6 +122,7 @@ local function resolveSelfSpec(ctx)
         bg = COL.ok,
         tooltipLine2 = "Armor active.",
         needsAction = false,
+        soundKind = nil,
         timerSec = armorTimer,
     }
 end
@@ -234,7 +237,7 @@ local function playBuffReminder()
     end
 end
 
-local function updateSoundReminder(selfNeedsAction, groupNeedsAction)
+local function updateSoundReminder(selfSoundKind, groupNeedsAction)
     local d = ns.db
     if not d or not d.showSound then
         if ns._soundTicker then
@@ -245,15 +248,14 @@ local function updateSoundReminder(selfNeedsAction, groupNeedsAction)
         return
     end
 
-    local anyNeedsAction = selfNeedsAction or groupNeedsAction
-    local kind = selfNeedsAction and "self" or "group"
+    local kind = selfSoundKind or (groupNeedsAction and "group") or nil
 
     local wasActive = ns._soundActive
     local kindChanged = (ns._soundKind ~= kind)
-    ns._soundActive = anyNeedsAction
+    ns._soundActive = (kind ~= nil)
     ns._soundKind = kind
 
-    if anyNeedsAction then
+    if kind then
         if not wasActive or kindChanged then
             playBuffReminder()
             if ns._soundTicker then ns._soundTicker:Cancel() end
@@ -320,7 +322,7 @@ function ns.UpdateButtons()
         brillianceButton:Show()
     end
 
-    updateSoundReminder(selfSpec.needsAction, groupSpec.needsAction)
+    updateSoundReminder(selfSpec.soundKind, groupSpec.needsAction)
 
     local needN = countNeedingInt(roster)
     local BAR_H = ns.UI_BAR_H or 38
