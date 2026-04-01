@@ -187,9 +187,18 @@ function ns.SetButtonTimer(btn, sec)
 end
 
 function ns.CreateMainFrame()
-    local mf = CreateFrame("Frame", "WizardBuffFrame", UIParent)
+    local mf = CreateFrame("Frame", "WizardBuffFrame", UIParent, "BackdropTemplate")
     ns.mainFrame = mf
     mf:SetSize(ns.UI_FRAME_W, ns.UI_BAR_H)
+
+    mf:SetBackdrop({
+        bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
+        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+        tile = true, tileSize = 16, edgeSize = 12,
+        insets = { left = 2, right = 2, top = 2, bottom = 2 },
+    })
+    mf:SetBackdropColor(0, 0, 0, 0.8)
+    mf:SetBackdropBorderColor(0.3, 0.5, 0.8, 0.6)
 
     local pos = ns.db and ns.db.hudPos
     if pos and pos.point and pos.relPoint and pos.x and pos.y then
@@ -396,7 +405,7 @@ function ns.CreateAutoBuffButton()
     b:SetScript("OnEnter", function(self)
         if not InCombatLockdown() then self.bg:SetColorTexture(0.10, 0.10, 0.14, 1) end
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-        GameTooltip:AddLine("Self", 0.85, 0.92, 1)
+        GameTooltip:AddLine("Auto Buff", 0.85, 0.92, 1)
         if self.tooltipLine2 and self.tooltipLine2 ~= "" then
             GameTooltip:AddLine(self.tooltipLine2, 0.6, 0.6, 0.6, true)
         end
@@ -411,9 +420,13 @@ function ns.CreateAutoBuffButton()
     ns.RegisterGlowButton(b)
 
     b:SetScript("PostClick", function(self)
-        local unit = self:GetAttribute("unit")
-        if unit and not InCombatLockdown() then
-            ns._recentlyBuffed[unit] = GetTime()
+        if not InCombatLockdown() then
+            if self._isIntCast then
+                local unit = self:GetAttribute("unit")
+                if unit then
+                    ns._recentlyBuffed[unit] = GetTime()
+                end
+            end
             ns.ScheduleUpdate(true)
         end
     end)

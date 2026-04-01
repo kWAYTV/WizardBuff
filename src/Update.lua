@@ -65,6 +65,7 @@ local function applyButtonSpec(btn, spec)
     local c = spec.bg
     btn.bg:SetColorTexture(c[1], c[2], c[3], c[4])
     btn.tooltipLine2 = spec.tooltipLine2
+    btn._isIntCast = spec.isIntCast or false
     ns.SetButtonTimer(btn, spec.timerSec)
     ns.SetButtonGlow(btn, spec.needsAction)
 end
@@ -84,9 +85,15 @@ local function countNeedingInt(roster)
     return n
 end
 
-local function resolveSelfSpec(ctx)
+local function resolveAutoSpec(ctx)
     local armorSpell = ctx.armorSpell
     local bubbleSpell = ctx.bubbleSpell
+    local intToUse = ctx.intToUse
+    local intSid = ctx.intSid
+    local brillSid = ctx.brillSid
+    local brillSpell = ctx.brillSpell
+    local nextIntUnit, nextIntName = ctx.nextIntUnit, ctx.nextIntName
+    local nextIntPetUnit, nextIntPetName = ctx.nextIntPetUnit, ctx.nextIntPetName
     local armorTimer = ns.GetSelfArmorRemaining and ns.GetSelfArmorRemaining()
 
     if ns.SelfNeedsArmor() and armorSpell then
@@ -100,6 +107,36 @@ local function resolveSelfSpec(ctx)
             needsAction = true,
             soundKind = "self",
             timerSec = armorTimer,
+            isIntCast = false,
+        }
+    end
+
+    if intToUse and nextIntUnit then
+        local isBrill = brillSpell and (intToUse == brillSpell)
+        return {
+            spellName = intToUse,
+            unit = nextIntUnit,
+            icon = isBrill and resolveSpellIcon(brillSid, ICON.brill) or resolveSpellIcon(intSid, ICON.int),
+            bg = isBrill and COL.brill or COL.int,
+            tooltipLine2 = nextIntName .. " needs buff.",
+            needsAction = true,
+            soundKind = "group",
+            timerSec = armorTimer,
+            isIntCast = true,
+        }
+    end
+
+    if intToUse and nextIntPetUnit then
+        return {
+            spellName = intToUse,
+            unit = nextIntPetUnit,
+            icon = resolveSpellIcon(intSid, ICON.int),
+            bg = COL.int,
+            tooltipLine2 = (nextIntPetName or "Pet") .. " needs buff.",
+            needsAction = true,
+            soundKind = "group",
+            timerSec = armorTimer,
+            isIntCast = true,
         }
     end
 
@@ -114,16 +151,18 @@ local function resolveSelfSpec(ctx)
             needsAction = true,
             soundKind = nil,
             timerSec = armorTimer,
+            isIntCast = false,
         }
     end
 
     return {
         icon = ICON.selfIdle,
         bg = COL.ok,
-        tooltipLine2 = "Armor active.",
+        tooltipLine2 = "All buffed!",
         needsAction = false,
         soundKind = nil,
         timerSec = armorTimer,
+        isIntCast = false,
     }
 end
 
@@ -299,9 +338,17 @@ function ns.UpdateButtons()
     local nextIntUnit, nextIntName = ns.GetNextIntTarget(false)
     local nextIntPetUnit, nextIntPetName = ns.GetNextIntTarget(true)
 
-    local selfSpec = resolveSelfSpec({
+    local autoSpec = resolveAutoSpec({
         armorSpell = armorSpell,
         bubbleSpell = ns.GetBubbleSpell(),
+        intToUse = intToUse,
+        intSid = intSid,
+        brillSid = brillSid,
+        brillSpell = brillSpell,
+        nextIntUnit = nextIntUnit,
+        nextIntName = nextIntName,
+        nextIntPetUnit = nextIntPetUnit,
+        nextIntPetName = nextIntPetName,
     })
     local groupSpec = resolveGroupSpec({
         intSpell = intSpell,
@@ -316,13 +363,13 @@ function ns.UpdateButtons()
         nextIntPetName = nextIntPetName,
     })
 
-    applyButtonSpec(autoBuffButton, selfSpec)
+    applyButtonSpec(autoBuffButton, autoSpec)
     if brillianceButton then
         applyButtonSpec(brillianceButton, groupSpec)
         brillianceButton:Show()
     end
 
-    updateSoundReminder(selfSpec.soundKind, groupSpec.needsAction)
+    updateSoundReminder(autoSpec.soundKind, groupSpec.needsAction)
 
     local needN = countNeedingInt(roster)
     local BAR_H = ns.UI_BAR_H or 38

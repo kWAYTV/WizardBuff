@@ -65,7 +65,7 @@ ns.defaults = {
     showTimers = true,
     showGlow = true,
     showSound = false,
-    showClassRows = false,
+    showClassRows = true,
     buffArmor = true,
     armorType = "auto",
     enableBubble = true,
@@ -99,7 +99,7 @@ ns.CLASS_COLORS = {
 ns._recentlyBuffed = {}
 
 BINDING_HEADER_WIZARDBUFF = "Wizard Buff"
-_G["BINDING_NAME_CLICK WizardBuffAutoBuffButton:LeftButton"] = "Self Buff (armor, shield)"
+_G["BINDING_NAME_CLICK WizardBuffAutoBuffButton:LeftButton"] = "Auto Buff (armor, intellect, pets)"
 _G["BINDING_NAME_CLICK WizardBuffBrillianceButton:LeftButton"] = "Group Buff (Int / Brilliance)"
 
 ns.db = nil
