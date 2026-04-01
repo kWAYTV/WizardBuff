@@ -7,7 +7,7 @@ function ns.CreateGridCell(index)
     local mf  = ns.mainFrame
     local btn = CreateFrame("Button", "WizardBuffCell" .. index, mf, "SecureActionButtonTemplate")
     btn:SetSize(CELL, CELL)
-    btn:RegisterForClicks("AnyUp", "AnyDown")
+    btn:RegisterForClicks("AnyDown")
     btn:SetAttribute("type", "spell")
     ns.StripSecureActionChrome(btn)
 

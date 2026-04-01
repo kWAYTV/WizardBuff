@@ -56,7 +56,7 @@ end
 local function makeIconButton(name, parent)
     local b = CreateFrame("Button", name, parent, "SecureActionButtonTemplate")
     b:SetSize(ICON_SIZE, ICON_SIZE)
-    b:RegisterForClicks("AnyUp", "AnyDown")
+    b:RegisterForClicks("AnyDown")
     b:SetAttribute("type", "macro")
     stripSecureActionChrome(b)
 
