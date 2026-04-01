@@ -9,14 +9,13 @@ local GAP = 2
 ns.UI_FRAME_W = PAD + ICON + GAP + ICON + PAD
 ns.UI_BAR_H   = PAD + ICON + PAD
 
-local CELL_W = 24
-local CELL_H = 12
-local CELL_GAP = 1
-local ACCENT_W = 2
+local CELL_W = 28
+local CELL_H = 28
+local CELL_GAP = 2
 ns.GRID_CELL_W = CELL_W
 ns.GRID_CELL_H = CELL_H
 ns.GRID_GAP    = CELL_GAP
-ns.GRID_PER_ROW = 4
+ns.GRID_PER_ROW = 5
 
 function ns.ApplyHudScale()
     local mf = ns.mainFrame
@@ -409,40 +408,41 @@ function ns.CreateGridCell(index)
     btn:SetAttribute("type", "spell")
     stripSecureActionChrome(btn)
 
-    local fill = btn:CreateTexture(nil, "BACKGROUND")
-    fill:SetPoint("TOPLEFT", ACCENT_W, 0)
-    fill:SetPoint("BOTTOMRIGHT", 0, 0)
+    local border = btn:CreateTexture(nil, "BACKGROUND")
+    border:SetAllPoints()
+    border:SetColorTexture(0, 0, 0, 0.8)
+    btn.border = border
+
+    local fill = btn:CreateTexture(nil, "ARTWORK")
+    fill:SetPoint("TOPLEFT", 1, -1)
+    fill:SetPoint("BOTTOMRIGHT", -1, 1)
     btn.fill = fill
 
-    local accent = btn:CreateTexture(nil, "ARTWORK")
-    accent:SetPoint("TOPLEFT", 0, 0)
-    accent:SetPoint("BOTTOMLEFT", 0, 0)
-    accent:SetWidth(ACCENT_W)
-    btn.accent = accent
-
     local initial = btn:CreateFontString(nil, "OVERLAY")
-    initial:SetFont(STANDARD_TEXT_FONT, 8, "OUTLINE")
-    initial:SetPoint("CENTER", 1, 0)
-    initial:SetShadowOffset(0, 0)
+    initial:SetFont(STANDARD_TEXT_FONT, 10, "OUTLINE")
+    initial:SetPoint("CENTER", 0, 0)
+    initial:SetShadowOffset(1, -1)
     btn.initial = initial
 
     btn:SetScript("OnEnter", function(self)
         ns._hudMouseOver = true
         ns.ApplyHudFade()
-        local cr, cg, cb = 1, 1, 1
-        if self.classColor then cr, cg, cb = unpack(self.classColor) end
         if self.fill then
-            self.fill:SetColorTexture(cr * 0.35, cg * 0.35, cb * 0.35, 0.95)
+            local cr, cg, cb = 1, 1, 1
+            if self.classColor then cr, cg, cb = unpack(self.classColor) end
+            self.fill:SetColorTexture(cr * 0.6, cg * 0.6, cb * 0.6, 1)
         end
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        local cr, cg, cb = 1, 1, 1
+        if self.classColor then cr, cg, cb = unpack(self.classColor) end
         GameTooltip:AddLine(self.playerName or "?", cr, cg, cb)
         if self.ownerName then
             GameTooltip:AddLine("Pet \194\183 " .. self.ownerName, 0.55, 0.55, 0.55)
         end
         if self.needsInt then
-            GameTooltip:AddLine("Needs Intellect", 1, 0.4, 0.4)
+            GameTooltip:AddLine("Needs Intellect — click to buff", 1, 0.4, 0.4)
         else
-            GameTooltip:AddLine("Buffed", 0.4, 1, 0.4)
+            GameTooltip:AddLine("Buffed — click to rebuff", 0.4, 1, 0.4)
         end
         GameTooltip:Show()
     end)
@@ -460,13 +460,13 @@ function ns.ApplyGridCellColor(btn)
     local r, g, b = 0.5, 0.5, 0.5
     if btn.classColor then r, g, b = unpack(btn.classColor) end
 
-    btn.accent:SetColorTexture(r, g, b, 0.9)
-
     if btn.needsInt then
-        btn.fill:SetColorTexture(r * 0.55, g * 0.55, b * 0.55, 0.92)
-        btn.initial:SetTextColor(1, 1, 1, 0.95)
+        btn.fill:SetColorTexture(r * 0.45, g * 0.45, b * 0.45, 0.95)
+        btn.initial:SetTextColor(1, 1, 1, 1)
+        btn.border:SetColorTexture(r * 0.8, g * 0.8, b * 0.8, 1)
     else
-        btn.fill:SetColorTexture(r * 0.12, g * 0.12, b * 0.12, 0.75)
-        btn.initial:SetTextColor(r * 0.5, g * 0.5, b * 0.5, 0.6)
+        btn.fill:SetColorTexture(r * 0.15, g * 0.15, b * 0.15, 0.8)
+        btn.initial:SetTextColor(r * 0.5, g * 0.5, b * 0.5, 0.7)
+        btn.border:SetColorTexture(0, 0, 0, 0.6)
     end
 end

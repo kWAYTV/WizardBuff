@@ -50,15 +50,15 @@ function ns.RegisterOptions(addon)
                         inline = true,
                         args   = {
                             enabled = {
-                                type = "toggle", name = "Enabled", order = 1,
+                                type = "toggle", name = "Enabled", desc = "", order = 1,
                                 width = "full", disabled = inCombat,
                             },
                             showWhenSolo = {
-                                type = "toggle", name = "Show when solo", order = 2,
+                                type = "toggle", name = "Show when solo", desc = "Display the HUD even when not in a group", order = 2,
                                 width = "full",
                             },
                             locked = {
-                                type = "toggle", name = "Lock position", order = 3,
+                                type = "toggle", name = "Lock position", desc = "", order = 3,
                                 width = "full",
                             },
                         },
@@ -70,23 +70,23 @@ function ns.RegisterOptions(addon)
                         inline = true,
                         args   = {
                             showTimers = {
-                                type = "toggle", name = "Buff timers", order = 1,
+                                type = "toggle", name = "Buff timers", desc = "Show remaining duration on icons", order = 1,
                                 width = "full",
                             },
                             showGlow = {
-                                type = "toggle", name = "Glow alerts", order = 2,
+                                type = "toggle", name = "Glow alerts", desc = "Pulsing border when a buff needs casting", order = 2,
                                 width = "full",
                             },
                             showHudNeedCount = {
-                                type = "toggle", name = "Need count text", order = 3,
+                                type = "toggle", name = "Need count text", desc = "Show how many group members need Intellect", order = 3,
                                 width = "full",
                             },
                             showClassRows = {
-                                type = "toggle", name = "Buff grid (class rows)", order = 4,
+                                type = "toggle", name = "Buff grid (class rows)", desc = "Per-player cast buttons grouped by class", order = 4,
                                 width = "full", disabled = inCombat,
                             },
                             showDragHandle = {
-                                type = "toggle", name = "Show drag handle", order = 5,
+                                type = "toggle", name = "Show drag handle", desc = "Small handle above the HUD for dragging and quick actions", order = 5,
                                 width = "full",
                                 set = function(_, v)
                                     addon.db.profile.showDragHandle = v
@@ -94,7 +94,7 @@ function ns.RegisterOptions(addon)
                                 end,
                             },
                             minimapHide = {
-                                type = "toggle", name = "Hide minimap icon", order = 6,
+                                type = "toggle", name = "Hide minimap icon", desc = "", order = 6,
                                 width = "full",
                                 get = function() return addon.db.profile.minimap.hide end,
                                 set = function(_, v)
@@ -114,11 +114,11 @@ function ns.RegisterOptions(addon)
                         inline = true,
                         args   = {
                             showSound = {
-                                type = "toggle", name = "Enable sound alerts", order = 1,
+                                type = "toggle", name = "Enable sound alerts", desc = "Play a sound when buffs are missing", order = 1,
                                 width = "full",
                             },
                             testSound = {
-                                type = "execute", name = "Test self sound", order = 2,
+                                type = "execute", name = "Test self sound", desc = "", order = 2,
                                 width = 0.8,
                                 disabled = function() return not addon.db.profile.showSound end,
                                 func = function()
@@ -126,7 +126,7 @@ function ns.RegisterOptions(addon)
                                 end,
                             },
                             testSound2 = {
-                                type = "execute", name = "Test group sound", order = 3,
+                                type = "execute", name = "Test group sound", desc = "", order = 3,
                                 width = 0.8,
                                 disabled = function() return not addon.db.profile.showSound end,
                                 func = function()
@@ -151,18 +151,18 @@ function ns.RegisterOptions(addon)
                         inline = true,
                         args   = {
                             hudScale = {
-                                type = "range", name = "HUD scale", order = 1,
+                                type = "range", name = "HUD scale", desc = "", order = 1,
                                 width = "full",
                                 min = 0.5, max = 2, step = 0.05, isPercent = true,
                                 disabled = inCombat,
                             },
                             hudAlphaIdle = {
-                                type = "range", name = "Idle opacity", order = 2,
+                                type = "range", name = "Idle opacity", desc = "Opacity when not hovering the HUD", order = 2,
                                 width = "full",
                                 min = 0, max = 1, step = 0.05, isPercent = true,
                             },
                             hudAlphaHover = {
-                                type = "range", name = "Hover opacity", order = 3,
+                                type = "range", name = "Hover opacity", desc = "Opacity when hovering the HUD", order = 3,
                                 width = "full",
                                 min = 0.3, max = 1, step = 0.05, isPercent = true,
                             },
@@ -175,7 +175,7 @@ function ns.RegisterOptions(addon)
                         inline = true,
                         args   = {
                             hideHudInCombat = {
-                                type = "toggle", name = "Fade HUD in combat", order = 1,
+                                type = "toggle", name = "Fade HUD in combat", desc = "Reduce opacity during combat to avoid distraction", order = 1,
                                 width = "full",
                             },
                         },
@@ -187,7 +187,7 @@ function ns.RegisterOptions(addon)
                         inline = true,
                         args   = {
                             resetPosition = {
-                                type = "execute", name = "Reset position to center", order = 1,
+                                type = "execute", name = "Reset position to center", desc = "", order = 1,
                                 disabled = inCombat,
                                 func = function()
                                     if ns.mainFrame then
@@ -217,28 +217,28 @@ function ns.RegisterOptions(addon)
                         inline = true,
                         args   = {
                             buffArmor = {
-                                type = "toggle", name = "Armor", order = 1,
+                                type = "toggle", name = "Armor", desc = "", order = 1,
                                 width = 1.0,
                             },
                             armorType = {
-                                type = "select", name = "Armor type", order = 2,
+                                type = "select", name = "Armor type", desc = "", order = 2,
                                 width = 1.0,
                                 values = { auto = "Auto", ice = "Ice", mage = "Mage", frost = "Frost" },
                                 disabled = function() return not addon.db.profile.buffArmor end,
                             },
                             spacer1 = { order = 3, type = "description", name = "" },
                             enableBubble = {
-                                type = "toggle", name = "Emergency shield", order = 4,
+                                type = "toggle", name = "Emergency shield", desc = "Cast a shield when HP drops below the threshold", order = 4,
                                 width = 1.0,
                             },
                             bubbleType = {
-                                type = "select", name = "Shield type", order = 5,
+                                type = "select", name = "Shield type", desc = "", order = 5,
                                 width = 1.0,
                                 values = { auto = "Auto", icebarrier = "Ice Barrier", manashield = "Mana Shield", none = "Off" },
                                 disabled = function() return not addon.db.profile.enableBubble end,
                             },
                             bubbleThreshold = {
-                                type = "range", name = "Shield HP% threshold", order = 6,
+                                type = "range", name = "Shield HP% threshold", desc = "Cast shield when HP drops below this percentage", order = 6,
                                 width = "full",
                                 min = 5, max = 100, step = 5,
                                 disabled = function() return not addon.db.profile.enableBubble end,
@@ -252,16 +252,16 @@ function ns.RegisterOptions(addon)
                         inline = true,
                         args   = {
                             buffIntellect = {
-                                type = "toggle", name = "Intellect", order = 1,
+                                type = "toggle", name = "Intellect", desc = "", order = 1,
                                 width = 1.0,
                             },
                             useArcaneBrilliance = {
-                                type = "toggle", name = "Prefer Arcane Brilliance", order = 2,
+                                type = "toggle", name = "Prefer Arcane Brilliance", desc = "Use Arcane Brilliance instead of single-target Intellect when possible", order = 2,
                                 width = 1.0,
                                 disabled = function() return not addon.db.profile.buffIntellect end,
                             },
                             buffPets = {
-                                type = "toggle", name = "Buff pets", order = 3,
+                                type = "toggle", name = "Buff pets", desc = "", order = 3,
                                 width = "full",
                                 disabled = function() return not addon.db.profile.buffIntellect end,
                             },
@@ -278,7 +278,7 @@ function ns.RegisterOptions(addon)
                                 name = "Don't refresh buffs that still have more than this many seconds remaining. Set to 0 to disable.",
                             },
                             refreshFloorSec = {
-                                type = "range", name = "Min remaining (seconds)", order = 2,
+                                type = "range", name = "Min remaining (seconds)", desc = "", order = 2,
                                 width = "full",
                                 min = 0, max = 600, step = 30,
                             },
@@ -306,14 +306,14 @@ function ns.RegisterOptions(addon)
                         inline = true,
                         args   = {
                             choose = {
-                                order = 1, type = "select", name = "Switch profile",
+                                order = 1, type = "select", name = "Switch profile", desc = "",
                                 width = 1.2,
                                 get = function() return addon.db:GetCurrentProfile() end,
                                 set = function(_, v) addon.db:SetProfile(v); refresh() end,
                                 values = profileList(false),
                             },
                             new = {
-                                order = 2, type = "input", name = "New profile",
+                                order = 2, type = "input", name = "New profile", desc = "",
                                 width = 1.2,
                                 get = false,
                                 set = function(_, v)
@@ -323,7 +323,7 @@ function ns.RegisterOptions(addon)
                                 end,
                             },
                             copy = {
-                                order = 3, type = "select", name = "Copy from",
+                                order = 3, type = "select", name = "Copy from", desc = "Copy all settings from another profile into the current one",
                                 width = 1.2,
                                 get = false,
                                 set = function(_, v) addon.db:CopyProfile(v); refresh() end,
@@ -332,7 +332,7 @@ function ns.RegisterOptions(addon)
                                 confirmText = "Overwrite current settings with the selected profile?",
                             },
                             delete = {
-                                order = 4, type = "select", name = "Delete",
+                                order = 4, type = "select", name = "Delete", desc = "",
                                 width = 1.2,
                                 get = false,
                                 set = function(_, v) addon.db:DeleteProfile(v) end,
@@ -349,18 +349,18 @@ function ns.RegisterOptions(addon)
                         inline = true,
                         args   = {
                             reset = {
-                                order = 1, type = "execute", name = "Reset to defaults",
+                                order = 1, type = "execute", name = "Reset to defaults", desc = "",
                                 func = function() addon.db:ResetProfile(); refresh() end,
                                 confirm = true,
                                 confirmText = "Reset current profile to defaults?",
                             },
                             export = {
-                                order = 2, type = "execute", name = "Export",
+                                order = 2, type = "execute", name = "Export", desc = "Copy profile data to share or back up",
                                 width = 0.6,
                                 func = function() ns.ShowProfileExport() end,
                             },
                             import = {
-                                order = 3, type = "execute", name = "Import",
+                                order = 3, type = "execute", name = "Import", desc = "Paste and apply profile data",
                                 width = 0.6,
                                 func = function() ns.ShowProfileImport() end,
                             },

@@ -416,7 +416,7 @@ function ns.UpdateButtons()
 
         ns.ApplyGridCellColor(cell)
 
-        if p.needsInt and intToUse then
+        if intToUse then
             cell:SetAttribute("type", "spell")
             cell:SetAttribute("spell", intToUse)
             cell:SetAttribute("unit", p.unit)
