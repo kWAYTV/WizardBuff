@@ -102,10 +102,7 @@ local function formatHudTimer(sec)
     return string.format(" (%ds)", math.floor(sec))
 end
 
-local function applyHudLabels(mf, autoSpec, brillSpec, d)
-    if not mf or not mf.autoStatus or not mf.brillStatus then return end
-    mf.autoStatus:Hide()
-    mf.brillStatus:Hide()
+local function applyHudLabels()
 end
 
 local function countNeedingInt(roster)
@@ -264,29 +261,18 @@ local function resolveBrillianceSpec(ctx)
 end
 
 local function clearSecureSpell(btn)
-    if not btn then
-        return
-    end
+    if not btn then return end
     btn:SetAttribute("type", nil)
     btn:SetAttribute("spell", nil)
     btn:SetAttribute("unit", nil)
 end
 
-local function hideAllClassRows(classButtons, playerButtons)
-    for classIndex = 1, #CLASS_ORDER do
-        local classBtn = classButtons[classIndex]
-        if classBtn then
-            clearSecureSpell(classBtn)
-            classBtn:Hide()
-        end
-        local pb = playerButtons[classIndex]
-        if pb then
-            for _, pBtn in pairs(pb) do
-                clearSecureSpell(pBtn)
-                pBtn.inUse = false
-                pBtn:Hide()
-            end
-        end
+local function hideUnusedGridCells(startIdx)
+    local cells = ns.gridCells
+    if not cells then return end
+    for i = startIdx, #cells do
+        clearSecureSpell(cells[i])
+        cells[i]:Hide()
     end
 end
 
@@ -344,21 +330,15 @@ function ns.UpdateButtons()
     local db = ns.db
     local mainFrame = ns.mainFrame
     local roster = ns.roster
-    local classButtons = ns.classButtons
-    local playerButtons = ns.playerButtons
     local autoBuffButton = ns.autoBuffButton
     local brillianceButton = ns.brillianceButton
 
     if not mainFrame or not ns.isMage or not db.enabled then
-        if mainFrame then
-            mainFrame:Hide()
-        end
+        if mainFrame then mainFrame:Hide() end
         return
     end
     if InCombatLockdown() then
-        if ns.ApplyHudFade then
-            ns.ApplyHudFade()
-        end
+        if ns.ApplyHudFade then ns.ApplyHudFade() end
         return
     end
 
@@ -397,157 +377,122 @@ function ns.UpdateButtons()
 
     updateSoundReminder(autoSpec.needsAction, brillSpec.needsAction, autoSpec.labelShort)
 
-    applyHudLabels(mainFrame, autoSpec, brillSpec, db)
-    if ns.ApplySlotBadges then
-        ns.ApplySlotBadges()
-    end
+    applyHudLabels()
+    if ns.ApplySlotBadges then ns.ApplySlotBadges() end
 
     local needN = countNeedingInt(roster)
-    if mainFrame.needLine then
-        if db.showHudNeedCount then
-            if needN > 0 then
-                mainFrame.needLine:SetText("|cffff7777" .. needN .. "|r |cff666666need Int|r")
-            else
-                mainFrame.needLine:SetText("|cff448844ok|r |cff555555Int|r")
+    local BAR_H = ns.UI_BAR_H or 38
+    local BAR_W = ns.UI_FRAME_W or 72
+    local showNeed = db.showHudNeedCount
+    local needH = 0
+
+    if not db.showClassRows then
+        hideUnusedGridCells(1)
+        if mainFrame.needLine then mainFrame.needLine:SetText("") end
+        autoBuffButton:ClearAllPoints()
+        autoBuffButton:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", 3, -3)
+        mainFrame:SetSize(BAR_W, BAR_H)
+        mainFrame:Show()
+        if ns.ApplyHudFade then ns.ApplyHudFade() end
+        return
+    end
+
+    local CW = ns.GRID_CELL_W or 24
+    local CH = ns.GRID_CELL_H or 12
+    local CG = ns.GRID_GAP or 1
+    local PER_ROW = ns.GRID_PER_ROW or 4
+
+    local gridPlayers = {}
+    for _, class in ipairs(CLASS_ORDER) do
+        local players = roster[class]
+        if players then
+            for _, p in ipairs(players) do
+                gridPlayers[#gridPlayers + 1] = {
+                    name = p.name,
+                    unit = p.unit,
+                    class = class,
+                    needsInt = p.needsInt,
+                    ownerName = p.ownerName,
+                }
             end
-        else
-            mainFrame.needLine:SetText("")
         end
     end
-    if ns.RefreshHudChrome then
-        ns.RefreshHudChrome()
-    end
 
-    local ROW_H = ns.UI_ROW_H or 18
-    local CLASS_W = ns.UI_CLASS_ROW_W or 100
-    local BAR_W = ns.UI_FRAME_W or 72
-    local FRAME_W = db.showClassRows and math.max(BAR_W, 6 + CLASS_W + 6) or BAR_W
-    local baseH = ns.UI_BAR_H or 38
-    if db.showHudNeedCount then baseH = baseH + 12 end
-    local ROW_TOP = -baseH
+    if not ns.gridCells then ns.gridCells = {} end
 
+    local cols = math.min(#gridPlayers, PER_ROW)
+    local gridPxW = cols > 0 and (cols * CW + (cols - 1) * CG) or 0
     local iconPairW = 32 * 2 + 2
+    local FRAME_W = math.max(iconPairW + 6, gridPxW + 6)
+
     local xPad = math.max(3, math.floor((FRAME_W - iconPairW) / 2))
     autoBuffButton:ClearAllPoints()
     autoBuffButton:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", xPad, -3)
 
-    if not db.showClassRows then
-        hideAllClassRows(classButtons, playerButtons)
-        mainFrame:SetSize(FRAME_W, baseH)
-        mainFrame:Show()
-        if ns.ApplyHudFade then
-            ns.ApplyHudFade()
-        end
-        return
+    local yAfterIcons = -(3 + 32 + 2)
+
+    if showNeed and mainFrame.needLine then
+        needH = 11
+        mainFrame.needLine:ClearAllPoints()
+        mainFrame.needLine:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", 3, yAfterIcons)
+        mainFrame.needLine:SetPoint("RIGHT", mainFrame, "RIGHT", -3, 0)
+        mainFrame.needLine:SetJustifyH("CENTER")
+        mainFrame.needLine:SetText(
+            needN > 0
+                and ("|cffff7777" .. needN .. "|r |cff555555need|r")
+                or  "|cff448844ok|r"
+        )
+        yAfterIcons = yAfterIcons - needH
+    elseif mainFrame.needLine then
+        mainFrame.needLine:SetText("")
     end
 
-    local yOffset = ROW_TOP
-    local totalRowH = 0
+    local gridYStart = yAfterIcons - 2
+    local gridXStart = math.max(3, math.floor((FRAME_W - gridPxW) / 2))
+    local maxRow = 0
 
-    for classIndex, class in ipairs(CLASS_ORDER) do
-        local players = roster[class]
-        local needCount, totalCount = 0, 0
-        if players then
-            totalCount = #players
-            for _, p in ipairs(players) do
-                if p.needsInt then
-                    needCount = needCount + 1
-                end
-            end
+    for i, p in ipairs(gridPlayers) do
+        if not ns.gridCells[i] then
+            ns.gridCells[i] = ns.CreateGridCell(i)
         end
+        local cell = ns.gridCells[i]
+        local col = (i - 1) % PER_ROW
+        local row = math.floor((i - 1) / PER_ROW)
+        if row > maxRow then maxRow = row end
 
-        if not classButtons[classIndex] then
-            classButtons[classIndex] = ns.CreateClassButton(classIndex)
-        end
-        if not playerButtons[classIndex] then
-            playerButtons[classIndex] = {}
-        end
+        cell:ClearAllPoints()
+        cell:SetPoint("TOPLEFT", mainFrame, "TOPLEFT",
+            gridXStart + col * (CW + CG),
+            gridYStart - row * (CH + CG))
 
-        local classBtn = classButtons[classIndex]
+        local cc = ns.CLASS_COLORS[p.class] or {0.5, 0.5, 0.5}
+        cell.classColor = cc
+        cell.playerName = p.name
+        cell.needsInt = p.needsInt
+        cell.ownerName = p.ownerName
+        cell.initial:SetText(p.name:sub(1, 1):upper())
 
-        if not (players and totalCount > 0) then
-            classBtn:Hide()
-            for _, pBtn in pairs(playerButtons[classIndex]) do
-                pBtn.inUse = false
-                pBtn:Hide()
-            end
+        ns.ApplyGridCellColor(cell)
+
+        if intSpell and p.needsInt then
+            cell:SetAttribute("type", "spell")
+            cell:SetAttribute("spell", intSpell)
+            cell:SetAttribute("unit", p.unit)
         else
-            local firstUnit
-            for _, p in ipairs(players) do
-                if p.needsInt then
-                    firstUnit = p.unit
-                    break
-                end
-            end
-
-            if firstUnit and intSpell then
-                classBtn:SetAttribute("type", "spell")
-                classBtn:SetAttribute("spell", intSpell)
-                classBtn:SetAttribute("unit", firstUnit)
-            else
-                classBtn:SetAttribute("type", nil)
-                classBtn:SetAttribute("spell", nil)
-                classBtn:SetAttribute("unit", nil)
-            end
-
-            local className = (class == "PET") and "Pets" or (class:sub(1, 1) .. class:sub(2):lower())
-            classBtn.text:SetText(className)
-            classBtn.count:SetText(needCount > 0 and ("|cffff5555" .. needCount .. "|r/" .. totalCount) or ("|cff66dd66" .. totalCount .. "|r"))
-
-            classBtn:ClearAllPoints()
-            classBtn:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", 6, yOffset)
-            classBtn:Show()
-
-            local pIndex = 0
-            for _, p in ipairs(players) do
-                pIndex = pIndex + 1
-                if not playerButtons[classIndex][pIndex] then
-                    playerButtons[classIndex][pIndex] = ns.CreatePlayerButton(classIndex, pIndex)
-                end
-                local pBtn = playerButtons[classIndex][pIndex]
-                pBtn:ClearAllPoints()
-                pBtn:SetPoint("TOPLEFT", classBtn, "TOPRIGHT", 3, -(pIndex - 1) * ROW_H)
-                pBtn.playerName = p.name
-                pBtn.ownerName = p.ownerName
-                local displayName = p.name
-                if #displayName > 12 then
-                    displayName = displayName:sub(1, 11) .. ".."
-                end
-                pBtn.text:SetText(displayName)
-                if intSpell then
-                    pBtn:SetAttribute("type", "spell")
-                    pBtn:SetAttribute("spell", intSpell)
-                    pBtn:SetAttribute("unit", p.unit)
-                else
-                    pBtn:SetAttribute("type", nil)
-                    pBtn:SetAttribute("spell", nil)
-                    pBtn:SetAttribute("unit", nil)
-                end
-                if p.needsInt then
-                    pBtn.intIcon:SetVertexColor(1, 0.35, 0.35)
-                    pBtn.intIcon:SetAlpha(1)
-                else
-                    pBtn.intIcon:SetVertexColor(0.35, 1, 0.35)
-                    pBtn.intIcon:SetAlpha(0.65)
-                end
-                pBtn.inUse = true
-                pBtn:Hide()
-            end
-
-            local pbRow = playerButtons[classIndex]
-            for i = pIndex + 1, #pbRow do
-                pbRow[i].inUse = false
-                pbRow[i]:Hide()
-            end
-
-            yOffset = yOffset - ROW_H - 2
-            totalRowH = totalRowH + ROW_H + 2
+            cell:SetAttribute("type", nil)
+            cell:SetAttribute("spell", nil)
+            cell:SetAttribute("unit", nil)
         end
+
+        cell:Show()
     end
 
-    mainFrame:SetSize(FRAME_W, baseH + totalRowH + 4)
+    hideUnusedGridCells(#gridPlayers + 1)
+
+    local rows = maxRow + 1
+    local gridH = rows > 0 and (rows * CH + (rows - 1) * CG) or 0
+    local totalH = -gridYStart + gridH + 2
+    mainFrame:SetSize(FRAME_W, totalH)
     mainFrame:Show()
-    if ns.ApplyHudFade then
-        ns.ApplyHudFade()
-    end
+    if ns.ApplyHudFade then ns.ApplyHudFade() end
 end

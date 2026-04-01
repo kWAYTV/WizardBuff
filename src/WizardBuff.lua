@@ -102,8 +102,7 @@ ns.db = nil
 ns.isMage = false
 ns.roster = {}
 ns.mainFrame = nil
-ns.classButtons = {}
-ns.playerButtons = {}
+ns.gridCells = {}
 ns.autoBuffButton = nil
 ns.brillianceButton = nil
 ns._hudMouseOver = false
@@ -216,9 +215,9 @@ function WizardBuff:SlashHandler(input)
     elseif cmd == "lock" then
         db.locked = not db.locked
         print("|cff9ab8d4Wizard Buff|r: " .. (db.locked and "locked" or "unlocked"))
-    elseif cmd == "rows" or cmd == "classrows" then
+    elseif cmd == "grid" or cmd == "rows" or cmd == "classrows" then
         db.showClassRows = not db.showClassRows
-        print("|cff9ab8d4Wizard Buff|r: Class rows " .. (db.showClassRows and "on" or "off"))
+        print("|cff9ab8d4Wizard Buff|r: Buff grid " .. (db.showClassRows and "on" or "off"))
         ns.ScheduleUpdate()
     elseif cmd == "armor" then
         db.buffArmor = not db.buffArmor
@@ -241,7 +240,7 @@ function WizardBuff:SlashHandler(input)
         print("|cff9ab8d4Wizard Buff|r: Pets " .. (db.buffPets and "on" or "off"))
         ns.ScheduleUpdate()
     else
-        print("|cff9ab8d4Wizard Buff|r: /wbuff toggle | config | lock | rows | armor | bubble | int | brilliance | pets")
+        print("|cff9ab8d4Wizard Buff|r: /wbuff toggle | config | lock | grid | armor | bubble | int | brilliance | pets")
     end
 end
 

@@ -18,9 +18,15 @@ local NEED_H = 12
 ns.UI_FRAME_W = PAD + ICON + GAP + ICON + PAD
 ns.UI_BAR_H   = PAD + ICON + PAD
 ns.UI_ROWS_TOP = -(PAD + ICON + PAD)
-ns.UI_ROW_H = 18
-ns.UI_CLASS_ROW_W = 100
-ns.UI_PLAYER_BTN_W = 106
+
+local CELL_W = 24
+local CELL_H = 12
+local CELL_GAP = 1
+local ACCENT_W = 2
+ns.GRID_CELL_W = CELL_W
+ns.GRID_CELL_H = CELL_H
+ns.GRID_GAP    = CELL_GAP
+ns.GRID_PER_ROW = 4
 
 function ns.ApplyHudScale()
     local mf = ns.mainFrame
@@ -54,14 +60,6 @@ function ns.RefreshHudChrome()
     local d = ns.db
     local mf = ns.mainFrame
     if not mf or not d then return end
-    if mf.title then mf.title:Hide() end
-
-    local showNeed = d.showHudNeedCount and true or false
-    if mf.needLine then mf.needLine:SetShown(showNeed) end
-
-    local h = PAD + ICON + PAD
-    if showNeed then h = h + NEED_H end
-    mf:SetHeight(h)
 end
 
 local function scheduleHudLeaveCheck(mf)
@@ -204,11 +202,6 @@ function ns.CreateMainFrame()
     mf:SetFrameStrata("MEDIUM")
     mf:SetFrameLevel(8)
 
-    local bg = mf:CreateTexture(nil, "BACKGROUND")
-    bg:SetAllPoints()
-    bg:SetColorTexture(0.03, 0.03, 0.04, 0.82)
-    mf.bg = bg
-
     mf:RegisterForDrag("LeftButton")
     mf:SetScript("OnDragStart", function(self)
         if not InCombatLockdown() and not (ns.db and ns.db.locked) then
@@ -235,18 +228,11 @@ function ns.CreateMainFrame()
         end
     end)
 
-    local needLine = mf:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    needLine:SetPoint("BOTTOM", mf, "BOTTOM", 0, 2)
+    local needLine = mf:CreateFontString(nil, "OVERLAY")
+    needLine:SetFont(STANDARD_TEXT_FONT, 9, "OUTLINE")
+    needLine:SetShadowOffset(1, -1)
     needLine:SetText("")
     mf.needLine = needLine
-
-    mf.title = mf:CreateFontString(nil, "OVERLAY")
-    mf.title:Hide()
-
-    mf.autoStatus  = mf:CreateFontString(nil, "OVERLAY")
-    mf.autoStatus:Hide()
-    mf.brillStatus = mf:CreateFontString(nil, "OVERLAY")
-    mf.brillStatus:Hide()
 
     ns.ApplyHudScale()
 end
@@ -346,139 +332,72 @@ function ns.CreateBrillianceButton()
     ns.RegisterGlowButton(b)
 end
 
-function ns.CreateClassButton(classIndex)
-    local class = CLASS_ORDER[classIndex]
+function ns.CreateGridCell(index)
     local mf = ns.mainFrame
-    local playerButtons = ns.playerButtons
-    local W = ns.UI_CLASS_ROW_W
-
-    local btn = CreateFrame("Button", "WizardBuffClass" .. classIndex, mf, "SecureActionButtonTemplate")
-    btn:SetSize(W, ns.UI_ROW_H)
+    local btn = CreateFrame("Button", "WizardBuffCell" .. index, mf, "SecureActionButtonTemplate")
+    btn:SetSize(CELL_W, CELL_H)
     btn:RegisterForClicks("AnyUp", "AnyDown")
-    local r, g, b = unpack(CLASS_COLORS[class] or {0.5, 0.5, 0.5})
+    btn:SetAttribute("type", "spell")
+    stripSecureActionChrome(btn)
 
-    local bg = btn:CreateTexture(nil, "BACKGROUND")
-    bg:SetAllPoints()
-    bg:SetColorTexture(r * 0.10, g * 0.10, b * 0.10, 0.85)
-    btn.bg = bg
-    btn.color = {r, g, b}
+    local fill = btn:CreateTexture(nil, "BACKGROUND")
+    fill:SetPoint("TOPLEFT", ACCENT_W, 0)
+    fill:SetPoint("BOTTOMRIGHT", 0, 0)
+    btn.fill = fill
 
-    local icon = btn:CreateTexture(nil, "ARTWORK")
-    icon:SetSize(ns.UI_ROW_H - 2, ns.UI_ROW_H - 2)
-    icon:SetPoint("LEFT", 2, 0)
-    if class == "PET" then
-        icon:SetTexture("Interface\\Icons\\Ability_Hunter_BeastCall")
-    else
-        icon:SetTexture("Interface\\GLUES\\CHARACTERCREATE\\UI-CHARACTERCREATE-CLASSES")
-        local coords = CLASS_ICON_TCOORDS[class]
-        if coords then icon:SetTexCoord(unpack(coords)) end
-    end
-    btn.icon = icon
-
-    local txt = btn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    txt:SetPoint("LEFT", icon, "RIGHT", 3, 0)
-    txt:SetTextColor(r * 0.9, g * 0.9, b * 0.9)
-    btn.text = txt
-
-    local count = btn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    count:SetPoint("RIGHT", -3, 0)
-    btn.count = count
-    btn.class = class
-    btn.classIndex = classIndex
-
-    btn:SetScript("OnEnter", function(self)
-        if not InCombatLockdown() then
-            self.bg:SetColorTexture(r * 0.22, g * 0.22, b * 0.22, 0.95)
-            if playerButtons[classIndex] then
-                for _, pb in pairs(playerButtons[classIndex]) do
-                    if pb.inUse then pb:Show() end
-                end
-            end
-        end
-        GameTooltip:SetOwner(self, "ANCHOR_BOTTOMRIGHT")
-        GameTooltip:AddLine(class:sub(1,1) .. class:sub(2):lower(), r, g, b)
-        GameTooltip:Show()
-    end)
-    btn:SetScript("OnLeave", function(self)
-        if not InCombatLockdown() then
-            self.bg:SetColorTexture(r * 0.10, g * 0.10, b * 0.10, 0.85)
-        end
-        GameTooltip:Hide()
-        C_Timer.After(0.4, function()
-            if not InCombatLockdown() and playerButtons[classIndex] then
-                local anyHovered = self:IsMouseOver()
-                for _, pb in pairs(playerButtons[classIndex]) do
-                    if pb:IsMouseOver() then anyHovered = true end
-                end
-                if not anyHovered then
-                    for _, pb in pairs(playerButtons[classIndex]) do pb:Hide() end
-                end
-            end
-        end)
-    end)
-    return btn
-end
-
-function ns.CreatePlayerButton(classIndex, playerIndex)
-    local class = CLASS_ORDER[classIndex]
-    local mf = ns.mainFrame
-    local playerButtons = ns.playerButtons
-    local classButtons = ns.classButtons
-
-    local btn = CreateFrame("Button", "WizardBuffPlayer" .. classIndex .. "_" .. playerIndex, mf, "SecureActionButtonTemplate")
-    btn:SetSize(ns.UI_PLAYER_BTN_W, ns.UI_ROW_H - 1)
-    btn:RegisterForClicks("AnyUp", "AnyDown")
-    btn:SetFrameStrata("TOOLTIP")
-    local r, g, b = unpack(CLASS_COLORS[class] or {1, 1, 1})
-
-    local bg = btn:CreateTexture(nil, "BACKGROUND")
-    bg:SetAllPoints()
-    bg:SetColorTexture(0.03, 0.03, 0.04, 0.95)
-    btn.bg = bg
-
-    local accent = btn:CreateTexture(nil, "BORDER")
+    local accent = btn:CreateTexture(nil, "ARTWORK")
     accent:SetPoint("TOPLEFT", 0, 0)
     accent:SetPoint("BOTTOMLEFT", 0, 0)
-    accent:SetWidth(2)
-    accent:SetColorTexture(r * 0.55, g * 0.55, b * 0.55, 0.7)
+    accent:SetWidth(ACCENT_W)
     btn.accent = accent
 
-    local txt = btn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    txt:SetPoint("LEFT", 6, 0)
-    txt:SetTextColor(r * 0.95, g * 0.95, b * 0.95)
-    btn.text = txt
-
-    local intIcon = btn:CreateTexture(nil, "ARTWORK")
-    intIcon:SetSize(11, 11)
-    intIcon:SetPoint("RIGHT", -3, 0)
-    intIcon:SetTexture("Interface\\Icons\\Spell_Holy_MagicalSentry")
-    btn.intIcon = intIcon
+    local initial = btn:CreateFontString(nil, "OVERLAY")
+    initial:SetFont(STANDARD_TEXT_FONT, 8, "OUTLINE")
+    initial:SetPoint("CENTER", 1, 0)
+    initial:SetShadowOffset(0, 0)
+    btn.initial = initial
 
     btn:SetScript("OnEnter", function(self)
-        if not InCombatLockdown() then self.bg:SetColorTexture(0.06, 0.06, 0.09, 1) end
+        ns._hudMouseOver = true
+        ns.ApplyHudFade()
+        local cr, cg, cb = 1, 1, 1
+        if self.classColor then cr, cg, cb = unpack(self.classColor) end
+        if self.fill then
+            self.fill:SetColorTexture(cr * 0.35, cg * 0.35, cb * 0.35, 0.95)
+        end
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-        GameTooltip:AddLine(self.playerName or "Player", r, g, b)
+        GameTooltip:AddLine(self.playerName or "?", cr, cg, cb)
         if self.ownerName then
             GameTooltip:AddLine("Pet \194\183 " .. self.ownerName, 0.55, 0.55, 0.55)
         end
+        if self.needsInt then
+            GameTooltip:AddLine("Needs Intellect", 1, 0.4, 0.4)
+        else
+            GameTooltip:AddLine("Buffed", 0.4, 1, 0.4)
+        end
         GameTooltip:Show()
     end)
     btn:SetScript("OnLeave", function(self)
-        if not InCombatLockdown() then self.bg:SetColorTexture(0.03, 0.03, 0.04, 0.95) end
+        ns.ApplyGridCellColor(self)
         GameTooltip:Hide()
-        local classBtn = classButtons[classIndex]
-        C_Timer.After(0.25, function()
-            if not InCombatLockdown() and classBtn and not classBtn:IsMouseOver() and not self:IsMouseOver() then
-                local anyHovered = false
-                for _, pb in pairs(playerButtons[classIndex]) do
-                    if pb:IsMouseOver() then anyHovered = true end
-                end
-                if not anyHovered then self:Hide() end
-            end
-        end)
+        scheduleHudLeaveCheck(mf)
     end)
-    btn.inUse = false
-    btn.classIndex = classIndex
+
     btn:Hide()
     return btn
+end
+
+function ns.ApplyGridCellColor(btn)
+    local r, g, b = 0.5, 0.5, 0.5
+    if btn.classColor then r, g, b = unpack(btn.classColor) end
+
+    btn.accent:SetColorTexture(r, g, b, 0.9)
+
+    if btn.needsInt then
+        btn.fill:SetColorTexture(r * 0.55, g * 0.55, b * 0.55, 0.92)
+        btn.initial:SetTextColor(1, 1, 1, 0.95)
+    else
+        btn.fill:SetColorTexture(r * 0.12, g * 0.12, b * 0.12, 0.75)
+        btn.initial:SetTextColor(r * 0.5, g * 0.5, b * 0.5, 0.6)
+    end
 end

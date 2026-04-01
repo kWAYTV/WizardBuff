@@ -77,7 +77,7 @@ function WizardBuff_RegisterOptions(addon)
                         end,
                     },
                     showClassRows = {
-                        type = "toggle", name = "Class rows", order = 8,
+                        type = "toggle", name = "Buff grid", order = 8,
                         width = 1.0, disabled = inCombat,
                     },
                     minimapHide = {
