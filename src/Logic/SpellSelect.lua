@@ -65,6 +65,10 @@ function ns.HasArcanePowder()
     return HasReagent(ReagentIDs.ArcanePowder)
 end
 
+function ns.GetArcanePowderCount()
+    return GetItemCount(ReagentIDs.ArcanePowder) or 0
+end
+
 ---------------------------------------------------------------------------
 -- Armor / bubble spell resolution (reads ns.db via SetLogicContext)
 ---------------------------------------------------------------------------

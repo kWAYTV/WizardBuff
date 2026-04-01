@@ -15,6 +15,7 @@ ns.defaults = {
     showGlow           = true,
     showSound          = false,
     showClassRows      = true,
+    gridColumns        = 5,
     buffArmor          = true,
     armorType          = "auto",
     enableBubble       = true,

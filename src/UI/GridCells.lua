@@ -50,8 +50,16 @@ function ns.CreateGridCell(index)
         if self.ownerName then
             GameTooltip:AddLine("Pet \194\183 " .. self.ownerName, 0.5, 0.5, 0.5)
         end
-        if self.needsInt then
-            GameTooltip:AddLine("Needs Intellect", 1, 0.4, 0.4)
+        if self.isDead then
+            GameTooltip:AddLine("Dead", 0.5, 0.5, 0.5)
+        elseif self.isOffline then
+            GameTooltip:AddLine("Offline", 0.5, 0.5, 0.5)
+        elseif self.needsInt then
+            if self.outOfRange then
+                GameTooltip:AddLine("Needs Intellect (out of range)", 1, 0.6, 0.2)
+            else
+                GameTooltip:AddLine("Needs Intellect", 1, 0.4, 0.4)
+            end
         else
             GameTooltip:AddLine("Buffed", 0.4, 1, 0.4)
         end
@@ -78,10 +86,15 @@ function ns.ApplyGridCellColor(btn)
     local r, g, b = 0.5, 0.5, 0.5
     if btn.classColor then r, g, b = unpack(btn.classColor) end
 
-    if btn.needsInt then
-        btn.fill:SetColorTexture(r * 0.45, g * 0.45, b * 0.45, 0.95)
-        btn.initial:SetTextColor(1, 1, 1, 1)
-        for _, e in ipairs(btn.edges) do e:SetColorTexture(r, g, b, 0.9) end
+    if btn.isDead or btn.isOffline then
+        btn.fill:SetColorTexture(0.12, 0.12, 0.12, 0.6)
+        btn.initial:SetTextColor(0.35, 0.35, 0.35, 0.7)
+        for _, e in ipairs(btn.edges) do e:SetColorTexture(0.2, 0.2, 0.2, 0.5) end
+    elseif btn.needsInt then
+        local dim = btn.outOfRange and 0.25 or 0.45
+        btn.fill:SetColorTexture(r * dim, g * dim, b * dim, 0.95)
+        btn.initial:SetTextColor(1, 1, 1, btn.outOfRange and 0.5 or 1)
+        for _, e in ipairs(btn.edges) do e:SetColorTexture(r, g, b, btn.outOfRange and 0.4 or 0.9) end
     else
         btn.fill:SetColorTexture(r * 0.12, g * 0.12, b * 0.12, 0.7)
         btn.initial:SetTextColor(r * 0.4, g * 0.4, b * 0.4, 0.6)

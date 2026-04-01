@@ -100,7 +100,11 @@ end
 
 function WizardBuff:PLAYER_REGEN_ENABLED()
     if ns.isMage and ns.ApplyHudFade then ns.ApplyHudFade() end
-    ns.ScheduleUpdate()
+    if ns._pendingUpdate then
+        ns.ScheduleUpdate(true)
+    else
+        ns.ScheduleUpdate()
+    end
 end
 
 function WizardBuff:PLAYER_REGEN_DISABLED()

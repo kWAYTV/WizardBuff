@@ -40,6 +40,8 @@ function ns.BuildGridPlayers()
                     class     = class,
                     needsInt  = p.needsInt,
                     ownerName = p.ownerName,
+                    isDead    = p.isDead,
+                    isOffline = p.isOffline,
                 }
             end
         end
@@ -71,7 +73,7 @@ function ns.LayoutGrid(gridPlayers, intToUse, needN)
     local CW      = ns.GRID_CELL_W
     local CH      = ns.GRID_CELL_H
     local CG      = ns.GRID_GAP
-    local PER_ROW = ns.GRID_PER_ROW
+    local PER_ROW = db.gridColumns or ns.GRID_PER_ROW
 
     if not ns.gridCells then ns.gridCells = {} end
 
@@ -92,11 +94,19 @@ function ns.LayoutGrid(gridPlayers, intToUse, needN)
         mainFrame.needLine:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", 2, yAfterIcons)
         mainFrame.needLine:SetPoint("RIGHT", mainFrame, "RIGHT", -2, 0)
         mainFrame.needLine:SetJustifyH("CENTER")
-        mainFrame.needLine:SetText(
-            needN > 0
-                and ("|cffff7777" .. needN .. "|r |cff555555need|r")
-                or  "|cff448844ok|r"
-        )
+
+        local parts = {}
+        if needN > 0 then
+            parts[#parts + 1] = "|cffff7777" .. needN .. "|r |cff555555need|r"
+        else
+            parts[#parts + 1] = "|cff448844ok|r"
+        end
+        local powderN = ns.GetArcanePowderCount and ns.GetArcanePowderCount() or 0
+        if powderN >= 0 then
+            local clr = powderN > 5 and "88aaff" or (powderN > 0 and "ffcc44" or "ff5555")
+            parts[#parts + 1] = "|cff" .. clr .. powderN .. "|r|cff555555pw|r"
+        end
+        mainFrame.needLine:SetText(table.concat(parts, "  "))
         yAfterIcons = yAfterIcons - needH
     elseif mainFrame.needLine then
         mainFrame.needLine:SetText("")
@@ -124,11 +134,14 @@ function ns.LayoutGrid(gridPlayers, intToUse, needN)
         cell.playerName = p.name
         cell.needsInt   = p.needsInt
         cell.ownerName  = p.ownerName
+        cell.isDead     = p.isDead
+        cell.isOffline  = p.isOffline
+        cell.outOfRange = p.unit and not ns.IsUnitInBuffRange(p.unit) or false
         cell.initial:SetText(p.name:sub(1, 1):upper())
 
         ns.ApplyGridCellColor(cell)
 
-        if intToUse then
+        if intToUse and not p.isDead and not p.isOffline then
             cell:SetAttribute("type", "spell")
             cell:SetAttribute("spell", intToUse)
             cell:SetAttribute("unit", p.unit)

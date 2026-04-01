@@ -80,6 +80,13 @@ function ns.RegisterOptions(addon)
                                 desc = "Per-player cast buttons grouped by class",
                                 order = 4, width = "full", disabled = inCombat,
                             },
+                            gridColumns = {
+                                type = "range", name = "Grid columns",
+                                desc = "Number of player cells per row in the buff grid",
+                                order = 4.5, width = "full",
+                                min = 2, max = 20, step = 1,
+                                disabled = function() return not addon.db.profile.showClassRows end,
+                            },
                             showDragHandle = {
                                 type = "toggle", name = "Show drag handle",
                                 desc = "Small handle above the HUD for dragging and quick actions",

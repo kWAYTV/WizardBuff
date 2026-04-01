@@ -38,15 +38,16 @@ function ns.ScanRoster()
 
     local function AddUnit(unit)
         if not UnitExists(unit) then return end
-        if UnitIsDeadOrGhost(unit) then return end
-        if not UnitIsConnected(unit) then return end
         local name  = GetUnitName(unit, true)
         local class = GetUnitClass(unit)
         if not class or not name then return end
+        local isDead    = UnitIsDeadOrGhost(unit)
+        local isOffline = not UnitIsConnected(unit)
         local hasStrongerBrill = ns.HasStrongerBrilliance(unit)
         local hasInt  = ns.UnitHasBuff(unit, intName)
         local hasBrill = ns.UnitHasBuff(unit, brillName)
         local needsInt = db.buffIntellect
+            and not isDead and not isOffline
             and not hasStrongerBrill and not hasInt and not hasBrill
             and not ns.IsRecentlyBuffed(unit)
         if not roster[class] then roster[class] = {} end
@@ -57,13 +58,16 @@ function ns.ScanRoster()
             needsInt = needsInt,
             level  = UnitLevel(unit),
             hasStrongerBrill = hasStrongerBrill,
+            isDead    = isDead,
+            isOffline = isOffline,
         })
     end
 
     local function AddPet(petUnit, ownerName)
         if not db.buffPets then return end
         if not UnitExists(petUnit) then return end
-        if UnitIsDeadOrGhost(petUnit) then return end
+        local isDead = UnitIsDeadOrGhost(petUnit)
+        if isDead then return end
         local petName = GetUnitName(petUnit, false)
         if not petName then return end
         local hasStrongerBrill = ns.HasStrongerBrilliance(petUnit)
