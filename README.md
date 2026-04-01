@@ -1,6 +1,6 @@
 # Wizard Buff for World of Warcraft
 
-Wizard Buff is a mage buff management addon for WoW Classic (TBC Anniversary). It provides a compact HUD with one-click buffing for armor, Intellect, Arcane Brilliance, emergency shields, and per-player grid cells — so you never miss a buff in dungeons or raids.
+Wizard Buff is a mage buff management addon for WoW Classic (TBC Anniversary). It provides a compact HUD with one-click buffing for armor, Intellect, Arcane Brilliance, shields, and per-player grid cells — so you never miss a buff in dungeons or raids.
 
 ## Documentation
 
@@ -18,9 +18,8 @@ Wizard Buff detects your known spells, highest ranks, and reagent supply automat
 
 - **Auto Buff** (left icon) — cascading priority: armor → self Intellect → next unbuffed group member → pets.
 - **Group Buff** (middle icon) — Intellect or Arcane Brilliance on the next unbuffed member or pet; falls back to your friendly target if everyone is covered.
-- **Self** (right icon) — Ice Barrier or Mana Shield on yourself when your HP drops below a configurable threshold.
+- **Self** (right icon) — keeps Ice Barrier or Mana Shield up on yourself; glows when the buff is missing.
 - **Mouse wheel** on any icon button cycles between spell modes (e.g. lock to Frost Armor, force single-target Intellect, pick Ice Barrier vs Mana Shield).
-- The addon picks the correct spell rank for each target's level, so you never waste mana on low-level members.
 
 ### Buff grid (Decursive-style micro-frames)
 

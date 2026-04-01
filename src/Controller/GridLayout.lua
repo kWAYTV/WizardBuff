@@ -127,7 +127,7 @@ function ns.LayoutGrid(gridPlayers, intToUse, needN, allOOR)
 
         ns.ApplyGridCellColor(cell)
 
-        if intToUse and not p.isDead and not p.isOffline then
+        if intToUse and p.needsInt and not p.isDead and not p.isOffline and not cell.outOfRange then
             cell:SetAttribute("type", "spell")
             cell:SetAttribute("spell", intToUse)
             cell:SetAttribute("unit", p.unit)

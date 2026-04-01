@@ -54,6 +54,7 @@ local COMMANDS = {
     ["macro"] = function()
         ns.Print("Self buff macro: /click WizardBuffAutoBuffButton")
         ns.Print("Group buff macro: /click WizardBuffBrillianceButton")
+        ns.Print("Shield macro: /click WizardBuffShieldButton")
     end,
 }
 
