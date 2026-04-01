@@ -1,4 +1,4 @@
-name: Auto Tag & Release
+name: Auto Tag
 
 on:
   push:
@@ -7,13 +7,10 @@ on:
 
 permissions:
   contents: write
-
-env:
-  CF_API_KEY: ${{ secrets.CF_API_KEY }}
-  GITHUB_OAUTH: ${{ secrets.GITHUB_TOKEN }}
+  actions: write
 
 jobs:
-  tag-and-release:
+  tag:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6.0.2
@@ -38,11 +35,7 @@ jobs:
           git push origin "$next"
           echo "tag=$next" >> "$GITHUB_OUTPUT"
 
-      - uses: actions/checkout@v6.0.2
-        with:
-          ref: ${{ steps.tag.outputs.tag }}
-          fetch-depth: 0
-
-      - uses: BigWigsMods/packager@v2.5.1
+      - name: Trigger release workflow
+        run: gh workflow run release.yml --ref "${{ steps.tag.outputs.tag }}"
         env:
-          GITHUB_REF: refs/tags/${{ steps.tag.outputs.tag }}
+          GH_TOKEN: ${{ github.token }}
