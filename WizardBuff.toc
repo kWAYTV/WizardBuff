@@ -4,7 +4,7 @@
 ## Author: LazyLoafs
 ## Version: @project-version@
 ## DefaultState: enabled
-## X-Curse-Project-ID: 1234567
+## X-Curse-Project-ID: 1501057
 ## SavedVariables: WizardBuffDB
 
 embeds.xml
