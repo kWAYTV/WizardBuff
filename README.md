@@ -16,8 +16,10 @@ Wizard Buff detects your known spells, highest ranks, and reagent supply automat
 
 ### One-click smart buffing
 
-- **Auto Buff** (left icon) follows a cascading priority: armor → self Intellect → next unbuffed group member → pets → emergency shield.
-- **Group Buff** (right icon) casts Intellect or Arcane Brilliance on the next unbuffed member or pet; falls back to your friendly target if everyone is covered.
+- **Auto Buff** (left icon) — cascading priority: armor → self Intellect → next unbuffed group member → pets.
+- **Group Buff** (middle icon) — Intellect or Arcane Brilliance on the next unbuffed member or pet; falls back to your friendly target if everyone is covered.
+- **Self** (right icon) — Ice Barrier or Mana Shield on yourself when your HP drops below a configurable threshold.
+- **Mouse wheel** on any icon button cycles between spell modes (e.g. lock to Frost Armor, force single-target Intellect, pick Ice Barrier vs Mana Shield).
 - The addon picks the correct spell rank for each target's level, so you never waste mana on low-level members.
 
 ### Buff grid (Decursive-style micro-frames)
@@ -30,6 +32,8 @@ Per-player click-to-cast cells grouped by class. Each cell shows the player's in
 - **Reagent counter** shows your Arcane Powder supply on the HUD and minimap tooltip so you never run dry mid-raid.
 - **Recently-buffed tracking** suppresses targets you just cast on, avoiding double-casts while the server catches up.
 - Dead, offline, and out-of-range members are visually distinguished so you focus on targets you can actually buff.
+- **Out-of-range feedback** — icon buttons desaturate and dim when the next target is too far, so you know to move closer before clicking.
+- **Rich tooltips** — hover any icon button to see the queued spell, target name, status, and current mode.
 
 ### React faster
 
@@ -74,14 +78,16 @@ Bind these to keys or toolbar slots for one-press buffing:
 ```
 /click WizardBuffAutoBuffButton
 /click WizardBuffBrillianceButton
+/click WizardBuffShieldButton
 ```
 
 ## Key Bindings
 
 Open **Game Menu → Key Bindings → Addons → Wizard Buff** to bind:
 
-- **Auto Buff** — armor, intellect, pets, shield cascade
+- **Auto Buff** — armor, intellect, pets cascade
 - **Group Buff** — Intellect / Arcane Brilliance on next target
+- **Self** — Ice Barrier / Mana Shield
 
 ## Settings
 
