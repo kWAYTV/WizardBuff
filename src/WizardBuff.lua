@@ -55,6 +55,7 @@ ns.defaults = {
     useArcaneBrilliance = true,
     buffPets = true,
     keybind = "",
+    hudPos = nil,
     minimap = { hide = false },
     migratedFromMagePower = false,
 }

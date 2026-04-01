@@ -288,6 +288,41 @@ local function hideAllClassRows(classButtons, playerButtons)
     end
 end
 
+local SOUND_FILE = "Sound\\Interface\\AlarmClockWarning3.ogg"
+local SOUND_INTERVAL = 15
+
+local function playBuffReminder()
+    PlaySoundFile(SOUND_FILE, "Master")
+end
+
+local function updateSoundReminder(anyNeedsAction)
+    local d = ns.db
+    if not d or not d.showSound then
+        if ns._soundTicker then
+            ns._soundTicker:Cancel()
+            ns._soundTicker = nil
+        end
+        ns._soundActive = false
+        return
+    end
+
+    local wasActive = ns._soundActive
+    ns._soundActive = anyNeedsAction
+
+    if anyNeedsAction then
+        if not wasActive then
+            playBuffReminder()
+            if ns._soundTicker then ns._soundTicker:Cancel() end
+            ns._soundTicker = C_Timer.NewTicker(SOUND_INTERVAL, playBuffReminder)
+        end
+    else
+        if ns._soundTicker then
+            ns._soundTicker:Cancel()
+            ns._soundTicker = nil
+        end
+    end
+end
+
 function ns.UpdateButtons()
     local db = ns.db
     local mainFrame = ns.mainFrame
@@ -342,6 +377,8 @@ function ns.UpdateButtons()
         applyButtonSpec(brillianceButton, brillSpec)
         brillianceButton:Show()
     end
+
+    updateSoundReminder(autoSpec.needsAction or brillSpec.needsAction)
 
     applyHudLabels(mainFrame, autoSpec, brillSpec, db)
     if ns.ApplySlotBadges then

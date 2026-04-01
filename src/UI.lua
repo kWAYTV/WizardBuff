@@ -72,29 +72,53 @@ local function scheduleHudLeaveCheck(mf)
     end)
 end
 
+local GLOW_R, GLOW_G, GLOW_B = 1, 0.75, 0.2
+local GLOW_THICK = 2
+
 local function createGlow(btn)
-    local glow = btn:CreateTexture(nil, "OVERLAY", nil, 1)
-    glow:SetPoint("TOPLEFT", -4, 4)
-    glow:SetPoint("BOTTOMRIGHT", 4, -4)
-    glow:SetTexture("Interface\\Buttons\\CheckButtonGlow")
-    glow:SetBlendMode("ADD")
-    glow:SetAlpha(0)
-    glow:Hide()
-    btn.glowTex = glow
+    local edges = {}
+    for i = 1, 4 do
+        local e = btn:CreateTexture(nil, "OVERLAY", nil, 2)
+        e:SetColorTexture(GLOW_R, GLOW_G, GLOW_B, 1)
+        e:SetBlendMode("ADD")
+        e:SetAlpha(0)
+        e:Hide()
+        edges[i] = e
+    end
+    local top, bottom, left, right = edges[1], edges[2], edges[3], edges[4]
+    top:SetPoint("TOPLEFT", btn, "TOPLEFT", -GLOW_THICK, GLOW_THICK)
+    top:SetPoint("TOPRIGHT", btn, "TOPRIGHT", GLOW_THICK, GLOW_THICK)
+    top:SetHeight(GLOW_THICK)
+
+    bottom:SetPoint("BOTTOMLEFT", btn, "BOTTOMLEFT", -GLOW_THICK, -GLOW_THICK)
+    bottom:SetPoint("BOTTOMRIGHT", btn, "BOTTOMRIGHT", GLOW_THICK, -GLOW_THICK)
+    bottom:SetHeight(GLOW_THICK)
+
+    left:SetPoint("TOPLEFT", top, "BOTTOMLEFT", 0, 0)
+    left:SetPoint("BOTTOMLEFT", bottom, "TOPLEFT", 0, 0)
+    left:SetWidth(GLOW_THICK)
+
+    right:SetPoint("TOPRIGHT", top, "BOTTOMRIGHT", 0, 0)
+    right:SetPoint("BOTTOMRIGHT", bottom, "TOPRIGHT", 0, 0)
+    right:SetWidth(GLOW_THICK)
+
+    btn.glowEdges = edges
     btn._glowPhase = 0
     btn._glowing = false
 end
 
 local GLOW_SPEED = 2.5
-local GLOW_MIN = 0.15
-local GLOW_MAX = 0.7
+local GLOW_MIN = 0.5
+local GLOW_MAX = 1.0
 
 local function updateGlows(self, elapsed)
     for _, btn in ipairs(self._glowButtons) do
-        if btn._glowing and btn.glowTex then
+        if btn._glowing and btn.glowEdges then
             btn._glowPhase = (btn._glowPhase or 0) + elapsed * GLOW_SPEED
             local a = GLOW_MIN + (GLOW_MAX - GLOW_MIN) * (0.5 + 0.5 * math.sin(btn._glowPhase))
-            btn.glowTex:SetAlpha(a)
+            for _, e in ipairs(btn.glowEdges) do
+                e:SetAlpha(a)
+            end
         end
     end
 end
@@ -113,32 +137,22 @@ function ns.RegisterGlowButton(btn)
     table.insert(ns._glowFrame._glowButtons, btn)
 end
 
-local SOUND_COOLDOWN = 30
-local lastSoundTime = 0
-
 function ns.SetButtonGlow(btn, on)
-    if not btn or not btn.glowTex then return end
+    if not btn or not btn.glowEdges then return end
     local d = ns.db
     if not d or not d.showGlow then on = false end
 
-    local wasGlowing = btn._glowing
     btn._glowing = on
 
     if on then
-        btn.glowTex:Show()
+        for _, e in ipairs(btn.glowEdges) do e:Show() end
         btn._glowPhase = btn._glowPhase or 0
         if ns._glowFrame then ns._glowFrame:Show() end
-
-        if not wasGlowing and d.showSound then
-            local now = GetTime()
-            if now - lastSoundTime > SOUND_COOLDOWN then
-                PlaySound(8959, "Master")
-                lastSoundTime = now
-            end
-        end
     else
-        btn.glowTex:SetAlpha(0)
-        btn.glowTex:Hide()
+        for _, e in ipairs(btn.glowEdges) do
+            e:SetAlpha(0)
+            e:Hide()
+        end
         btn._glowPhase = 0
     end
 end
@@ -176,7 +190,14 @@ function ns.CreateMainFrame()
     local mf = CreateFrame("Frame", "WizardBuffFrame", UIParent)
     ns.mainFrame = mf
     mf:SetSize(ns.UI_FRAME_W, ns.UI_BAR_H)
-    mf:SetPoint("CENTER", 0, 200)
+
+    local pos = ns.db and ns.db.hudPos
+    if pos and pos.point and pos.relPoint and pos.x and pos.y then
+        mf:SetPoint(pos.point, UIParent, pos.relPoint, pos.x, pos.y)
+    else
+        mf:SetPoint("CENTER", 0, 200)
+    end
+
     mf:SetMovable(true)
     mf:EnableMouse(true)
     mf:SetClampedToScreen(true)
@@ -194,7 +215,13 @@ function ns.CreateMainFrame()
             self:StartMoving()
         end
     end)
-    mf:SetScript("OnDragStop", function(self) self:StopMovingOrSizing() end)
+    mf:SetScript("OnDragStop", function(self)
+        self:StopMovingOrSizing()
+        if ns.db then
+            local point, _, relPoint, x, y = self:GetPoint(1)
+            ns.db.hudPos = { point = point, relPoint = relPoint, x = x, y = y }
+        end
+    end)
 
     mf:SetScript("OnEnter", function()
         ns._hudMouseOver = true

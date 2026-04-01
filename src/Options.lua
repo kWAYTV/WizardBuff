@@ -62,6 +62,13 @@ function WizardBuff_RegisterOptions(addon)
                         type = "toggle", name = "Sound alert", order = 7,
                         width = 1.0,
                     },
+                    testSound = {
+                        type = "execute", name = "Test sound", order = 7.5,
+                        width = 0.7,
+                        func = function()
+                            PlaySoundFile("Sound\\Interface\\AlarmClockWarning3.ogg", "Master")
+                        end,
+                    },
                     showClassRows = {
                         type = "toggle", name = "Class rows", order = 8,
                         width = 1.0, disabled = inCombat,
@@ -113,6 +120,9 @@ function WizardBuff_RegisterOptions(addon)
                             if ns.mainFrame then
                                 ns.mainFrame:ClearAllPoints()
                                 ns.mainFrame:SetPoint("CENTER", 0, 200)
+                            end
+                            if addon.db.profile then
+                                addon.db.profile.hudPos = nil
                             end
                         end,
                     },
