@@ -311,6 +311,12 @@ function ns.UpdateButtons()
         return
     end
 
+    if UnitIsDeadOrGhost("player") then
+        if mainFrame then mainFrame:Show() end
+        if ns.ApplyHudFade then ns.ApplyHudFade() end
+        return
+    end
+
     ns.ScanRoster()
 
     local armorSpell = ns.GetArmorSpell()
