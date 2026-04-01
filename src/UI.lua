@@ -409,6 +409,14 @@ function ns.CreateAutoBuffButton()
     end)
     hookSecureHover(b, mf)
     ns.RegisterGlowButton(b)
+
+    b:SetScript("PostClick", function(self)
+        local unit = self:GetAttribute("unit")
+        if unit and not InCombatLockdown() then
+            ns._recentlyBuffed[unit] = GetTime()
+            ns.ScheduleUpdate(true)
+        end
+    end)
 end
 
 function ns.CreateBrillianceButton()
@@ -434,6 +442,14 @@ function ns.CreateBrillianceButton()
     end)
     hookSecureHover(b, mf)
     ns.RegisterGlowButton(b)
+
+    b:SetScript("PostClick", function(self)
+        local unit = self:GetAttribute("unit")
+        if unit and not InCombatLockdown() then
+            ns._recentlyBuffed[unit] = GetTime()
+            ns.ScheduleUpdate(true)
+        end
+    end)
 end
 
 function ns.CreateGridCell(index)
@@ -486,6 +502,14 @@ function ns.CreateGridCell(index)
         ns.ApplyGridCellColor(self)
         GameTooltip:Hide()
         scheduleHudLeaveCheck(mf)
+    end)
+
+    btn:SetScript("PostClick", function(self)
+        local unit = self:GetAttribute("unit")
+        if unit and not InCombatLockdown() then
+            ns._recentlyBuffed[unit] = GetTime()
+            ns.ScheduleUpdate(true)
+        end
     end)
 
     btn:Hide()

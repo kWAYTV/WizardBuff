@@ -96,6 +96,8 @@ ns.CLASS_COLORS = {
     PET = {0.5, 0.8, 0.5},
 }
 
+ns._recentlyBuffed = {}
+
 BINDING_HEADER_WIZARDBUFF = "Wizard Buff"
 _G["BINDING_NAME_CLICK WizardBuffAutoBuffButton:LeftButton"] = "Self Buff (armor, shield)"
 _G["BINDING_NAME_CLICK WizardBuffBrillianceButton:LeftButton"] = "Group Buff (Int / Brilliance)"
@@ -131,12 +133,21 @@ local dbDefaults = {
 }
 
 local _scheduleTimer
-function ns.ScheduleUpdate()
-    if _scheduleTimer then return end
+function ns.ScheduleUpdate(immediate)
     if InCombatLockdown() then
         ns._pendingUpdate = true
         return
     end
+    if immediate then
+        if _scheduleTimer then return end
+        _scheduleTimer = C_Timer.After(0.05, function()
+            _scheduleTimer = nil
+            ns._pendingUpdate = false
+            ns.UpdateButtons()
+        end)
+        return
+    end
+    if _scheduleTimer then return end
     _scheduleTimer = C_Timer.After(0.3, function()
         _scheduleTimer = nil
         ns._pendingUpdate = false
@@ -207,7 +218,6 @@ function WizardBuff:OnEnable()
     self:RegisterEvent("PLAYER_REGEN_DISABLED")
     self:RegisterEvent("BAG_UPDATE")
     self:RegisterEvent("PLAYER_TARGET_CHANGED")
-    self:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
     ns.ScheduleUpdate()
     ns.Print("|cff666666v" .. ns.VERSION .. "|r — /wbuff config · mage buff HUD")
 end
@@ -312,23 +322,5 @@ function WizardBuff:BAG_UPDATE()
 end
 
 function WizardBuff:PLAYER_TARGET_CHANGED()
-    ns.ScheduleUpdate()
-end
-
-ns._recentlyBuffed = {}
-
-function WizardBuff:UNIT_SPELLCAST_SUCCEEDED(_, unit, _, spellId)
-    if not unit or not spellId then return end
-    local isOurBuff = false
-    for _, list in pairs(ns.SpellIDs) do
-        if type(list) == "table" then
-            for _, id in ipairs(list) do
-                if id == spellId then isOurBuff = true; break end
-            end
-        end
-        if isOurBuff then break end
-    end
-    if not isOurBuff then return end
-    ns._recentlyBuffed[unit] = GetTime()
     ns.ScheduleUpdate()
 end
