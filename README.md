@@ -33,6 +33,8 @@ Per-player click-to-cast cells grouped by class. Each cell shows the player's in
 - Dead, offline, and out-of-range members are visually distinguished so you focus on targets you can actually buff.
 - **Out-of-range feedback** — icon buttons desaturate and dim when the next target is too far, so you know to move closer before clicking.
 - **Rich tooltips** — hover any icon button to see the queued spell, target name, status, and current mode.
+- **Floating messages** — status and feedback text appears near the HUD and fades out (like Decursive), so you don't have to watch chat.
+- **Cast failure feedback** — clicking a dead, offline, out-of-range, or already-buffed target tells you why nothing happened instead of failing silently.
 
 ### React faster
 
