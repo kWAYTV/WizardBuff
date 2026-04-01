@@ -44,3 +44,5 @@ jobs:
           fetch-depth: 0
 
       - uses: BigWigsMods/packager@v2.5.1
+        env:
+          GITHUB_REF: refs/tags/${{ steps.tag.outputs.tag }}
