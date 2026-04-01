@@ -2,7 +2,7 @@ local _, ns = ...
 ns = ns or _G.WizardBuffAddon
 assert(ns, "WizardBuff: load WizardBuff.lua before LDB.lua")
 
-function WizardBuff_RegisterLDB(addon)
+function ns.RegisterLDB(addon)
     local LDB       = LibStub("LibDataBroker-1.1")
     local LibDBIcon = LibStub("LibDBIcon-1.0")
     local LibQTip   = LibStub("LibQTip-1.0", true)
@@ -87,13 +87,13 @@ function WizardBuff_RegisterLDB(addon)
                     local d = ns.db
                     if d then
                         d.locked = not d.locked
-                        print("|cff8eb4d4Wizard Buff|r: " .. (d.locked and "locked" or "unlocked"))
+                        ns.Print(d.locked and "locked" or "unlocked")
                     end
                 else
                     local d = ns.db
                     if d then
                         d.enabled = not d.enabled
-                        print("|cff8eb4d4Wizard Buff|r: " .. (d.enabled and "on" or "off"))
+                        ns.Print(d.enabled and "on" or "off")
                         if ns.ScheduleUpdate then ns.ScheduleUpdate() end
                     end
                 end

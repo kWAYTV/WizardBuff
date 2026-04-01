@@ -31,6 +31,54 @@ function ns.GetHighestRankSpell(spellList)
     return nil, nil
 end
 
+local SPELL_MIN_TARGET_LEVEL = {
+    [1459]  = 1,   -- AI R1
+    [1460]  = 14,  -- AI R2
+    [1461]  = 28,  -- AI R3
+    [10156] = 42,  -- AI R4
+    [10157] = 56,  -- AI R5
+    [27126] = 70,  -- AI R6 (TBC)
+    [23028] = 56,  -- AB R1
+    [27127] = 70,  -- AB R2 (TBC)
+}
+
+local function getRankedSpellName(id, rankIndex)
+    local name = GetSpellInfo(id)
+    if not name then return nil end
+    if GetSpellSubtext then
+        local subtext = GetSpellSubtext(id)
+        if subtext and subtext ~= "" then
+            return name .. "(" .. subtext .. ")"
+        end
+    end
+    if rankIndex then
+        return name .. "(Rank " .. rankIndex .. ")"
+    end
+    return name
+end
+
+function ns.GetBestRankForUnit(unit, spellList)
+    if not spellList then return nil, nil end
+    local targetLevel
+    if unit and UnitExists(unit) then
+        targetLevel = UnitLevel(unit)
+    end
+    if not targetLevel or targetLevel < 1 then
+        return ns.GetHighestRankSpell(spellList)
+    end
+    for i = #spellList, 1, -1 do
+        local id = spellList[i]
+        local name = GetSpellInfo(id)
+        if name and IsSpellKnown(id) then
+            local minLvl = SPELL_MIN_TARGET_LEVEL[id] or 1
+            if targetLevel >= minLvl then
+                return getRankedSpellName(id, i), id
+            end
+        end
+    end
+    return nil, nil
+end
+
 local function HasReagent(itemID)
     local count = GetItemCount(itemID)
     return count and count > 0
@@ -262,6 +310,7 @@ function ns.ScanRoster()
             name = name,
             class = class,
             needsInt = needsInt,
+            level = UnitLevel(unit),
             hasStrongerBrill = hasStrongerBrill,
         })
     end
@@ -292,6 +341,7 @@ function ns.ScanRoster()
             name = petName,
             class = "PET",
             needsInt = needsInt,
+            level = UnitLevel(petUnit),
             ownerName = ownerName,
             hasStrongerBrill = hasStrongerBrill,
         })

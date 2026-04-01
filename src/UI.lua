@@ -2,22 +2,12 @@ local _, ns = ...
 ns = ns or _G.WizardBuffAddon
 assert(ns, "WizardBuff: load WizardBuff.lua before UI.lua")
 
-local CLASS_ORDER = ns.CLASS_ORDER
-local CLASS_COLORS = ns.CLASS_COLORS
-local db
-
-function ns.SetUIContext(dbTable)
-    db = dbTable
-end
-
 local ICON = 32
 local PAD = 3
 local GAP = 2
-local NEED_H = 12
 
 ns.UI_FRAME_W = PAD + ICON + GAP + ICON + PAD
 ns.UI_BAR_H   = PAD + ICON + PAD
-ns.UI_ROWS_TOP = -(PAD + ICON + PAD)
 
 local CELL_W = 24
 local CELL_H = 12
@@ -46,20 +36,6 @@ function ns.ApplyHudFade()
         end
     end
     mf:SetAlpha(a)
-end
-
-function ns.ApplySlotBadges()
-    local auto = ns.autoBuffButton
-    local brill = ns.brillianceButton
-    if not auto or not brill then return end
-    if auto.slotBadge  then auto.slotBadge:Hide()  end
-    if brill.slotBadge then brill.slotBadge:Hide() end
-end
-
-function ns.RefreshHudChrome()
-    local d = ns.db
-    local mf = ns.mainFrame
-    if not mf or not d then return end
 end
 
 local function scheduleHudLeaveCheck(mf)
@@ -202,31 +178,11 @@ function ns.CreateMainFrame()
     mf:SetFrameStrata("MEDIUM")
     mf:SetFrameLevel(8)
 
-    mf:RegisterForDrag("LeftButton")
-    mf:SetScript("OnDragStart", function(self)
-        if not InCombatLockdown() and not (ns.db and ns.db.locked) then
-            self:StartMoving()
-        end
-    end)
-    mf:SetScript("OnDragStop", function(self)
-        self:StopMovingOrSizing()
-        if ns.db then
-            local point, _, relPoint, x, y = self:GetPoint(1)
-            ns.db.hudPos = { point = point, relPoint = relPoint, x = x, y = y }
-        end
-    end)
-
     mf:SetScript("OnEnter", function()
         ns._hudMouseOver = true
         ns.ApplyHudFade()
     end)
     mf:SetScript("OnLeave", function() scheduleHudLeaveCheck(mf) end)
-
-    mf:SetScript("OnMouseUp", function(_, button)
-        if button == "RightButton" and ns.OpenConfig then
-            ns.OpenConfig()
-        end
-    end)
 
     local needLine = mf:CreateFontString(nil, "OVERLAY")
     needLine:SetFont(STANDARD_TEXT_FONT, 9, "OUTLINE")
@@ -235,6 +191,81 @@ function ns.CreateMainFrame()
     mf.needLine = needLine
 
     ns.ApplyHudScale()
+end
+
+local HANDLE_H = 10
+
+function ns.CreateHandle()
+    local mf = ns.mainFrame
+    local h = CreateFrame("Button", "WizardBuffHandle", mf)
+    ns.handle = h
+    h:SetHeight(HANDLE_H)
+    h:SetPoint("TOPLEFT", mf, "TOPLEFT", 0, 0)
+    h:SetPoint("TOPRIGHT", mf, "TOPRIGHT", 0, 0)
+    h:SetFrameStrata("MEDIUM")
+    h:SetFrameLevel(mf:GetFrameLevel() + 5)
+    h:EnableMouse(true)
+    h:RegisterForDrag("LeftButton")
+    h:RegisterForClicks("AnyUp")
+
+    local hl = h:CreateTexture(nil, "HIGHLIGHT")
+    hl:SetAllPoints()
+    hl:SetColorTexture(1, 1, 1, 0.15)
+    hl:SetBlendMode("ADD")
+
+    local grip = h:CreateTexture(nil, "OVERLAY")
+    grip:SetSize(16, 2)
+    grip:SetPoint("CENTER", 0, 0)
+    grip:SetColorTexture(1, 1, 1, 0)
+    h.grip = grip
+
+    h:SetScript("OnEnter", function(self)
+        ns._hudMouseOver = true
+        ns.ApplyHudFade()
+        self.grip:SetColorTexture(1, 1, 1, 0.4)
+
+        GameTooltip:SetOwner(self, "ANCHOR_TOP")
+        GameTooltip:AddLine("Wizard Buff", 0.6, 0.8, 1)
+        local locked = ns.db and ns.db.locked
+        if locked then
+            GameTooltip:AddLine("Right-click: config", 0.6, 0.6, 0.6)
+            GameTooltip:AddLine("Shift+click: unlock", 0.6, 0.6, 0.6)
+        else
+            GameTooltip:AddLine("Drag to move", 0.6, 0.6, 0.6)
+            GameTooltip:AddLine("Right-click: config", 0.6, 0.6, 0.6)
+            GameTooltip:AddLine("Shift+click: lock", 0.6, 0.6, 0.6)
+        end
+        GameTooltip:Show()
+    end)
+    h:SetScript("OnLeave", function(self)
+        self.grip:SetColorTexture(1, 1, 1, 0)
+        GameTooltip:Hide()
+        scheduleHudLeaveCheck(mf)
+    end)
+
+    h:SetScript("OnDragStart", function()
+        if not InCombatLockdown() and not (ns.db and ns.db.locked) then
+            mf:StartMoving()
+        end
+    end)
+    h:SetScript("OnDragStop", function()
+        mf:StopMovingOrSizing()
+        if ns.db then
+            local point, _, relPoint, x, y = mf:GetPoint(1)
+            ns.db.hudPos = { point = point, relPoint = relPoint, x = x, y = y }
+        end
+    end)
+
+    h:SetScript("OnClick", function(_, button)
+        if IsShiftKeyDown() then
+            if ns.db then
+                ns.db.locked = not ns.db.locked
+                ns.Print(ns.db.locked and "Locked" or "Unlocked")
+            end
+        elseif button == "RightButton" then
+            if ns.OpenConfig then ns.OpenConfig() end
+        end
+    end)
 end
 
 local function stripSecureActionChrome(b)
@@ -270,7 +301,6 @@ local function makeIconButton(name, parent)
     icon:SetPoint("TOPLEFT", 1, -1)
     icon:SetPoint("BOTTOMRIGHT", -1, 1)
     b.icon = icon
-    b.text = nil
 
     stripSecureActionChrome(b)
     createGlow(b)
@@ -285,13 +315,10 @@ function ns.CreateAutoBuffButton()
     b:SetPoint("TOPLEFT", mf, "TOPLEFT", PAD, -PAD)
     b.icon:SetTexture("Interface\\Icons\\Spell_Holy_MagicalSentry")
 
-    b.slotBadge = b:CreateFontString(nil, "OVERLAY")
-    b.slotBadge:Hide()
-
     b:SetScript("OnEnter", function(self)
         if not InCombatLockdown() then self.bg:SetColorTexture(0.10, 0.10, 0.14, 1) end
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-        GameTooltip:AddLine("Auto", 0.85, 0.92, 1)
+        GameTooltip:AddLine("Self", 0.85, 0.92, 1)
         if self.tooltipLine2 and self.tooltipLine2 ~= "" then
             GameTooltip:AddLine(self.tooltipLine2, 0.6, 0.6, 0.6, true)
         end
@@ -311,9 +338,6 @@ function ns.CreateBrillianceButton()
     ns.brillianceButton = b
     b:SetPoint("LEFT", ns.autoBuffButton, "RIGHT", GAP, 0)
     b.icon:SetTexture("Interface\\Icons\\Spell_Nature_Regeneration")
-
-    b.slotBadge = b:CreateFontString(nil, "OVERLAY")
-    b.slotBadge:Hide()
 
     b:SetScript("OnEnter", function(self)
         if not InCombatLockdown() then self.bg:SetColorTexture(0.10, 0.08, 0.14, 1) end

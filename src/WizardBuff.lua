@@ -29,7 +29,7 @@ ns.SpellIDs = {
     MageArmor = {6117, 22782, 22783},
     IceBarrier = {11426, 13031, 13032, 13033},
     ManaShield = {1463, 8494, 8495, 10191, 10192, 10193},
-    ArcaneIntellect = {1459, 1460, 1461, 10156, 10157},
+    ArcaneIntellect = {1459, 1460, 1461, 10156, 10157, 27126},
     ArcaneBrilliance = {23028, 27127},
 }
 
@@ -95,8 +95,8 @@ ns.CLASS_COLORS = {
 }
 
 BINDING_HEADER_WIZARDBUFF = "Wizard Buff"
-_G["BINDING_NAME_CLICK WizardBuffAutoBuffButton:LeftButton"] = "Auto Buff (armor, shield if low HP, Int/Brilliance)"
-_G["BINDING_NAME_CLICK WizardBuffBrillianceButton:LeftButton"] = "Arcane Brilliance (or Int if no reagent)"
+_G["BINDING_NAME_CLICK WizardBuffAutoBuffButton:LeftButton"] = "Self Buff (armor, shield)"
+_G["BINDING_NAME_CLICK WizardBuffBrillianceButton:LeftButton"] = "Group Buff (Int / Brilliance)"
 
 ns.db = nil
 ns.isMage = false
@@ -109,6 +109,14 @@ ns._hudMouseOver = false
 
 _G.WizardBuffAddon = ns
 
+function ns.Print(msg)
+    print("|cff9ab8d4Wizard Buff|r: " .. tostring(msg))
+end
+
+function ns.PrintError(msg)
+    print("|cffff6666Wizard Buff|r: " .. tostring(msg))
+end
+
 local AceAddon = LibStub("AceAddon-3.0")
 local AceDB = LibStub("AceDB-3.0")
 
@@ -119,6 +127,20 @@ ns.addon = WizardBuff
 local dbDefaults = {
     profile = ns.defaults,
 }
+
+local _scheduleTimer
+function ns.ScheduleUpdate()
+    if _scheduleTimer then return end
+    if InCombatLockdown() then
+        ns._pendingUpdate = true
+        return
+    end
+    _scheduleTimer = C_Timer.After(0.3, function()
+        _scheduleTimer = nil
+        ns._pendingUpdate = false
+        ns.UpdateButtons()
+    end)
+end
 
 local function migrateLegacy(self)
     local old = _G.MagePowerDB
@@ -142,17 +164,15 @@ function WizardBuff:OnInitialize()
     self.db.RegisterCallback(self, "OnProfileChanged", function()
         ns.db = self.db.profile
         ns.SetLogicContext(ns.db, ns.roster)
-        ns.SetUIContext(ns.db)
         if ns.ApplyHudScale  then ns.ApplyHudScale()  end
         if ns.ScheduleUpdate then ns.ScheduleUpdate() end
     end)
     ns.db = self.db.profile
     ns.SetLogicContext(ns.db, ns.roster)
-    ns.SetUIContext(ns.db)
 
-    local ok, err = pcall(WizardBuff_RegisterOptions, self)
+    local ok, err = pcall(ns.RegisterOptions, self)
     if not ok then
-        print("|cffff6666Wizard Buff|r: options registration failed — " .. tostring(err))
+        ns.PrintError("options registration failed — " .. tostring(err))
     end
 
     self:RegisterChatCommand("wizardbuff", "SlashHandler")
@@ -160,7 +180,7 @@ function WizardBuff:OnInitialize()
 end
 
 function WizardBuff:OnEnable()
-    WizardBuff_RegisterLDB(self)
+    ns.RegisterLDB(self)
 
     local _, class = UnitClass("player")
     ns.isMage = (class == "MAGE")
@@ -168,14 +188,9 @@ function WizardBuff:OnEnable()
         return
     end
     ns.CreateMainFrame()
+    ns.CreateHandle()
     ns.CreateAutoBuffButton()
     ns.CreateBrillianceButton()
-    if ns.ApplySlotBadges then
-        ns.ApplySlotBadges()
-    end
-    if ns.RefreshHudChrome then
-        ns.RefreshHudChrome()
-    end
     if ns.ApplyHudFade then
         ns.ApplyHudFade()
     end
@@ -187,10 +202,10 @@ function WizardBuff:OnEnable()
     self:RegisterEvent("UNIT_AURA")
     self:RegisterEvent("PLAYER_REGEN_ENABLED")
     self:RegisterEvent("PLAYER_REGEN_DISABLED")
-    self:RegisterEvent("UPDATE_BINDINGS")
     self:RegisterEvent("BAG_UPDATE")
+    self:RegisterEvent("PLAYER_TARGET_CHANGED")
     ns.ScheduleUpdate()
-    print("|cff9ab8d4Wizard Buff|r |cff666666v" .. ns.VERSION .. "|r — /wbuff config · mage buff HUD")
+    ns.Print("|cff666666v" .. ns.VERSION .. "|r — /wbuff config · mage buff HUD")
 end
 
 function WizardBuff:OnDisable()
@@ -208,39 +223,39 @@ function WizardBuff:SlashHandler(input)
     end
     if cmd == "" or cmd == "toggle" then
         db.enabled = not db.enabled
-        print("|cff9ab8d4Wizard Buff|r: " .. (db.enabled and "on" or "off"))
+        ns.Print(db.enabled and "on" or "off")
         ns.ScheduleUpdate()
     elseif cmd == "config" or cmd == "options" or cmd == "settings" then
         ns.OpenConfig()
     elseif cmd == "lock" then
         db.locked = not db.locked
-        print("|cff9ab8d4Wizard Buff|r: " .. (db.locked and "locked" or "unlocked"))
+        ns.Print(db.locked and "locked" or "unlocked")
     elseif cmd == "grid" or cmd == "rows" or cmd == "classrows" then
         db.showClassRows = not db.showClassRows
-        print("|cff9ab8d4Wizard Buff|r: Buff grid " .. (db.showClassRows and "on" or "off"))
+        ns.Print("Buff grid " .. (db.showClassRows and "on" or "off"))
         ns.ScheduleUpdate()
     elseif cmd == "armor" then
         db.buffArmor = not db.buffArmor
-        print("|cff9ab8d4Wizard Buff|r: Armor " .. (db.buffArmor and "on" or "off"))
+        ns.Print("Armor " .. (db.buffArmor and "on" or "off"))
         ns.ScheduleUpdate()
     elseif cmd == "bubble" then
         db.enableBubble = not db.enableBubble
-        print("|cff9ab8d4Wizard Buff|r: Bubble " .. (db.enableBubble and "on" or "off"))
+        ns.Print("Bubble " .. (db.enableBubble and "on" or "off"))
         ns.ScheduleUpdate()
     elseif cmd == "int" or cmd == "intellect" then
         db.buffIntellect = not db.buffIntellect
-        print("|cff9ab8d4Wizard Buff|r: Intellect " .. (db.buffIntellect and "on" or "off"))
+        ns.Print("Intellect " .. (db.buffIntellect and "on" or "off"))
         ns.ScheduleUpdate()
     elseif cmd == "brilliance" then
         db.useArcaneBrilliance = not db.useArcaneBrilliance
-        print("|cff9ab8d4Wizard Buff|r: Brilliance preference " .. (db.useArcaneBrilliance and "on" or "off"))
+        ns.Print("Brilliance preference " .. (db.useArcaneBrilliance and "on" or "off"))
         ns.ScheduleUpdate()
     elseif cmd == "pets" then
         db.buffPets = not db.buffPets
-        print("|cff9ab8d4Wizard Buff|r: Pets " .. (db.buffPets and "on" or "off"))
+        ns.Print("Pets " .. (db.buffPets and "on" or "off"))
         ns.ScheduleUpdate()
     else
-        print("|cff9ab8d4Wizard Buff|r: /wbuff toggle | config | lock | grid | armor | bubble | int | brilliance | pets")
+        ns.Print("/wbuff toggle | config | lock | grid | armor | bubble | int | brilliance | pets")
     end
 end
 
@@ -271,9 +286,10 @@ function WizardBuff:PLAYER_REGEN_DISABLED()
     end
 end
 
-function WizardBuff:UPDATE_BINDINGS()
+function WizardBuff:BAG_UPDATE()
+    ns.ScheduleUpdate()
 end
 
-function WizardBuff:BAG_UPDATE()
+function WizardBuff:PLAYER_TARGET_CHANGED()
     ns.ScheduleUpdate()
 end

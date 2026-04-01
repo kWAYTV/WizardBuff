@@ -12,5 +12,4 @@ src/Options.lua
 src/Logic.lua
 src/UI.lua
 src/Update.lua
-src/Events.lua
 src/LDB.lua

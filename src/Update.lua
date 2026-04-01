@@ -8,28 +8,22 @@ local SpellIDs = ns.SpellIDs
 local SpellNames = ns.SpellNames
 local CLASS_ORDER = ns.CLASS_ORDER
 
--- Distinct textures per role (idle "OK" used same INT art as Brill — looked identical in-game).
 local ICON = {
-    armor = "Interface\\Icons\\Spell_Frost_FrostArmor02",
-    int = "Interface\\Icons\\Spell_Holy_MagicalSentry",
-    brill = "Interface\\Icons\\Spell_Holy_ArcaneIntellect",
-    shield = "Interface\\Icons\\Spell_Ice_Lament",
-    -- UX fallbacks when Blizzard gives identical spell icons (common for INT vs Brill in Classic data).
-    autoIdle = "Interface\\Icons\\Spell_Frost_FrostArmor02",
-    brillIdle = "Interface\\Icons\\Spell_Nature_Regeneration",
-    -- Group slot when Brilliance is not trained yet (spellbook) — do not reuse INT art for this column.
+    armor     = "Interface\\Icons\\Spell_Frost_FrostArmor02",
+    int       = "Interface\\Icons\\Spell_Holy_MagicalSentry",
+    brill     = "Interface\\Icons\\Spell_Holy_ArcaneIntellect",
+    shield    = "Interface\\Icons\\Spell_Ice_Lament",
+    selfIdle  = "Interface\\Icons\\Spell_Frost_FrostArmor02",
+    grpIdle   = "Interface\\Icons\\Spell_Nature_Regeneration",
     notLearned = "Interface\\Icons\\INV_Misc_QuestionMark",
 }
 
-local ARCANE_POWDER_ITEM = 17020
-
 local COL = {
-    armor = {0.18, 0.32, 0.48, 0.92},
-    int = {0.22, 0.18, 0.35, 0.92},
-    shield = {0.15, 0.22, 0.38, 0.92},
-    ok = {0.12, 0.32, 0.12, 0.92},
-    brill = {0.26, 0.16, 0.38, 0.92},
-    intNoPowder = {0.28, 0.22, 0.14, 0.92},
+    armor    = {0.18, 0.32, 0.48, 0.92},
+    int      = {0.22, 0.18, 0.35, 0.92},
+    shield   = {0.15, 0.22, 0.38, 0.92},
+    ok       = {0.12, 0.32, 0.12, 0.92},
+    brill    = {0.26, 0.16, 0.38, 0.92},
     disabled = {0.14, 0.1, 0.18, 0.92},
 }
 
@@ -50,59 +44,29 @@ local function resolveSpellIcon(spellId, fallbackPath)
     return fallbackPath
 end
 
-local function getItemIconPath(itemId, fallbackPath)
-    if GetItemIcon then
-        local tex = GetItemIcon(itemId)
-        if tex and tex ~= "" then
-            return tex
-        end
-    end
-    return fallbackPath
-end
-
--- If both slots resolve to the same texture, distinguish the right (group/brill) slot first — never clobber both with idle art while casting Int on both.
-local function ensureDistinctHudIcons(autoSpec, brillSpec)
-    local a, b = autoSpec.icon, brillSpec.icon
-    if a and b and a ~= b then
-        return
-    end
-    brillSpec.icon = getItemIconPath(ARCANE_POWDER_ITEM, ICON.brill)
-    if brillSpec.icon == autoSpec.icon then
-        brillSpec.icon = ICON.brillIdle
-    end
-    if autoSpec.icon == brillSpec.icon then
-        autoSpec.icon = ICON.autoIdle
-    end
-end
-
--- Right (group) slot always shows powder when we only cast Intellect there (no powder / no Brilliance yet) so it never mirrors the auto column.
-local function brillGroupSlotIcon()
-    return getItemIconPath(ARCANE_POWDER_ITEM, ICON.brillIdle)
-end
-
 local function applyButtonSpec(btn, spec)
-    btn:SetAttribute("macrotext", spec.macro)
+    if spec.spellId then
+        btn:SetAttribute("type", "spell")
+        btn:SetAttribute("spell", spec.spellId)
+        btn:SetAttribute("unit", spec.unit or "player")
+        btn:SetAttribute("macrotext", nil)
+    elseif spec.macro then
+        btn:SetAttribute("type", "macro")
+        btn:SetAttribute("macrotext", spec.macro)
+        btn:SetAttribute("spell", nil)
+        btn:SetAttribute("unit", nil)
+    else
+        btn:SetAttribute("type", nil)
+        btn:SetAttribute("spell", nil)
+        btn:SetAttribute("unit", nil)
+        btn:SetAttribute("macrotext", nil)
+    end
     btn.icon:SetTexture(spec.icon)
     local c = spec.bg
     btn.bg:SetColorTexture(c[1], c[2], c[3], c[4])
     btn.tooltipLine2 = spec.tooltipLine2
     ns.SetButtonTimer(btn, spec.timerSec)
     ns.SetButtonGlow(btn, spec.needsAction)
-end
-
-local function formatHudTimer(sec)
-    if not sec or sec <= 0 then
-        return ""
-    end
-    if sec >= 3600 then
-        return string.format(" (%dh)", math.floor(sec / 3600))
-    elseif sec >= 60 then
-        return string.format(" (%dm)", math.floor(sec / 60))
-    end
-    return string.format(" (%ds)", math.floor(sec))
-end
-
-local function applyHudLabels()
 end
 
 local function countNeedingInt(roster)
@@ -120,143 +84,122 @@ local function countNeedingInt(roster)
     return n
 end
 
-local function resolveAutoBuffSpec(ctx)
-    local armorSpell, bubbleSpell = ctx.armorSpell, ctx.bubbleSpell
-    local intToUse = ctx.intToUse
-    local nextIntUnit, nextIntName = ctx.nextIntUnit, ctx.nextIntName
-    local nextIntPetUnit, nextIntPetName = ctx.nextIntPetUnit, ctx.nextIntPetName
+local function resolveSelfSpec(ctx)
+    local armorSpell = ctx.armorSpell
+    local bubbleSpell = ctx.bubbleSpell
+    local armorTimer = ns.GetSelfArmorRemaining and ns.GetSelfArmorRemaining()
 
     if ns.SelfNeedsArmor() and armorSpell then
         local _, sid = ns.GetArmorSpell()
         return {
-            macro = "/cast [@player] " .. armorSpell,
-            text = "|cff69ccf0Armor|r",
-            labelShort = "Armor",
+            spellId = sid,
+            unit = "player",
             icon = resolveSpellIcon(sid, ICON.armor),
             bg = COL.armor,
-            tooltipLine2 = "Self-cast armor before buffing the group.",
+            tooltipLine2 = "Self-cast armor.",
             needsAction = true,
+            timerSec = armorTimer,
         }
     end
 
     if bubbleSpell and ns.NeedsBubble() and not ns.PlayerHasShieldBuff() then
         local _, sid = ns.GetBubbleSpell()
         return {
-            macro = ns.MakeSelfCastMacro(bubbleSpell),
-            text = "|cff99ccffShield|r",
-            labelShort = "Shield",
+            spellId = sid,
+            unit = "player",
             icon = resolveSpellIcon(sid, ICON.shield),
             bg = COL.shield,
-            tooltipLine2 = "Emergency shield when your health is below the threshold.",
+            tooltipLine2 = "Emergency shield — HP below threshold.",
             needsAction = true,
+            timerSec = armorTimer,
         }
-    end
-
-    if nextIntUnit and intToUse then
-        local _, iid = ns.GetHighestRankSpell(SpellIDs.ArcaneIntellect)
-        return {
-            macro = ns.MakeBuffMacro(nextIntUnit, intToUse),
-            text = "|cffaaaaff" .. nextIntName .. "|r",
-            labelShort = (nextIntName and #nextIntName > 8) and (nextIntName:sub(1, 7) .. "\226\128\166") or (nextIntName or "Int"),
-            icon = resolveSpellIcon(iid, ICON.int),
-            bg = COL.int,
-            tooltipLine2 = "Casts on the next roster member that needs Intellect (or Brilliance if configured).",
-            needsAction = true,
-        }
-    end
-
-    if nextIntPetUnit and intToUse then
-        local _, iid = ns.GetHighestRankSpell(SpellIDs.ArcaneIntellect)
-        return {
-            macro = ns.MakeBuffMacro(nextIntPetUnit, intToUse),
-            text = "|cffaaaaffPet|r",
-            labelShort = "Pet",
-            icon = resolveSpellIcon(iid, ICON.int),
-            bg = COL.int,
-            tooltipLine2 = "Casts on the next pet that needs Intellect.",
-            needsAction = true,
-        }
-    end
-
-    local armorTimer = ns.GetSelfArmorRemaining and ns.GetSelfArmorRemaining()
-    local intTimer = SpellNames.ArcaneIntellect and ns.GetBuffTimeRemaining("player", SpellNames.ArcaneIntellect)
-    local selfTimer = nil
-    if armorTimer and intTimer then
-        selfTimer = math.min(armorTimer, intTimer)
-    else
-        selfTimer = armorTimer or intTimer
     end
 
     return {
-        macro = nil,
-        text = "|cff66dd66OK|r",
-        labelShort = "Queue",
-        icon = ICON.autoIdle,
+        icon = ICON.selfIdle,
         bg = COL.ok,
-        tooltipLine2 = "Next target in queue: armor, shield (if low HP), then Int/Brilliance.",
+        tooltipLine2 = "Armor active.",
         needsAction = false,
-        timerSec = selfTimer,
+        timerSec = armorTimer,
     }
 end
 
-local function resolveBrillianceSpec(ctx)
-    local brillTarget = ctx.brillTarget
-    local brillSpell, intSpell = ctx.brillSpell, ctx.intSpell
-    local hasPowder = ctx.hasPowder
-    local learnedBrill, brillSid = ns.GetHighestRankSpell(SpellIDs.ArcaneBrilliance)
-    local _, intSid = ns.GetHighestRankSpell(SpellIDs.ArcaneIntellect)
+local function resolveGroupSpec(ctx)
+    local brillSpell = ctx.brillSpell
+    local intSidToUse = ctx.intSidToUse
+    local intSid = ctx.intSid
+    local brillSid = ctx.brillSid
+    local nextIntUnit, nextIntName = ctx.nextIntUnit, ctx.nextIntName
+    local nextIntPetUnit, nextIntPetName = ctx.nextIntPetUnit, ctx.nextIntPetName
 
-    if brillSpell then
-        return brillTarget and {
-            macro = ns.MakeBuffMacro(brillTarget, brillSpell),
-            text = "|cffcc99ffBrilliance|r",
-            labelShort = "Brill",
-            icon = resolveSpellIcon(brillSid, ICON.brill),
-            bg = COL.brill,
-            timerSec = nil,
-            tooltipLine2 = "Casts Arcane Brilliance on the same target as Auto when possible.",
-            needsAction = true,
-        } or {
-            macro = nil,
-            text = "|cff66dd66Done|r",
-            labelShort = "Done",
-            icon = resolveSpellIcon(brillSid, ICON.brillIdle),
-            bg = COL.ok,
-            timerSec = SpellNames.ArcaneBrilliance and ns.GetBuffTimeRemaining("player", SpellNames.ArcaneBrilliance) or nil,
-            tooltipLine2 = "Group buff satisfied or no valid target.",
+    local selfIntTimer
+    if SpellNames.ArcaneBrilliance then
+        selfIntTimer = ns.GetBuffTimeRemaining("player", SpellNames.ArcaneBrilliance)
+    end
+    if not selfIntTimer and SpellNames.ArcaneIntellect then
+        selfIntTimer = ns.GetBuffTimeRemaining("player", SpellNames.ArcaneIntellect)
+    end
+
+    if not intSid and not brillSid then
+        return {
+            icon = ICON.notLearned,
+            bg = COL.disabled,
+            tooltipLine2 = "Learn Arcane Intellect to use this slot.",
             needsAction = false,
+            timerSec = nil,
         }
     end
 
-    if learnedBrill and not hasPowder and intSpell then
-        return brillTarget and {
-            macro = ns.MakeBuffMacro(brillTarget, intSpell),
-            text = "|cffffcc66Int|r",
-            labelShort = "Int",
-            icon = brillGroupSlotIcon(),
-            bg = COL.intNoPowder,
-            tooltipLine2 = "No Arcane Powder: this button still casts Intellect, but the icon is the group slot (powder = Arcane Brilliance when you have it).",
+    if nextIntUnit and intSidToUse then
+        local isBrill = brillSid and (intSidToUse == brillSid)
+        return {
+            spellId = intSidToUse,
+            unit = nextIntUnit,
+            icon = isBrill and resolveSpellIcon(brillSid, ICON.brill) or resolveSpellIcon(intSid, ICON.int),
+            bg = isBrill and COL.brill or COL.int,
+            tooltipLine2 = nextIntName .. " needs buff.",
             needsAction = true,
-        } or {
-            macro = nil,
-            text = "|cff66dd66OK|r",
-            labelShort = "Group",
-            icon = brillGroupSlotIcon(),
+            timerSec = selfIntTimer,
+        }
+    end
+
+    if nextIntPetUnit and intSidToUse then
+        return {
+            spellId = intSidToUse,
+            unit = nextIntPetUnit,
+            icon = resolveSpellIcon(intSid, ICON.int),
+            bg = COL.int,
+            tooltipLine2 = (nextIntPetName or "Pet") .. " needs buff.",
+            needsAction = true,
+            timerSec = selfIntTimer,
+        }
+    end
+
+    local idleIcon
+    if brillSid then
+        idleIcon = resolveSpellIcon(brillSid, ICON.grpIdle)
+    else
+        idleIcon = resolveSpellIcon(intSid, ICON.int)
+    end
+
+    if intSid and UnitExists("target") and UnitIsFriend("player", "target") and not UnitIsDeadOrGhost("target") then
+        return {
+            spellId = intSid,
+            unit = "target",
+            icon = idleIcon,
             bg = COL.ok,
-            tooltipLine2 = "Buy Arcane Powder to cast Arcane Brilliance from this slot; until then it falls back to Int.",
+            tooltipLine2 = "Click to buff target.",
             needsAction = false,
-            timerSec = SpellNames.ArcaneIntellect and ns.GetBuffTimeRemaining("player", SpellNames.ArcaneIntellect) or nil,
+            timerSec = selfIntTimer,
         }
     end
 
     return {
-        macro = nil,
-        text = "|cff666666\226\128\148|r",
-        labelShort = "Train",
-        icon = ICON.notLearned,
-        bg = COL.disabled,
-        tooltipLine2 = "Arcane Brilliance is not in your spellbook yet. Train it to unlock the group buff on this slot.",
+        icon = idleIcon,
+        bg = COL.ok,
+        tooltipLine2 = "Group buffed.",
         needsAction = false,
+        timerSec = selfIntTimer,
     }
 end
 
@@ -265,6 +208,7 @@ local function clearSecureSpell(btn)
     btn:SetAttribute("type", nil)
     btn:SetAttribute("spell", nil)
     btn:SetAttribute("unit", nil)
+    btn:SetAttribute("macrotext", nil)
 end
 
 local function hideUnusedGridCells(startIdx)
@@ -275,6 +219,8 @@ local function hideUnusedGridCells(startIdx)
         cells[i]:Hide()
     end
 end
+
+--- Sound reminders ---------------------------------------------------------
 
 local SOUND_SELF  = "Sound\\Interface\\AlarmClockWarning3.ogg"
 local SOUND_GROUP = "Sound\\Interface\\iQuestUpdate.ogg"
@@ -288,7 +234,7 @@ local function playBuffReminder()
     end
 end
 
-local function updateSoundReminder(autoNeedsAction, brillNeedsAction, autoLabel)
+local function updateSoundReminder(selfNeedsAction, groupNeedsAction)
     local d = ns.db
     if not d or not d.showSound then
         if ns._soundTicker then
@@ -299,13 +245,8 @@ local function updateSoundReminder(autoNeedsAction, brillNeedsAction, autoLabel)
         return
     end
 
-    local anyNeedsAction = autoNeedsAction or brillNeedsAction
-    local kind
-    if autoNeedsAction and (autoLabel == "Armor" or autoLabel == "Shield") then
-        kind = "self"
-    else
-        kind = "group"
-    end
+    local anyNeedsAction = selfNeedsAction or groupNeedsAction
+    local kind = selfNeedsAction and "self" or "group"
 
     local wasActive = ns._soundActive
     local kindChanged = (ns._soundKind ~= kind)
@@ -345,40 +286,41 @@ function ns.UpdateButtons()
     ns.ScanRoster()
 
     local armorSpell = ns.GetArmorSpell()
-    local intSpell = ns.GetHighestRankSpell(SpellIDs.ArcaneIntellect)
+    local intSpell, intSid = ns.GetHighestRankSpell(SpellIDs.ArcaneIntellect)
     local hasPowder = ns.HasArcanePowder()
-    local brillSpell = hasPowder and ns.GetHighestRankSpell(SpellIDs.ArcaneBrilliance)
-    local intToUse = (brillSpell and db.useArcaneBrilliance) and brillSpell or intSpell
+    local brillSpell, brillSid
+    if hasPowder then
+        brillSpell, brillSid = ns.GetHighestRankSpell(SpellIDs.ArcaneBrilliance)
+    end
+    local intSidToUse = (brillSpell and db.useArcaneBrilliance) and brillSid or intSid
 
     local nextIntUnit, nextIntName = ns.GetNextIntTarget(false)
     local nextIntPetUnit, nextIntPetName = ns.GetNextIntTarget(true)
 
-    local autoSpec = resolveAutoBuffSpec({
+    local selfSpec = resolveSelfSpec({
         armorSpell = armorSpell,
         bubbleSpell = ns.GetBubbleSpell(),
-        intToUse = intToUse,
+    })
+    local groupSpec = resolveGroupSpec({
+        intSpell = intSpell,
+        brillSpell = brillSpell,
+        intSid = intSid,
+        brillSid = brillSid,
+        intSidToUse = intSidToUse,
+        hasPowder = hasPowder,
         nextIntUnit = nextIntUnit,
         nextIntName = nextIntName,
         nextIntPetUnit = nextIntPetUnit,
         nextIntPetName = nextIntPetName,
     })
-    local brillSpec = resolveBrillianceSpec({
-        brillTarget = nextIntUnit or nextIntPetUnit,
-        brillSpell = brillSpell,
-        intSpell = intSpell,
-        hasPowder = hasPowder,
-    })
-    ensureDistinctHudIcons(autoSpec, brillSpec)
-    applyButtonSpec(autoBuffButton, autoSpec)
+
+    applyButtonSpec(autoBuffButton, selfSpec)
     if brillianceButton then
-        applyButtonSpec(brillianceButton, brillSpec)
+        applyButtonSpec(brillianceButton, groupSpec)
         brillianceButton:Show()
     end
 
-    updateSoundReminder(autoSpec.needsAction, brillSpec.needsAction, autoSpec.labelShort)
-
-    applyHudLabels()
-    if ns.ApplySlotBadges then ns.ApplySlotBadges() end
+    updateSoundReminder(selfSpec.needsAction, groupSpec.needsAction)
 
     local needN = countNeedingInt(roster)
     local BAR_H = ns.UI_BAR_H or 38
@@ -474,14 +416,13 @@ function ns.UpdateButtons()
 
         ns.ApplyGridCellColor(cell)
 
-        if intSpell and p.needsInt then
+        if p.needsInt and intSidToUse then
             cell:SetAttribute("type", "spell")
-            cell:SetAttribute("spell", intSpell)
+            cell:SetAttribute("spell", intSidToUse)
             cell:SetAttribute("unit", p.unit)
+            cell:SetAttribute("macrotext", nil)
         else
-            cell:SetAttribute("type", nil)
-            cell:SetAttribute("spell", nil)
-            cell:SetAttribute("unit", nil)
+            clearSecureSpell(cell)
         end
 
         cell:Show()
