@@ -113,4 +113,4 @@ The `@project-version@` token in the `.toc` is replaced with the tag name or com
 
 ## License
 
-All Rights Reserved © LazyLoafs
+All Rights Reserved © kWAYTV
