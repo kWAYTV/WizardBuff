@@ -70,6 +70,7 @@ function WizardBuff:OnEnable()
     if ns.ApplyHudFade  then ns.ApplyHudFade()  end
     if ns.ApplyHudScale then ns.ApplyHudScale() end
 
+    ns.InitCastFeedback()
     self:RegisterEvent("PLAYER_ENTERING_WORLD")
     self:RegisterEvent("GROUP_ROSTER_UPDATE")
     self:RegisterEvent("UNIT_AURA")
@@ -77,6 +78,7 @@ function WizardBuff:OnEnable()
     self:RegisterEvent("PLAYER_REGEN_DISABLED")
     self:RegisterEvent("BAG_UPDATE")
     self:RegisterEvent("PLAYER_TARGET_CHANGED")
+    self:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
 
     ns.ScheduleUpdate()
     ns.Print("|cff666666" .. ns.VERSION .. "|r — /wbuff config · mage buff HUD")
@@ -93,6 +95,7 @@ function WizardBuff:PLAYER_ENTERING_WORLD()  ns.ScheduleUpdate()      end
 function WizardBuff:GROUP_ROSTER_UPDATE()     ns.ScheduleUpdate()      end
 function WizardBuff:BAG_UPDATE()              ns.ScheduleUpdate()      end
 function WizardBuff:PLAYER_TARGET_CHANGED()   ns.ScheduleUpdate()      end
+function WizardBuff:COMBAT_LOG_EVENT_UNFILTERED() ns.OnCombatLogEvent() end
 
 function WizardBuff:UNIT_AURA(_, unit)
     if unit == "player" or unit == "pet" or unit:match("^party") or unit:match("^raid") then
