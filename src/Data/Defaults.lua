@@ -26,7 +26,6 @@ ns.defaults = {
     buffPets           = true,
     showDragHandle     = true,
     refreshFloorSec    = 120,
-    keybind            = "",
     hudPos             = nil,
     minimap            = { hide = false },
     migratedFromMagePower = false,

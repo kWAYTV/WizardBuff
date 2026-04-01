@@ -25,6 +25,14 @@ local function hookSecureHover(btn, mf)
     btn:HookScript("OnLeave", function() ns.ScheduleHudLeaveCheck(mf) end)
 end
 
+local STATUS_COLORS = {
+    good    = { 0.4,  1,    0.4  },
+    warning = { 1,    0.65, 0.3  },
+    bad     = { 1,    0.4,  0.4  },
+    oor     = { 1,    0.5,  0.2  },
+    neutral = { 0.6,  0.6,  0.6  },
+}
+
 local function showRichTooltip(self, title, titleR, titleG, titleB)
     GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
     GameTooltip:AddLine(title, titleR, titleG, titleB)
@@ -32,22 +40,11 @@ local function showRichTooltip(self, title, titleR, titleG, titleB)
         GameTooltip:AddLine(self.tooltipSpell, 1, 1, 1)
     end
     if self.tooltipTarget then
-        local tgt = self.tooltipTarget
-        GameTooltip:AddLine("Target: " .. tgt, 0.7, 0.7, 0.7)
+        GameTooltip:AddLine("Target: " .. self.tooltipTarget, 0.7, 0.7, 0.7)
     end
     if self.tooltipStatus then
-        local sr, sg, sb = 0.6, 0.6, 0.6
-        local s = self.tooltipStatus
-        if s:find("Out of range") then
-            sr, sg, sb = 1, 0.5, 0.2
-        elseif s:find("move closer") then
-            sr, sg, sb = 1, 0.65, 0.3
-        elseif s:find("Needs cast") or s:find("HP below") then
-            sr, sg, sb = 1, 0.4, 0.4
-        elseif s:find("Active") or s:find("buffed") or s:find("In range") then
-            sr, sg, sb = 0.4, 1, 0.4
-        end
-        GameTooltip:AddLine(s, sr, sg, sb, true)
+        local c = STATUS_COLORS[self.tooltipColor] or STATUS_COLORS.neutral
+        GameTooltip:AddLine(self.tooltipStatus, c[1], c[2], c[3], true)
     end
     if self.tooltipMode then
         GameTooltip:AddLine("Mode: " .. self.tooltipMode, 0.55, 0.55, 0.55)

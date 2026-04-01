@@ -69,14 +69,19 @@ function ns.GetArcanePowderCount()
     return GetItemCount(ReagentIDs.ArcanePowder) or 0
 end
 
+function ns.PowderColorHex(n)
+    if n > 5  then return "88aaff" end
+    if n > 0  then return "ffcc44" end
+    return "ff5555"
+end
+
 ---------------------------------------------------------------------------
 -- Armor / bubble spell resolution (reads ns.db via SetLogicContext)
 ---------------------------------------------------------------------------
 local db
 
-function ns.SetLogicContext(dbTable, rosterTable)
+function ns.SetLogicContext(dbTable)
     db = dbTable
-    ns._logicRoster = rosterTable
 end
 
 function ns.GetArmorSpell()

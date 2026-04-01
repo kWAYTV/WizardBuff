@@ -23,7 +23,7 @@ function ns.RegisterLDB(addon)
 
             local powder = ns.GetArcanePowderCount and ns.GetArcanePowderCount() or nil
             if powder then
-                local clr = powder > 5 and "66dd66" or (powder > 0 and "ffcc44" or "ff5555")
+                local clr = ns.PowderColorHex(powder)
                 GameTooltip:AddLine("Arcane Powder: |cff" .. clr .. powder .. "|r", 1, 1, 1)
             end
         end

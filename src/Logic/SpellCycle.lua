@@ -41,19 +41,17 @@ local SHIELD_DEFS = {
 }
 
 ---------------------------------------------------------------------------
--- Build a filtered list from a definition table (lazy, cached per table)
+-- Build a filtered list from a definition table
+-- Rebuilt every call — lists are tiny (3-5 entries) and IsSpellKnown
+-- results can change mid-session (trainer, level-up).
 ---------------------------------------------------------------------------
-local caches = {}
-
 local function buildList(defs)
-    if caches[defs] then return caches[defs] end
     local out = {}
     for _, d in ipairs(defs) do
         if not d.spellKey or isAnyRankKnown(d.spellKey) then
             out[#out + 1] = d
         end
     end
-    caches[defs] = out
     return out
 end
 

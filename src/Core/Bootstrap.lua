@@ -36,13 +36,13 @@ function WizardBuff:OnInitialize()
 
     self.db.RegisterCallback(self, "OnProfileChanged", function()
         ns.db = self.db.profile
-        ns.SetLogicContext(ns.db, ns.roster)
+        ns.SetLogicContext(ns.db)
         if ns.ApplyHudScale  then ns.ApplyHudScale()  end
         if ns.ScheduleUpdate then ns.ScheduleUpdate()  end
     end)
 
     ns.db = self.db.profile
-    ns.SetLogicContext(ns.db, ns.roster)
+    ns.SetLogicContext(ns.db)
 
     local ok, err = pcall(ns.RegisterOptions, self)
     if not ok then

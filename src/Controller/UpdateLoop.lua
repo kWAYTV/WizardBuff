@@ -39,7 +39,6 @@ function ns.UpdateButtons()
 
     local ctx = {
         armorSpell     = armorSpell,
-        bubbleSpell    = ns.GetBubbleSpell(),
         intToUse       = intToUse,
         intSid         = intSid,
         brillSid       = brillSid,

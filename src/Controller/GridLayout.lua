@@ -161,7 +161,7 @@ function ns.LayoutGrid(gridPlayers, intToUse, needN, allOOR)
         end
         local powderN = ns.GetArcanePowderCount and ns.GetArcanePowderCount() or 0
         if powderN >= 0 then
-            local clr = powderN > 5 and "88aaff" or (powderN > 0 and "ffcc44" or "ff5555")
+            local clr = ns.PowderColorHex(powderN)
             parts[#parts + 1] = "|cff" .. clr .. powderN .. "|r |cff555555pw|r"
         end
         mainFrame.needLine:SetText(table.concat(parts, " \194\183 "))

@@ -19,8 +19,6 @@ local function resolveSpellIcon(spellId, fallbackPath)
     return fallbackPath
 end
 
-ns.ResolveSpellIcon = resolveSpellIcon
-
 ---------------------------------------------------------------------------
 -- Per-spell fallback icon (used when resolveSpellIcon has a valid ID
 -- but also as the "I know what spell this is" fallback)
@@ -67,6 +65,7 @@ function ns.ApplyButtonSpec(btn, spec)
     btn.tooltipTarget = spec.tooltipTarget
     btn.tooltipStatus = spec.tooltipStatus
     btn.tooltipMode   = spec.tooltipMode
+    btn.tooltipColor  = spec.tooltipColor
     btn._isIntCast = spec.isIntCast or false
     ns.SetButtonTimer(btn, spec.timerSec)
     ns.SetButtonGlow(btn, spec.needsAction and not spec.outOfRange)
@@ -139,6 +138,7 @@ function ns.ResolveAutoSpec(ctx)
                     tooltipSpell  = intSpell,
                     tooltipTarget = "self",
                     tooltipStatus = hasBuff and "Active" or "Needs cast",
+                    tooltipColor  = hasBuff and "good" or "bad",
                     tooltipMode   = "Self Intellect (locked)",
                 }
             end
@@ -158,6 +158,7 @@ function ns.ResolveAutoSpec(ctx)
                     tooltipSpell  = name,
                     tooltipTarget = "self",
                     tooltipStatus = needsCast and "Needs cast" or "Active",
+                    tooltipColor  = needsCast and "bad" or "good",
                     tooltipMode   = (SpellNames[selfKey] or selfKey) .. " (locked)",
                 }
             end
@@ -180,6 +181,7 @@ function ns.ResolveAutoSpec(ctx)
             tooltipSpell  = armorSpell,
             tooltipTarget = "self",
             tooltipStatus = "Needs cast",
+            tooltipColor  = "bad",
         }
     end
 
@@ -197,6 +199,7 @@ function ns.ResolveAutoSpec(ctx)
             tooltipSpell  = intToUse,
             tooltipTarget = ctx.nextIntName,
             tooltipStatus = "In range",
+            tooltipColor  = "good",
         }
     end
 
@@ -213,6 +216,7 @@ function ns.ResolveAutoSpec(ctx)
             tooltipSpell  = intToUse,
             tooltipTarget = ctx.nextIntPetName or "Pet",
             tooltipStatus = "In range",
+            tooltipColor  = "good",
         }
     end
 
@@ -230,6 +234,7 @@ function ns.ResolveAutoSpec(ctx)
             tooltipSpell  = intToUse,
             tooltipTarget = ctx.nextIntName,
             tooltipStatus = "Out of range",
+            tooltipColor  = "oor",
         }
     end
 
@@ -246,6 +251,7 @@ function ns.ResolveAutoSpec(ctx)
             tooltipSpell  = intToUse,
             tooltipTarget = ctx.nextIntPetName or "Pet",
             tooltipStatus = "Out of range",
+            tooltipColor  = "oor",
         }
     end
 
@@ -262,6 +268,7 @@ function ns.ResolveAutoSpec(ctx)
         tooltipSpell  = nil,
         tooltipTarget = nil,
         tooltipStatus = idleStatus,
+        tooltipColor  = needN > 0 and "warning" or "good",
     }
 end
 
@@ -302,6 +309,7 @@ function ns.ResolveGroupSpec(ctx)
             tooltipSpell  = nil,
             tooltipTarget = nil,
             tooltipStatus = "Learn Arcane Intellect to use this slot",
+            tooltipColor  = "neutral",
         }
     end
 
@@ -317,6 +325,7 @@ function ns.ResolveGroupSpec(ctx)
             tooltipSpell  = intToUse,
             tooltipTarget = ctx.nextIntName,
             tooltipStatus = "In range",
+            tooltipColor  = "good",
             tooltipMode   = groupKey ~= "auto" and (groupKey == "brill" and "Brilliance (locked)" or "Intellect (locked)") or nil,
         }
     end
@@ -332,6 +341,7 @@ function ns.ResolveGroupSpec(ctx)
             tooltipSpell  = intToUse,
             tooltipTarget = ctx.nextIntPetName or "Pet",
             tooltipStatus = "In range",
+            tooltipColor  = "good",
         }
     end
 
@@ -348,6 +358,7 @@ function ns.ResolveGroupSpec(ctx)
             tooltipSpell  = intToUse,
             tooltipTarget = ctx.nextIntName,
             tooltipStatus = "Out of range",
+            tooltipColor  = "oor",
             tooltipMode   = groupKey ~= "auto" and (groupKey == "brill" and "Brilliance (locked)" or "Intellect (locked)") or nil,
         }
     end
@@ -364,6 +375,7 @@ function ns.ResolveGroupSpec(ctx)
             tooltipSpell  = intToUse,
             tooltipTarget = ctx.nextIntPetName or "Pet",
             tooltipStatus = "Out of range",
+            tooltipColor  = "oor",
         }
     end
 
@@ -380,6 +392,7 @@ function ns.ResolveGroupSpec(ctx)
             tooltipSpell  = intToUse,
             tooltipTarget = "target",
             tooltipStatus = "Click to buff target",
+            tooltipColor  = "neutral",
         }
     end
 
@@ -394,6 +407,7 @@ function ns.ResolveGroupSpec(ctx)
         tooltipSpell  = nil,
         tooltipTarget = nil,
         tooltipStatus = idleStatus,
+        tooltipColor  = needN > 0 and "warning" or "good",
     }
 end
 
@@ -432,6 +446,7 @@ function ns.ResolveShieldSpec()
             tooltipSpell  = nil,
             tooltipTarget = nil,
             tooltipStatus = "No shield spell known",
+            tooltipColor  = "neutral",
         }
     end
 
@@ -448,6 +463,7 @@ function ns.ResolveShieldSpec()
         tooltipSpell  = spellName,
         tooltipTarget = "self",
         tooltipStatus = hasBuff and "Active" or (needsCast and "HP below threshold" or "Ready"),
+        tooltipColor  = hasBuff and "good" or (needsCast and "bad" or "neutral"),
         tooltipMode   = shieldKey ~= "auto" and ((SpellNames[resolvedKey] or resolvedKey) .. " (locked)") or nil,
     }
 end
