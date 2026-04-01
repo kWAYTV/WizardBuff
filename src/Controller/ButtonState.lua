@@ -2,6 +2,7 @@ local _, ns = ...
 
 local GetSpellInfo = ns.Compat.GetSpellInfo
 local SpellNames   = ns.SpellNames
+local SpellIDs     = ns.SpellIDs
 local ICON         = ns.ICON_PATHS
 
 ---------------------------------------------------------------------------
@@ -19,6 +20,20 @@ local function resolveSpellIcon(spellId, fallbackPath)
 end
 
 ns.ResolveSpellIcon = resolveSpellIcon
+
+---------------------------------------------------------------------------
+-- Per-spell fallback icon (used when resolveSpellIcon has a valid ID
+-- but also as the "I know what spell this is" fallback)
+---------------------------------------------------------------------------
+local SPELL_FALLBACK_ICON = {
+    FrostArmor       = ICON.frostArmor,
+    IceArmor         = ICON.iceArmor,
+    MageArmor        = ICON.mageArmor,
+    ArcaneIntellect  = ICON.int,
+    ArcaneBrilliance = ICON.brill,
+    IceBarrier       = ICON.iceBarrier,
+    ManaShield       = ICON.manaShield,
+}
 
 ---------------------------------------------------------------------------
 -- Apply a resolved spec to a secure button
@@ -50,23 +65,99 @@ function ns.ApplyButtonSpec(btn, spec)
 end
 
 ---------------------------------------------------------------------------
+-- Resolve a specific armor spell by key
+---------------------------------------------------------------------------
+local ARMOR_KEY_MAP = {
+    FrostArmor = SpellIDs.FrostArmor,
+    IceArmor   = SpellIDs.IceArmor,
+    MageArmor  = SpellIDs.MageArmor,
+}
+
+local function resolveLockedArmor(key)
+    local ids = ARMOR_KEY_MAP[key]
+    if not ids then return nil, nil end
+    return ns.GetHighestRankSpell(ids)
+end
+
+---------------------------------------------------------------------------
+-- Determine the icon for the player's currently active armor buff
+---------------------------------------------------------------------------
+local function getActiveArmorIcon()
+    local armorChecks = {
+        { ids = SpellIDs.IceArmor,   fallback = ICON.iceArmor },
+        { ids = SpellIDs.MageArmor,  fallback = ICON.mageArmor },
+        { ids = SpellIDs.FrostArmor, fallback = ICON.frostArmor },
+    }
+    for _, entry in ipairs(armorChecks) do
+        for i = #entry.ids, 1, -1 do
+            local name = GetSpellInfo(entry.ids[i])
+            if name and ns.UnitHasBuff("player", name) then
+                return resolveSpellIcon(entry.ids[i], entry.fallback)
+            end
+        end
+    end
+    return ICON.frostArmor
+end
+
+---------------------------------------------------------------------------
 -- Auto-buff spec (left button priority cascade)
 ---------------------------------------------------------------------------
 function ns.ResolveAutoSpec(ctx)
-    local armorSpell  = ctx.armorSpell
-    local bubbleSpell = ctx.bubbleSpell
     local intToUse    = ctx.intToUse
     local intSid      = ctx.intSid
     local brillSid    = ctx.brillSid
     local brillSpell  = ctx.brillSpell
     local armorTimer  = ns.GetSelfArmorRemaining()
 
+    local selfKey = ns.GetSelfModeKey()
+
+    if selfKey ~= "auto" then
+        if selfKey == "SelfInt" then
+            local intSpell, intSid2 = ns.GetHighestRankSpell(SpellIDs.ArcaneIntellect)
+            if intSpell then
+                local hasBuff = ns.UnitHasBuff("player", intSpell)
+                    or (SpellNames.ArcaneBrilliance and ns.UnitHasBuff("player", SpellNames.ArcaneBrilliance))
+                local timer = ns.GetBuffTimeRemaining("player", intSpell)
+                        or ns.GetBuffTimeRemaining("player", SpellNames.ArcaneBrilliance)
+                return {
+                    spellName    = intSpell,
+                    unit         = "player",
+                    icon         = resolveSpellIcon(intSid2, ICON.int),
+                    tooltipLine2 = "Self Intellect (locked).",
+                    needsAction  = not hasBuff,
+                    soundKind    = (not hasBuff) and "self" or nil,
+                    timerSec     = timer,
+                    isIntCast    = true,
+                }
+            end
+        else
+            local name, sid = resolveLockedArmor(selfKey)
+            if name then
+                local fallback = SPELL_FALLBACK_ICON[selfKey] or ICON.frostArmor
+                local needsCast = not ns.UnitHasBuff("player", name)
+                return {
+                    spellName    = name,
+                    unit         = "player",
+                    icon         = resolveSpellIcon(sid, fallback),
+                    tooltipLine2 = (SpellNames[selfKey] or selfKey) .. " (locked).",
+                    needsAction  = needsCast,
+                    soundKind    = needsCast and "self" or nil,
+                    timerSec     = ns.GetBuffTimeRemaining("player", name),
+                    isIntCast    = false,
+                }
+            end
+        end
+    end
+
+    local armorSpell = ctx.armorSpell
     if ns.SelfNeedsArmor() and armorSpell then
         local _, sid = ns.GetArmorSpell()
+        local armorKey = ns.GetArmorSpellKey and ns.GetArmorSpellKey() or nil
+        local fallback = (armorKey and SPELL_FALLBACK_ICON[armorKey]) or ICON.frostArmor
         return {
             spellName    = armorSpell,
             unit         = "player",
-            icon         = resolveSpellIcon(sid, ICON.armor),
+            icon         = resolveSpellIcon(sid, fallback),
             tooltipLine2 = "Self-cast armor.",
             needsAction  = true,
             soundKind    = "self",
@@ -102,22 +193,8 @@ function ns.ResolveAutoSpec(ctx)
         }
     end
 
-    if bubbleSpell and ns.NeedsBubble() and not ns.PlayerHasShieldBuff() then
-        local _, sid = ns.GetBubbleSpell()
-        return {
-            spellName    = bubbleSpell,
-            unit         = "player",
-            icon         = resolveSpellIcon(sid, ICON.shield),
-            tooltipLine2 = "Emergency shield — HP below threshold.",
-            needsAction  = true,
-            soundKind    = nil,
-            timerSec     = armorTimer,
-            isIntCast    = false,
-        }
-    end
-
     return {
-        icon         = ICON.selfIdle,
+        icon         = getActiveArmorIcon(),
         tooltipLine2 = "All buffed!",
         needsAction  = false,
         soundKind    = nil,
@@ -127,11 +204,10 @@ function ns.ResolveAutoSpec(ctx)
 end
 
 ---------------------------------------------------------------------------
--- Group-buff spec (right button)
+-- Group-buff spec (middle button)
 ---------------------------------------------------------------------------
 function ns.ResolveGroupSpec(ctx)
     local brillSpell = ctx.brillSpell
-    local intToUse   = ctx.intToUse
     local intSid     = ctx.intSid
     local brillSid   = ctx.brillSid
 
@@ -141,6 +217,18 @@ function ns.ResolveGroupSpec(ctx)
     end
     if not selfIntTimer and SpellNames.ArcaneIntellect then
         selfIntTimer = ns.GetBuffTimeRemaining("player", SpellNames.ArcaneIntellect)
+    end
+
+    local groupKey = ns.GetGroupModeKey()
+
+    local intSpell, _ = ns.GetHighestRankSpell(SpellIDs.ArcaneIntellect)
+    local intToUse
+    if groupKey == "brill" and brillSpell and ns.HasArcanePowder() then
+        intToUse = brillSpell
+    elseif groupKey == "int" and intSpell then
+        intToUse = intSpell
+    else
+        intToUse = ctx.intToUse
     end
 
     if not intToUse then
@@ -175,7 +263,7 @@ function ns.ResolveGroupSpec(ctx)
         }
     end
 
-    local idleIcon = brillSid and resolveSpellIcon(brillSid, ICON.grpIdle)
+    local idleIcon = brillSid and resolveSpellIcon(brillSid, ICON.brill)
                                 or resolveSpellIcon(intSid, ICON.int)
 
     if UnitExists("target") and UnitIsFriend("player", "target") and not UnitIsDeadOrGhost("target") then
@@ -194,5 +282,55 @@ function ns.ResolveGroupSpec(ctx)
         tooltipLine2 = "Group buffed.",
         needsAction  = false,
         timerSec     = selfIntTimer,
+    }
+end
+
+---------------------------------------------------------------------------
+-- Shield spec (right button)
+---------------------------------------------------------------------------
+local SHIELD_KEY_MAP = {
+    IceBarrier = SpellIDs.IceBarrier,
+    ManaShield = SpellIDs.ManaShield,
+}
+
+function ns.ResolveShieldSpec()
+    local shieldKey = ns.GetShieldModeKey()
+
+    local spellName, sid, resolvedKey
+    if shieldKey ~= "auto" then
+        local ids = SHIELD_KEY_MAP[shieldKey]
+        if ids then
+            spellName, sid = ns.GetHighestRankSpell(ids)
+            resolvedKey = shieldKey
+        end
+    else
+        spellName, sid = ns.GetHighestRankSpell(SpellIDs.IceBarrier)
+        resolvedKey = "IceBarrier"
+        if not spellName then
+            spellName, sid = ns.GetHighestRankSpell(SpellIDs.ManaShield)
+            resolvedKey = "ManaShield"
+        end
+    end
+
+    if not spellName then
+        return {
+            icon         = ICON.notLearned,
+            tooltipLine2 = "No shield spell known.",
+            needsAction  = false,
+            timerSec     = nil,
+        }
+    end
+
+    local fallback = SPELL_FALLBACK_ICON[resolvedKey] or ICON.iceBarrier
+    local hasBuff = ns.PlayerHasShieldBuff()
+    local needsCast = not hasBuff and ns.NeedsBubble()
+
+    return {
+        spellName    = spellName,
+        unit         = "player",
+        icon         = resolveSpellIcon(sid, fallback),
+        tooltipLine2 = spellName .. (needsCast and " — HP below threshold!" or ""),
+        needsAction  = needsCast,
+        timerSec     = nil,
     }
 end

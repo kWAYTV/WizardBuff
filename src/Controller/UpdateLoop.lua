@@ -7,6 +7,7 @@ function ns.UpdateButtons()
     local mainFrame      = ns.mainFrame
     local autoBuffButton = ns.autoBuffButton
     local brillianceButton = ns.brillianceButton
+    local shieldButton   = ns.shieldButton
 
     if not mainFrame or not ns.isMage or not db.enabled then
         if mainFrame then mainFrame:Hide() end
@@ -56,6 +57,17 @@ function ns.UpdateButtons()
     if brillianceButton then
         ns.ApplyButtonSpec(brillianceButton, groupSpec)
         brillianceButton:Show()
+    end
+
+    if shieldButton then
+        local hasAnyShield = ns.AnyShieldKnown and ns.AnyShieldKnown()
+        if hasAnyShield and db.enableBubble then
+            local shieldSpec = ns.ResolveShieldSpec()
+            ns.ApplyButtonSpec(shieldButton, shieldSpec)
+            shieldButton:Show()
+        else
+            shieldButton:Hide()
+        end
     end
 
     ns.UpdateSoundReminder(autoSpec.soundKind, groupSpec.needsAction)

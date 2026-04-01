@@ -79,10 +79,11 @@ function ns.LayoutGrid(gridPlayers, intToUse, needN)
 
     local cols      = math.min(#gridPlayers, PER_ROW)
     local gridPxW   = cols > 0 and (cols * CW + (cols - 1) * CG) or 0
-    local iconPairW = ICON_SIZE * 2 + ICON_GAP
-    local FRAME_W   = math.max(iconPairW + 4, gridPxW + 4)
+    local nIcons    = (ns.shieldButton and ns.shieldButton:IsShown()) and 3 or 2
+    local iconRowW  = ICON_SIZE * nIcons + ICON_GAP * (nIcons - 1)
+    local FRAME_W   = math.max(iconRowW + 4, gridPxW + 4)
 
-    local xPad = math.max(2, math.floor((FRAME_W - iconPairW) / 2))
+    local xPad = math.max(2, math.floor((FRAME_W - iconRowW) / 2))
     ns.autoBuffButton:ClearAllPoints()
     ns.autoBuffButton:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", xPad, -2)
 

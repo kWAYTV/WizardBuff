@@ -96,6 +96,19 @@ function ns.GetArmorSpell()
     end
 end
 
+function ns.GetArmorSpellKey()
+    local armorType = db.armorType or "auto"
+    if armorType == "frost" then return "FrostArmor"
+    elseif armorType == "ice" then return "IceArmor"
+    elseif armorType == "mage" then return "MageArmor"
+    else
+        if ns.GetHighestRankSpell(SpellIDs.IceArmor)  then return "IceArmor" end
+        if ns.GetHighestRankSpell(SpellIDs.MageArmor)  then return "MageArmor" end
+        if ns.GetHighestRankSpell(SpellIDs.FrostArmor) then return "FrostArmor" end
+    end
+    return nil
+end
+
 function ns.GetBubbleSpell()
     if not db.enableBubble then return nil, nil end
     local bubbleType = db.bubbleType or "auto"

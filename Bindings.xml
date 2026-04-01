@@ -3,4 +3,6 @@
     </Binding>
     <Binding name="CLICK WizardBuffBrillianceButton:LeftButton" category="ADDONS">
     </Binding>
+    <Binding name="CLICK WizardBuffShieldButton:LeftButton" category="ADDONS">
+    </Binding>
 </Bindings>

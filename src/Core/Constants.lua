@@ -13,7 +13,7 @@ ns.GRID_BORDER  = 2
 ns.GRID_GAP     = 2
 ns.GRID_PER_ROW = 5
 
-ns.UI_FRAME_W = ns.ICON_PAD + ns.ICON_SIZE + ns.ICON_GAP + ns.ICON_SIZE + ns.ICON_PAD
+ns.UI_FRAME_W = ns.ICON_PAD + ns.ICON_SIZE * 3 + ns.ICON_GAP * 2 + ns.ICON_PAD
 ns.UI_BAR_H   = ns.ICON_PAD + ns.ICON_SIZE + ns.ICON_PAD
 
 ns.HANDLE_SIZE = 20
@@ -43,12 +43,13 @@ ns.AUTO_LOCK_SEC = 30
 ---------------------------------------------------------------------------
 ns.ICON_PATHS = {
     addon      = "Interface\\AddOns\\WizardBuff\\Media\\icon",
-    armor      = "Interface\\Icons\\Spell_Frost_FrostArmor02",
-    int        = "Interface\\Icons\\Spell_Holy_MagicalSentry",
+    frostArmor = "Interface\\Icons\\Spell_Frost_FrostArmor02",
+    iceArmor   = "Interface\\Icons\\Spell_Frost_FrostArmor02",
+    mageArmor  = "Interface\\Icons\\Spell_MageArmor",
+    int        = "Interface\\Icons\\Spell_Holy_ArcaneIntellect",
     brill      = "Interface\\Icons\\Spell_Holy_ArcaneIntellect",
-    shield     = "Interface\\Icons\\Spell_Ice_Lament",
-    selfIdle   = "Interface\\Icons\\Spell_Frost_FrostArmor02",
-    grpIdle    = "Interface\\Icons\\Spell_Nature_Regeneration",
+    iceBarrier = "Interface\\Icons\\Spell_Ice_Lament",
+    manaShield = "Interface\\Icons\\Spell_Shadow_DetectLesserInvisibility",
     notLearned = "Interface\\Icons\\INV_Misc_QuestionMark",
 }
 
@@ -58,6 +59,7 @@ ns.ICON_PATHS = {
 BINDING_HEADER_WIZARDBUFF = "Wizard Buff"
 _G["BINDING_NAME_CLICK WizardBuffAutoBuffButton:LeftButton"]   = "Auto Buff (armor, intellect, pets)"
 _G["BINDING_NAME_CLICK WizardBuffBrillianceButton:LeftButton"] = "Group Buff (Int / Brilliance)"
+_G["BINDING_NAME_CLICK WizardBuffShieldButton:LeftButton"]     = "Shield (Ice Barrier / Mana Shield)"
 
 ---------------------------------------------------------------------------
 -- Runtime state slots
@@ -69,4 +71,8 @@ ns.mainFrame       = nil
 ns.gridCells       = {}
 ns.autoBuffButton  = nil
 ns.brillianceButton = nil
+ns.shieldButton    = nil
 ns._hudMouseOver   = false
+ns._selfMode       = 0
+ns._groupMode      = 0
+ns._shieldMode     = 0

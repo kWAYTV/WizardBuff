@@ -52,7 +52,6 @@ local function makeIconButton(name, parent)
     return b
 end
 
--- Expose for GridCells
 ns.StripSecureActionChrome = stripSecureActionChrome
 
 ---------------------------------------------------------------------------
@@ -63,18 +62,22 @@ function ns.CreateAutoBuffButton()
     local b  = makeIconButton("WizardBuffAutoBuffButton", mf)
     ns.autoBuffButton = b
     b:SetPoint("TOPLEFT", mf, "TOPLEFT", ICON_PAD, -ICON_PAD)
-    b.icon:SetTexture(ns.ICON_PATHS.int)
+    b.icon:SetTexture(ns.ICON_PATHS.frostArmor)
+    b:EnableMouseWheel(true)
 
     b:SetScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-        GameTooltip:AddLine("Auto Buff", 0.85, 0.92, 1)
+        GameTooltip:AddLine("Self Buff", 0.85, 0.92, 1)
         if self.tooltipLine2 and self.tooltipLine2 ~= "" then
             GameTooltip:AddLine(self.tooltipLine2, 0.6, 0.6, 0.6, true)
         end
-        GameTooltip:AddLine("/click WizardBuffAutoBuffButton", 0.35, 0.35, 0.35)
+        GameTooltip:AddLine("Scroll to cycle spells", 0.45, 0.45, 0.45)
         GameTooltip:Show()
     end)
     b:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    b:SetScript("OnMouseWheel", function(_, delta)
+        ns.CycleMode("_selfMode", ns.BuildSelfSpellList, delta)
+    end)
     hookSecureHover(b, mf)
     ns.RegisterGlowButton(b)
 
@@ -90,14 +93,15 @@ function ns.CreateAutoBuffButton()
 end
 
 ---------------------------------------------------------------------------
--- Brilliance / group button (right icon)
+-- Brilliance / group button (middle icon)
 ---------------------------------------------------------------------------
 function ns.CreateBrillianceButton()
     local mf = ns.mainFrame
     local b  = makeIconButton("WizardBuffBrillianceButton", mf)
     ns.brillianceButton = b
     b:SetPoint("LEFT", ns.autoBuffButton, "RIGHT", ICON_GAP, 0)
-    b.icon:SetTexture(ns.ICON_PATHS.grpIdle)
+    b.icon:SetTexture(ns.ICON_PATHS.int)
+    b:EnableMouseWheel(true)
 
     b:SetScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
@@ -105,10 +109,13 @@ function ns.CreateBrillianceButton()
         if self.tooltipLine2 and self.tooltipLine2 ~= "" then
             GameTooltip:AddLine(self.tooltipLine2, 0.6, 0.6, 0.6, true)
         end
-        GameTooltip:AddLine("/click WizardBuffBrillianceButton", 0.35, 0.35, 0.35)
+        GameTooltip:AddLine("Scroll to cycle spells", 0.45, 0.45, 0.45)
         GameTooltip:Show()
     end)
     b:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    b:SetScript("OnMouseWheel", function(_, delta)
+        ns.CycleMode("_groupMode", ns.BuildGroupModeList, delta)
+    end)
     hookSecureHover(b, mf)
     ns.RegisterGlowButton(b)
 
@@ -119,4 +126,40 @@ function ns.CreateBrillianceButton()
             ns.ScheduleUpdate(true)
         end
     end)
+end
+
+---------------------------------------------------------------------------
+-- Shield button (right icon)
+---------------------------------------------------------------------------
+function ns.CreateShieldButton()
+    local mf = ns.mainFrame
+    local b  = makeIconButton("WizardBuffShieldButton", mf)
+    ns.shieldButton = b
+    b:SetPoint("LEFT", ns.brillianceButton, "RIGHT", ICON_GAP, 0)
+    b.icon:SetTexture(ns.ICON_PATHS.iceBarrier)
+    b:EnableMouseWheel(true)
+
+    b:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        GameTooltip:AddLine("Shield", 0.85, 0.85, 1)
+        if self.tooltipLine2 and self.tooltipLine2 ~= "" then
+            GameTooltip:AddLine(self.tooltipLine2, 0.6, 0.6, 0.6, true)
+        end
+        GameTooltip:AddLine("Scroll to cycle spells", 0.45, 0.45, 0.45)
+        GameTooltip:Show()
+    end)
+    b:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    b:SetScript("OnMouseWheel", function(_, delta)
+        ns.CycleMode("_shieldMode", ns.BuildShieldSpellList, delta)
+    end)
+    hookSecureHover(b, mf)
+    ns.RegisterGlowButton(b)
+
+    b:SetScript("PostClick", function()
+        if not InCombatLockdown() then
+            ns.ScheduleUpdate(true)
+        end
+    end)
+
+    b:Hide()
 end

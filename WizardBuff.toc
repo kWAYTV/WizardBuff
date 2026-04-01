@@ -19,6 +19,7 @@ src/Core/SlashCommands.lua
 
 src/Logic/BuffQuery.lua
 src/Logic/SpellSelect.lua
+src/Logic/SpellCycle.lua
 src/Logic/Roster.lua
 
 src/UI/Glow.lua

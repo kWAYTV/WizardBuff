@@ -65,6 +65,7 @@ function WizardBuff:OnEnable()
     ns.UpdateHandleVisibility()
     ns.CreateAutoBuffButton()
     ns.CreateBrillianceButton()
+    ns.CreateShieldButton()
     if ns.ApplyHudFade  then ns.ApplyHudFade()  end
     if ns.ApplyHudScale then ns.ApplyHudScale() end
 
