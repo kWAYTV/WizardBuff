@@ -73,34 +73,73 @@ local function scheduleHudLeaveCheck(mf)
 end
 
 local function createGlow(btn)
-    local glow = btn:CreateTexture(nil, "OVERLAY")
-    glow:SetPoint("TOPLEFT", -3, 3)
-    glow:SetPoint("BOTTOMRIGHT", 3, -3)
-    glow:SetColorTexture(1, 0.82, 0.2, 0)
+    local glow = btn:CreateTexture(nil, "OVERLAY", nil, 1)
+    glow:SetPoint("TOPLEFT", -4, 4)
+    glow:SetPoint("BOTTOMRIGHT", 4, -4)
+    glow:SetTexture("Interface\\Buttons\\CheckButtonGlow")
     glow:SetBlendMode("ADD")
+    glow:SetAlpha(0)
     glow:Hide()
     btn.glowTex = glow
-
-    local ag = glow:CreateAnimationGroup()
-    ag:SetLooping("BOUNCE")
-    local pulse = ag:CreateAnimation("Alpha")
-    pulse:SetFromAlpha(0)
-    pulse:SetToAlpha(0.45)
-    pulse:SetDuration(0.6)
-    pulse:SetSmoothing("IN_OUT")
-    btn.glowAnim = ag
+    btn._glowPhase = 0
+    btn._glowing = false
 end
+
+local GLOW_SPEED = 2.5
+local GLOW_MIN = 0.15
+local GLOW_MAX = 0.7
+
+local function updateGlows(self, elapsed)
+    for _, btn in ipairs(self._glowButtons) do
+        if btn._glowing and btn.glowTex then
+            btn._glowPhase = (btn._glowPhase or 0) + elapsed * GLOW_SPEED
+            local a = GLOW_MIN + (GLOW_MAX - GLOW_MIN) * (0.5 + 0.5 * math.sin(btn._glowPhase))
+            btn.glowTex:SetAlpha(a)
+        end
+    end
+end
+
+function ns.InitGlowTicker()
+    if ns._glowFrame then return end
+    local f = CreateFrame("Frame")
+    f._glowButtons = {}
+    f:SetScript("OnUpdate", updateGlows)
+    f:Hide()
+    ns._glowFrame = f
+end
+
+function ns.RegisterGlowButton(btn)
+    ns.InitGlowTicker()
+    table.insert(ns._glowFrame._glowButtons, btn)
+end
+
+local SOUND_COOLDOWN = 30
+local lastSoundTime = 0
 
 function ns.SetButtonGlow(btn, on)
     if not btn or not btn.glowTex then return end
     local d = ns.db
     if not d or not d.showGlow then on = false end
+
+    local wasGlowing = btn._glowing
+    btn._glowing = on
+
     if on then
         btn.glowTex:Show()
-        if not btn.glowAnim:IsPlaying() then btn.glowAnim:Play() end
+        btn._glowPhase = btn._glowPhase or 0
+        if ns._glowFrame then ns._glowFrame:Show() end
+
+        if not wasGlowing and d.showSound then
+            local now = GetTime()
+            if now - lastSoundTime > SOUND_COOLDOWN then
+                PlaySound(8959, "Master")
+                lastSoundTime = now
+            end
+        end
     else
-        btn.glowAnim:Stop()
+        btn.glowTex:SetAlpha(0)
         btn.glowTex:Hide()
+        btn._glowPhase = 0
     end
 end
 
@@ -250,6 +289,7 @@ function ns.CreateAutoBuffButton()
         GameTooltip:Hide()
     end)
     hookSecureHover(b, mf)
+    ns.RegisterGlowButton(b)
 end
 
 function ns.CreateBrillianceButton()
@@ -276,6 +316,7 @@ function ns.CreateBrillianceButton()
         GameTooltip:Hide()
     end)
     hookSecureHover(b, mf)
+    ns.RegisterGlowButton(b)
 end
 
 function ns.CreateClassButton(classIndex)

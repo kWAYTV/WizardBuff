@@ -44,6 +44,7 @@ ns.defaults = {
     showHudNeedCount = true,
     showTimers = true,
     showGlow = true,
+    showSound = false,
     showClassRows = false,
     buffArmor = true,
     armorType = "auto",
