@@ -80,10 +80,26 @@ function ns.CreateGridCell(index)
     end)
 
     btn:SetScript("PostClick", function(self)
+        if InCombatLockdown() then return end
+        ns.MarkCastAttempt()
         local unit = self:GetAttribute("unit")
-        if unit and not InCombatLockdown() then
+        if unit then
             ns.MarkRecentlyBuffed(unit)
             ns.ScheduleUpdate(true)
+        elseif self.playerName then
+            local reason
+            if self.isDead then
+                reason = self.playerName .. " is dead"
+            elseif self.isOffline then
+                reason = self.playerName .. " is offline"
+            elseif self.outOfRange then
+                reason = self.playerName .. " is out of range"
+            elseif not self.needsInt then
+                reason = self.playerName .. " is already buffed"
+            end
+            if reason then
+                ns.ShowMessage(reason, 0.7, 0.7, 0.5)
+            end
         end
     end)
 

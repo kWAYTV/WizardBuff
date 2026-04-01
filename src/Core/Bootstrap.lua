@@ -79,6 +79,7 @@ function WizardBuff:OnEnable()
     self:RegisterEvent("BAG_UPDATE")
     self:RegisterEvent("PLAYER_TARGET_CHANGED")
     self:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
+    self:RegisterEvent("UI_ERROR_MESSAGE")
 
     ns.ScheduleUpdate()
     ns.Print("|cff666666" .. ns.VERSION .. "|r — /wbuff config · mage buff HUD")
@@ -96,6 +97,7 @@ function WizardBuff:GROUP_ROSTER_UPDATE()     ns.ScheduleUpdate()      end
 function WizardBuff:BAG_UPDATE()              ns.ScheduleUpdate()      end
 function WizardBuff:PLAYER_TARGET_CHANGED()   ns.ScheduleUpdate()      end
 function WizardBuff:COMBAT_LOG_EVENT_UNFILTERED() ns.OnCombatLogEvent() end
+function WizardBuff:UI_ERROR_MESSAGE(_, errType, msg) ns.OnUIErrorMessage(errType, msg) end
 
 function WizardBuff:UNIT_AURA(_, unit)
     if unit == "player" or unit == "pet" or unit:match("^party") or unit:match("^raid") then

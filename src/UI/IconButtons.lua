@@ -105,9 +105,13 @@ function ns.CreateAutoBuffButton()
 
     b:SetScript("PostClick", function(self)
         if not InCombatLockdown() then
+            ns.MarkCastAttempt()
             if self._isIntCast then
                 local unit = self:GetAttribute("unit")
                 if unit then ns.MarkRecentlyBuffed(unit) end
+            end
+            if not self:GetAttribute("type") then
+                ns.ShowMessage("Nothing to cast", 0.6, 0.6, 0.6)
             end
             ns.ScheduleUpdate(true)
         end
@@ -136,9 +140,15 @@ function ns.CreateBrillianceButton()
     ns.RegisterGlowButton(b)
 
     b:SetScript("PostClick", function(self)
-        local unit = self:GetAttribute("unit")
-        if unit and not InCombatLockdown() then
-            ns.MarkRecentlyBuffed(unit)
+        if not InCombatLockdown() then
+            ns.MarkCastAttempt()
+            local unit = self:GetAttribute("unit")
+            if unit then
+                ns.MarkRecentlyBuffed(unit)
+            end
+            if not self:GetAttribute("type") then
+                ns.ShowMessage("Nothing to cast", 0.6, 0.6, 0.6)
+            end
             ns.ScheduleUpdate(true)
         end
     end)
@@ -165,8 +175,12 @@ function ns.CreateShieldButton()
     hookSecureHover(b, mf)
     ns.RegisterGlowButton(b)
 
-    b:SetScript("PostClick", function()
+    b:SetScript("PostClick", function(self)
         if not InCombatLockdown() then
+            ns.MarkCastAttempt()
+            if not self:GetAttribute("type") then
+                ns.ShowMessage("Shield ready", 0.6, 0.6, 0.6)
+            end
             ns.ScheduleUpdate(true)
         end
     end)
