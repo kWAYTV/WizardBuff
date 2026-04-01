@@ -31,8 +31,11 @@ jobs:
             next="$major.$minor.$((patch + 1))"
           fi
           echo "Tagging $next"
+          sed -i "s/^## Version: .*/## Version: $next/" WizardBuff.toc
+          git add WizardBuff.toc
+          git commit -m "chore: stamp version $next"
           git tag -a "$next" -m "Release $next"
-          git push origin "$next"
+          git push origin master --tags
           echo "tag=$next" >> "$GITHUB_OUTPUT"
 
       - name: Trigger release workflow
