@@ -22,11 +22,15 @@ else
 end
 
 function ns.Print(msg)
-    print("|cff9ab8d4Wizard Buff|r: " .. tostring(msg))
+    local text = tostring(msg)
+    print("|cff9ab8d4Wizard Buff|r: " .. text)
+    if ns.ShowMessage then ns.ShowMessage(text) end
 end
 
 function ns.PrintError(msg)
-    print("|cffff6666Wizard Buff|r: " .. tostring(msg))
+    local text = tostring(msg)
+    print("|cffff6666Wizard Buff|r: " .. text)
+    if ns.ShowMessage then ns.ShowMessage(text, 1, 0.4, 0.4) end
 end
 
 _G.WizardBuffAddon = ns

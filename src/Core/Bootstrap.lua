@@ -61,6 +61,7 @@ function WizardBuff:OnEnable()
     if not ns.isMage then return end
 
     ns.CreateMainFrame()
+    ns.CreateMessageFrame()
     ns.CreateHandle()
     ns.UpdateHandleVisibility()
     ns.CreateAutoBuffButton()

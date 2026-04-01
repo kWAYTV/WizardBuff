@@ -25,6 +25,7 @@ src/Logic/Roster.lua
 src/UI/Glow.lua
 src/UI/Timers.lua
 src/UI/MainFrame.lua
+src/UI/MessageFrame.lua
 src/UI/Handle.lua
 src/UI/IconButtons.lua
 src/UI/GridCells.lua
