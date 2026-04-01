@@ -77,8 +77,8 @@ function ns.LayoutGrid(gridPlayers, intToUse, needN)
 
     if not ns.gridCells then ns.gridCells = {} end
 
-    local cols    = math.min(#gridPlayers, PER_ROW)
-    local gridPxW = cols > 0 and (cols * CW + (cols - 1) * CG) or 0
+    local cols      = math.min(#gridPlayers, PER_ROW)
+    local gridPxW   = cols > 0 and (cols * CW + (cols - 1) * CG) or 0
     local iconPairW = ICON_SIZE * 2 + ICON_GAP
     local FRAME_W   = math.max(iconPairW + 4, gridPxW + 4)
 
@@ -86,33 +86,9 @@ function ns.LayoutGrid(gridPlayers, intToUse, needN)
     ns.autoBuffButton:ClearAllPoints()
     ns.autoBuffButton:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", xPad, -2)
 
-    local yAfterIcons = -(2 + ICON_SIZE + 2)
+    local yCursor = -(2 + ICON_SIZE + 2)
 
-    if showNeed and mainFrame.needLine then
-        local needH = 10
-        mainFrame.needLine:ClearAllPoints()
-        mainFrame.needLine:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", 2, yAfterIcons)
-        mainFrame.needLine:SetPoint("RIGHT", mainFrame, "RIGHT", -2, 0)
-        mainFrame.needLine:SetJustifyH("CENTER")
-
-        local parts = {}
-        if needN > 0 then
-            parts[#parts + 1] = "|cffff7777" .. needN .. "|r |cff555555need|r"
-        else
-            parts[#parts + 1] = "|cff448844ok|r"
-        end
-        local powderN = ns.GetArcanePowderCount and ns.GetArcanePowderCount() or 0
-        if powderN >= 0 then
-            local clr = powderN > 5 and "88aaff" or (powderN > 0 and "ffcc44" or "ff5555")
-            parts[#parts + 1] = "|cff" .. clr .. powderN .. "|r|cff555555pw|r"
-        end
-        mainFrame.needLine:SetText(table.concat(parts, "  "))
-        yAfterIcons = yAfterIcons - needH
-    elseif mainFrame.needLine then
-        mainFrame.needLine:SetText("")
-    end
-
-    local gridYStart = yAfterIcons - 1
+    local gridYStart = yCursor - 1
     local gridXStart = math.max(2, math.floor((FRAME_W - gridPxW) / 2))
     local maxRow     = 0
 
@@ -157,7 +133,36 @@ function ns.LayoutGrid(gridPlayers, intToUse, needN)
 
     local rows   = maxRow + 1
     local gridH  = rows > 0 and (rows * CH + (rows - 1) * CG) or 0
-    local totalH = -gridYStart + gridH + 2
+    yCursor = gridYStart - gridH
+
+    local statusH = 0
+    if showNeed and mainFrame.needLine then
+        statusH = 12
+        mainFrame.needLine:ClearAllPoints()
+        mainFrame.needLine:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", 2, yCursor - 2)
+        mainFrame.needLine:SetPoint("RIGHT", mainFrame, "RIGHT", -2, 0)
+        mainFrame.needLine:SetJustifyH("CENTER")
+
+        local parts = {}
+        local selfNeed = ns.SelfNeedsArmor and ns.SelfNeedsArmor()
+        if needN > 0 then
+            parts[#parts + 1] = "|cffff7777" .. needN .. "|r|cff555555need|r"
+        elseif selfNeed then
+            parts[#parts + 1] = "|cffffaa44self|r"
+        else
+            parts[#parts + 1] = "|cff448844ok|r"
+        end
+        local powderN = ns.GetArcanePowderCount and ns.GetArcanePowderCount() or 0
+        if powderN >= 0 then
+            local clr = powderN > 5 and "88aaff" or (powderN > 0 and "ffcc44" or "ff5555")
+            parts[#parts + 1] = "|cff" .. clr .. powderN .. "|r|cff555555pw|r"
+        end
+        mainFrame.needLine:SetText(table.concat(parts, " \194\183 "))
+    elseif mainFrame.needLine then
+        mainFrame.needLine:SetText("")
+    end
+
+    local totalH = -yCursor + statusH + 4
     mainFrame:SetSize(FRAME_W, totalH)
     mainFrame:Show()
     ns.ApplyHudFade()
