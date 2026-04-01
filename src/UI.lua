@@ -248,22 +248,24 @@ function ns.CreateHandle()
     hl:SetTexture("Interface\\Buttons\\UI-Common-MouseHilight")
     hl:SetBlendMode("ADD")
 
-    h:SetScript("OnEnter", function(self)
-        ns._hudMouseOver = true
-        ns.ApplyHudFade()
+    local function showHandleTooltip(self)
         GameTooltip:SetOwner(self, "ANCHOR_TOP")
         GameTooltip:AddLine("Wizard Buff", 0.6, 0.8, 1)
         local locked = ns.db and ns.db.locked
         if locked then
-            GameTooltip:AddLine("Alt+drag \194\183 move", 0.55, 0.55, 0.55)
-            GameTooltip:AddLine("Right-click \194\183 config", 0.55, 0.55, 0.55)
-            GameTooltip:AddLine("Shift+click \194\183 unlock", 0.55, 0.55, 0.55)
+            GameTooltip:AddLine("Shift+click \194\183 unlock to move", 0.55, 0.55, 0.55)
         else
             GameTooltip:AddLine("Alt+drag \194\183 move", 0.55, 0.55, 0.55)
-            GameTooltip:AddLine("Right-click \194\183 config", 0.55, 0.55, 0.55)
             GameTooltip:AddLine("Shift+click \194\183 lock", 0.55, 0.55, 0.55)
         end
+        GameTooltip:AddLine("Right-click \194\183 config", 0.55, 0.55, 0.55)
         GameTooltip:Show()
+    end
+
+    h:SetScript("OnEnter", function(self)
+        ns._hudMouseOver = true
+        ns.ApplyHudFade()
+        showHandleTooltip(self)
     end)
     h:SetScript("OnLeave", function()
         GameTooltip:Hide()
@@ -271,7 +273,9 @@ function ns.CreateHandle()
     end)
 
     h:SetScript("OnMouseDown", function(_, button)
-        if button == "LeftButton" and IsAltKeyDown() and not InCombatLockdown() then
+        if button == "LeftButton" and IsAltKeyDown()
+           and not InCombatLockdown()
+           and not (ns.db and ns.db.locked) then
             h._isMoving = true
             cancelAutoLock()
             mf:StartMoving()
@@ -298,6 +302,7 @@ function ns.CreateHandle()
                     scheduleAutoLock()
                     ns.Print("Unlocked (auto-locks in 30s)")
                 end
+                showHandleTooltip(h)
             end
         elseif button == "RightButton" then
             if ns.OpenConfig then ns.OpenConfig() end
