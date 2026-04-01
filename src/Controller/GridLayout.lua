@@ -139,14 +139,12 @@ function ns.LayoutGrid(gridPlayers, intToUse, needN)
     if showNeed and mainFrame.needLine then
         statusH = 12
         mainFrame.needLine:ClearAllPoints()
-        mainFrame.needLine:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", 2, yCursor - 2)
-        mainFrame.needLine:SetPoint("RIGHT", mainFrame, "RIGHT", -2, 0)
-        mainFrame.needLine:SetJustifyH("CENTER")
+        mainFrame.needLine:SetPoint("TOP", mainFrame, "TOPLEFT", math.floor(FRAME_W / 2), yCursor - 2)
 
         local parts = {}
         local selfNeed = ns.SelfNeedsArmor and ns.SelfNeedsArmor()
         if needN > 0 then
-            parts[#parts + 1] = "|cffff7777" .. needN .. "|r|cff555555need|r"
+            parts[#parts + 1] = "|cffff7777" .. needN .. "|r |cff555555need|r"
         elseif selfNeed then
             parts[#parts + 1] = "|cffffaa44self|r"
         else
@@ -155,7 +153,7 @@ function ns.LayoutGrid(gridPlayers, intToUse, needN)
         local powderN = ns.GetArcanePowderCount and ns.GetArcanePowderCount() or 0
         if powderN >= 0 then
             local clr = powderN > 5 and "88aaff" or (powderN > 0 and "ffcc44" or "ff5555")
-            parts[#parts + 1] = "|cff" .. clr .. powderN .. "|r|cff555555pw|r"
+            parts[#parts + 1] = "|cff" .. clr .. powderN .. "|r |cff555555pw|r"
         end
         mainFrame.needLine:SetText(table.concat(parts, " \194\183 "))
     elseif mainFrame.needLine then
