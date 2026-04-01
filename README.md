@@ -4,32 +4,30 @@ A lightweight mage buff HUD for WoW Classic (TBC Anniversary). Shows what needs 
 
 ## Features
 
-- **Two-button HUD** — left button handles self-buffs (armor, emergency shield). Right button handles group buffs (Intellect / Arcane Brilliance for party, pets, and friendly target).
+- **Two-button HUD** — left button is **Auto Buff** (cascades: armor → self Intellect → group Intellect → pets → shield). Right button is dedicated **Group** (Brilliance / Intellect on next unbuffed member).
 - **Glow alerts** — bright pulsing gold border on any button that needs attention.
-- **Buff timers** — remaining duration overlaid on each icon. Color shifts to orange when time is low.
+- **Buff timers** — live countdown overlaid on each icon. Color shifts to orange when time is low.
 - **Sound reminders** — optional distinct sounds for missing self-buffs vs group buffs (toggleable).
-- **Need counter** — small "2 need Int" line below the icons so you know how many group members are unbuffed.
-- **Class rows** — expandable per-class roster with individual cast buttons for each player and pet.
+- **Need counter** — small "2 need" line below the icons so you know how many group members are unbuffed.
+- **Buff grid** — per-player/pet cast buttons grouped by class (enabled by default). Click any cell to buff or rebuff that unit.
 - **Smart targeting** — prioritizes self (armor first), then players in range, then pets. Skips units that already have a stronger Brilliance from another mage. Falls back to friendly target when group is fully buffed.
-- **Minimap button** — via LibDataBroker / LibDBIcon. Left-click toggles, Shift-click locks, right-click opens settings. Hover shows a LibQTip tooltip with status.
+- **Minimap button** — via LibDataBroker / LibDBIcon. Left-click toggles, Shift-click locks, right-click opens settings.
 - **Keybinds** — bind both buttons from the standard Key Bindings menu.
 - **Profile support** — AceDB profiles with import/export via the settings panel.
 - **Position memory** — drag the HUD anywhere; position persists across reloads and relogs.
 - **Auto-lock** — when you unlock to reposition, the HUD re-locks automatically after 30 seconds.
-- **Drag handle toggle** — the top-edge drag handle can be hidden via settings if you prefer a cleaner look.
+- **Drag handle** — small handle above the HUD for dragging and quick actions (can be hidden in settings).
 - **Buff duration guard** — prevents wasting reagents by skipping rebuffs when the remaining duration exceeds a configurable floor (default 2 minutes).
 - **Report to chat** — `/wbuff report` sends a buff status summary to party/raid chat (or local chat when solo).
 - **Combat-aware** — fades in combat, prevents taint by skipping secure frame changes during lockdown.
 
 ## Installation
 
-Copy the `WizardBuff` folder into:
+Install from [CurseForge](https://www.curseforge.com/wow/addons/wizard-buff) or copy the `WizardBuff` folder into:
 
 ```
 World of Warcraft\_anniversary_\Interface\AddOns\
 ```
-
-All libraries are embedded — no external dependencies required.
 
 > **Note:** Do *not* add `Bindings.xml` to the `.toc` file. The WoW client loads it automatically from the addon root.
 
@@ -39,8 +37,8 @@ The HUD appears automatically for Mage characters. Drag it where you like, then 
 
 | Button | What it does |
 |--------|-------------|
-| **Left icon (Self)** | Casts the highest-priority missing self-buff: armor → emergency shield (if HP below threshold) |
-| **Right icon (Group)** | Casts Intellect or Arcane Brilliance on the next unbuffed party/raid member or pet. When everyone is buffed, falls back to friendly target |
+| **Left icon (Auto Buff)** | Cascading priority: armor → self Intellect → next group member → pets → emergency shield |
+| **Right icon (Group)** | Casts Intellect or Arcane Brilliance on the next unbuffed party/raid member or pet. Falls back to friendly target when everyone is buffed |
 
 Hover over the drag handle at the top edge for quick actions:
 - **Right-click** — open settings
@@ -55,7 +53,7 @@ Hover over the drag handle at the top edge for quick actions:
 | *(none)* or `toggle` | Enable / disable the HUD |
 | `config` | Open the settings panel |
 | `lock` | Lock / unlock position (auto-locks after 30s) |
-| `rows` | Toggle class rows |
+| `grid` | Toggle buff grid |
 | `armor` | Toggle armor buffing |
 | `bubble` | Toggle emergency shield |
 | `int` | Toggle Intellect buffing |
@@ -72,7 +70,7 @@ You can bind the HUD buttons to custom macros or action bars:
 /click WizardBuffAutoBuffButton
 ```
 
-Triggers the **Self** button (armor / shield).
+Triggers the **Auto Buff** button (armor → intellect → pets).
 
 ```
 /click WizardBuffBrillianceButton
@@ -82,11 +80,11 @@ Triggers the **Group** button (Intellect / Brilliance on next target).
 
 ## Settings
 
-Open with `/wbuff config` or right-click the HUD.
+Open with `/wbuff config` or right-click the drag handle.
 
-- **General** — master toggle, lock, show solo, need count, buff timers, glow alerts, sound alerts (self / group), class rows, minimap icon visibility.
-- **Appearance** — HUD scale, idle/hover opacity, combat fade, drag handle toggle, position reset.
-- **Buffs** — armor type (auto/ice/mage/frost), Intellect, Brilliance preference, pet buffing, emergency shield type and HP% threshold, buff duration guard (min remaining seconds).
+- **General** — master toggle, lock, show solo, need count, buff timers, glow alerts, sound alerts, buff grid, drag handle, minimap icon.
+- **Appearance** — HUD scale, idle/hover opacity, combat fade, position reset.
+- **Buffs** — armor type (auto/ice/mage/frost), Intellect, Brilliance preference, pet buffing, emergency shield type and HP% threshold, buff duration guard.
 - **Profiles** — AceDB profile management with import/export.
 
 ## Saved Variables
@@ -96,15 +94,18 @@ Open with `/wbuff config` or right-click the HUD.
 
 ## Libraries
 
-All bundled in `Libs/`:
+Fetched automatically at build time via `.pkgmeta` externals:
 
-Ace3 (AceAddon, AceConfig, AceConfigDialog, AceConsole, AceDB, AceDBOptions, AceEvent, AceGUI, AceLocale) · LibStub · CallbackHandler · LibDataBroker-1.1 · LibDBIcon-1.0 · LibQTip-1.0
+Ace3 (AceAddon, AceConfig, AceConfigDialog, AceConsole, AceDB, AceDBOptions, AceEvent, AceGUI, AceLocale) · LibStub · CallbackHandler · LibDataBroker-1.1 · LibDBIcon-1.0
 
 ## Packaging
 
-Run `pack.bat` (or `pack.ps1` directly) to produce a `WizardBuff.zip` on your Desktop, structured with the correct root folder for CurseForge upload.
+Releases are built automatically via [BigWigsMods/packager](https://github.com/BigWigsMods/packager) GitHub Action:
 
-`.pkgmeta` is included for the CurseForge BigWigs packager if you prefer automated releases.
+- **Push a tag** (e.g. `1.3`) → builds a **Release** on CurseForge and GitHub
+- **Push to master** (no tag) → builds an **Alpha** on CurseForge
+
+The `@project-version@` token in the `.toc` is replaced with the tag name or commit hash automatically.
 
 ## Interface Version
 

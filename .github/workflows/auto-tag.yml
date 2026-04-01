@@ -1,0 +1,31 @@
+name: Auto Tag
+
+on:
+  push:
+    branches:
+      - master
+
+permissions:
+  contents: write
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: Bump version and tag
+        run: |
+          latest=$(git tag -l --sort=-v:refname | grep -E '^[0-9]+\.[0-9]+(\.[0-9]+)?$' | head -1)
+          if [ -z "$latest" ]; then
+            next="1.0.0"
+          else
+            IFS='.' read -r major minor patch <<< "$latest"
+            patch=${patch:-0}
+            next="$major.$minor.$((patch + 1))"
+          fi
+          echo "Tagging $next"
+          git tag -a "$next" -m "Release $next"
+          git push origin "$next"
