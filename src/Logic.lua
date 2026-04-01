@@ -270,18 +270,6 @@ local function GetUnitClass(unit)
     return class
 end
 
-function ns.MakeBuffMacro(unit, spell)
-    if unit == "player" or UnitIsUnit(unit, "player") then
-        return "/cast [nocombat,@player] " .. spell
-    else
-        return "/cast [nocombat,@" .. unit .. "] " .. spell
-    end
-end
-
-function ns.MakeSelfCastMacro(spell)
-    return "/cast [@player] " .. spell
-end
-
 function ns.ScanRoster()
     wipe(roster)
     local intName = SpellNames.ArcaneIntellect

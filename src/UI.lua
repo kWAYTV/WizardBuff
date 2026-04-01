@@ -193,7 +193,7 @@ function ns.CreateMainFrame()
     ns.ApplyHudScale()
 end
 
-local HANDLE_H = 10
+local HANDLE_SIZE = 16
 local autoLockTimer
 
 local function cancelAutoLock()
@@ -218,14 +218,18 @@ function ns.CreateHandle()
     local mf = ns.mainFrame
     local h = CreateFrame("Button", "WizardBuffHandle", mf)
     ns.handle = h
-    h:SetHeight(HANDLE_H)
-    h:SetPoint("TOPLEFT", mf, "TOPLEFT", 0, 0)
-    h:SetPoint("TOPRIGHT", mf, "TOPRIGHT", 0, 0)
+    h:SetSize(HANDLE_SIZE, HANDLE_SIZE)
+    h:SetPoint("BOTTOMLEFT", mf, "TOPLEFT", 0, 0)
     h:SetFrameStrata("MEDIUM")
     h:SetFrameLevel(mf:GetFrameLevel() + 5)
     h:EnableMouse(true)
     h:RegisterForDrag("LeftButton")
     h:RegisterForClicks("AnyUp")
+
+    local bg = h:CreateTexture(nil, "BACKGROUND")
+    bg:SetAllPoints()
+    bg:SetColorTexture(0.12, 0.12, 0.16, 0.6)
+    h.bg = bg
 
     local hl = h:CreateTexture(nil, "HIGHLIGHT")
     hl:SetAllPoints()
@@ -233,15 +237,17 @@ function ns.CreateHandle()
     hl:SetBlendMode("ADD")
 
     local grip = h:CreateTexture(nil, "OVERLAY")
-    grip:SetSize(16, 2)
-    grip:SetPoint("CENTER", 0, 0)
-    grip:SetColorTexture(1, 1, 1, 0)
-    h.grip = grip
+    grip:SetSize(8, 2)
+    grip:SetPoint("CENTER", 0, 1)
+    grip:SetColorTexture(0.7, 0.7, 0.7, 0.5)
+    local grip2 = h:CreateTexture(nil, "OVERLAY")
+    grip2:SetSize(8, 2)
+    grip2:SetPoint("CENTER", 0, -2)
+    grip2:SetColorTexture(0.7, 0.7, 0.7, 0.5)
 
     h:SetScript("OnEnter", function(self)
         ns._hudMouseOver = true
         ns.ApplyHudFade()
-        self.grip:SetColorTexture(1, 1, 1, 0.4)
 
         GameTooltip:SetOwner(self, "ANCHOR_TOP")
         GameTooltip:AddLine("Wizard Buff", 0.6, 0.8, 1)
@@ -257,7 +263,6 @@ function ns.CreateHandle()
         GameTooltip:Show()
     end)
     h:SetScript("OnLeave", function(self)
-        self.grip:SetColorTexture(1, 1, 1, 0)
         GameTooltip:Hide()
         scheduleHudLeaveCheck(mf)
     end)
