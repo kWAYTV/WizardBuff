@@ -50,12 +50,20 @@ function WizardBuff_RegisterOptions(addon)
                         type = "toggle", name = "Need count", order = 4,
                         width = 1.0,
                     },
+                    showTimers = {
+                        type = "toggle", name = "Buff timers", order = 5,
+                        width = 1.0,
+                    },
+                    showGlow = {
+                        type = "toggle", name = "Glow alerts", order = 6,
+                        width = 1.0,
+                    },
                     showClassRows = {
-                        type = "toggle", name = "Class rows", order = 5,
+                        type = "toggle", name = "Class rows", order = 7,
                         width = 1.0, disabled = inCombat,
                     },
                     minimapHide = {
-                        type = "toggle", name = "Hide minimap icon", order = 6,
+                        type = "toggle", name = "Hide minimap icon", order = 8,
                         width = 1.0,
                         get = function() return addon.db.profile.minimap.hide end,
                         set = function(_, v)

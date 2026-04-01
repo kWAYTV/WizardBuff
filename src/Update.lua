@@ -84,6 +84,8 @@ local function applyButtonSpec(btn, spec)
     local c = spec.bg
     btn.bg:SetColorTexture(c[1], c[2], c[3], c[4])
     btn.tooltipLine2 = spec.tooltipLine2
+    ns.SetButtonTimer(btn, spec.timerSec)
+    ns.SetButtonGlow(btn, spec.needsAction)
 end
 
 local function formatHudTimer(sec)
@@ -134,6 +136,7 @@ local function resolveAutoBuffSpec(ctx)
             icon = resolveSpellIcon(sid, ICON.armor),
             bg = COL.armor,
             tooltipLine2 = "Self-cast armor before buffing the group.",
+            needsAction = true,
         }
     end
 
@@ -146,6 +149,7 @@ local function resolveAutoBuffSpec(ctx)
             icon = resolveSpellIcon(sid, ICON.shield),
             bg = COL.shield,
             tooltipLine2 = "Emergency shield when your health is below the threshold.",
+            needsAction = true,
         }
     end
 
@@ -154,10 +158,11 @@ local function resolveAutoBuffSpec(ctx)
         return {
             macro = ns.MakeBuffMacro(nextIntUnit, intToUse),
             text = "|cffaaaaff" .. nextIntName .. "|r",
-            labelShort = (nextIntName and #nextIntName > 8) and (nextIntName:sub(1, 7) .. "…") or (nextIntName or "Int"),
+            labelShort = (nextIntName and #nextIntName > 8) and (nextIntName:sub(1, 7) .. "\226\128\166") or (nextIntName or "Int"),
             icon = resolveSpellIcon(iid, ICON.int),
             bg = COL.int,
             tooltipLine2 = "Casts on the next roster member that needs Intellect (or Brilliance if configured).",
+            needsAction = true,
         }
     end
 
@@ -170,7 +175,17 @@ local function resolveAutoBuffSpec(ctx)
             icon = resolveSpellIcon(iid, ICON.int),
             bg = COL.int,
             tooltipLine2 = "Casts on the next pet that needs Intellect.",
+            needsAction = true,
         }
+    end
+
+    local armorTimer = ns.GetSelfArmorRemaining and ns.GetSelfArmorRemaining()
+    local intTimer = SpellNames.ArcaneIntellect and ns.GetBuffTimeRemaining("player", SpellNames.ArcaneIntellect)
+    local selfTimer = nil
+    if armorTimer and intTimer then
+        selfTimer = math.min(armorTimer, intTimer)
+    else
+        selfTimer = armorTimer or intTimer
     end
 
     return {
@@ -180,6 +195,8 @@ local function resolveAutoBuffSpec(ctx)
         icon = ICON.autoIdle,
         bg = COL.ok,
         tooltipLine2 = "Next target in queue: armor, shield (if low HP), then Int/Brilliance.",
+        needsAction = false,
+        timerSec = selfTimer,
     }
 end
 
@@ -199,6 +216,7 @@ local function resolveBrillianceSpec(ctx)
             bg = COL.brill,
             timerSec = nil,
             tooltipLine2 = "Casts Arcane Brilliance on the same target as Auto when possible.",
+            needsAction = true,
         } or {
             macro = nil,
             text = "|cff66dd66Done|r",
@@ -207,6 +225,7 @@ local function resolveBrillianceSpec(ctx)
             bg = COL.ok,
             timerSec = SpellNames.ArcaneBrilliance and ns.GetBuffTimeRemaining("player", SpellNames.ArcaneBrilliance) or nil,
             tooltipLine2 = "Group buff satisfied or no valid target.",
+            needsAction = false,
         }
     end
 
@@ -215,10 +234,10 @@ local function resolveBrillianceSpec(ctx)
             macro = ns.MakeBuffMacro(brillTarget, intSpell),
             text = "|cffffcc66Int|r",
             labelShort = "Int",
-            -- Same spell as Auto column, but this is the *group* slot: show powder (Brilliance reagent), not the INT icon.
             icon = brillGroupSlotIcon(),
             bg = COL.intNoPowder,
             tooltipLine2 = "No Arcane Powder: this button still casts Intellect, but the icon is the group slot (powder = Arcane Brilliance when you have it).",
+            needsAction = true,
         } or {
             macro = nil,
             text = "|cff66dd66OK|r",
@@ -226,16 +245,19 @@ local function resolveBrillianceSpec(ctx)
             icon = brillGroupSlotIcon(),
             bg = COL.ok,
             tooltipLine2 = "Buy Arcane Powder to cast Arcane Brilliance from this slot; until then it falls back to Int.",
+            needsAction = false,
+            timerSec = SpellNames.ArcaneIntellect and ns.GetBuffTimeRemaining("player", SpellNames.ArcaneIntellect) or nil,
         }
     end
 
     return {
         macro = nil,
-        text = "|cff666666—|r",
+        text = "|cff666666\226\128\148|r",
         labelShort = "Train",
         icon = ICON.notLearned,
         bg = COL.disabled,
         tooltipLine2 = "Arcane Brilliance is not in your spellbook yet. Train it to unlock the group buff on this slot.",
+        needsAction = false,
     }
 end
 

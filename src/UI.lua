@@ -72,6 +72,67 @@ local function scheduleHudLeaveCheck(mf)
     end)
 end
 
+local function createGlow(btn)
+    local glow = btn:CreateTexture(nil, "OVERLAY")
+    glow:SetPoint("TOPLEFT", -3, 3)
+    glow:SetPoint("BOTTOMRIGHT", 3, -3)
+    glow:SetColorTexture(1, 0.82, 0.2, 0)
+    glow:SetBlendMode("ADD")
+    glow:Hide()
+    btn.glowTex = glow
+
+    local ag = glow:CreateAnimationGroup()
+    ag:SetLooping("BOUNCE")
+    local pulse = ag:CreateAnimation("Alpha")
+    pulse:SetFromAlpha(0)
+    pulse:SetToAlpha(0.45)
+    pulse:SetDuration(0.6)
+    pulse:SetSmoothing("IN_OUT")
+    btn.glowAnim = ag
+end
+
+function ns.SetButtonGlow(btn, on)
+    if not btn or not btn.glowTex then return end
+    local d = ns.db
+    if not d or not d.showGlow then on = false end
+    if on then
+        btn.glowTex:Show()
+        if not btn.glowAnim:IsPlaying() then btn.glowAnim:Play() end
+    else
+        btn.glowAnim:Stop()
+        btn.glowTex:Hide()
+    end
+end
+
+local function createTimer(btn)
+    local t = btn:CreateFontString(nil, "OVERLAY")
+    t:SetFont(STANDARD_TEXT_FONT, 10, "OUTLINE")
+    t:SetPoint("TOP", btn, "TOP", 0, -1)
+    t:SetTextColor(1, 1, 1, 0.95)
+    t:SetShadowOffset(1, -1)
+    t:SetText("")
+    btn.timerText = t
+end
+
+function ns.SetButtonTimer(btn, sec)
+    if not btn or not btn.timerText then return end
+    local d = ns.db
+    if not d or not d.showTimers or not sec or sec <= 0 then
+        btn.timerText:SetText("")
+        return
+    end
+    if sec >= 3600 then
+        btn.timerText:SetText(string.format("%dh", math.floor(sec / 3600)))
+    elseif sec >= 60 then
+        btn.timerText:SetText(string.format("%dm", math.floor(sec / 60)))
+    else
+        btn.timerText:SetText(string.format("%ds", math.floor(sec)))
+        btn.timerText:SetTextColor(1, 0.6, 0.3)
+        return
+    end
+    btn.timerText:SetTextColor(1, 1, 1, 0.95)
+end
+
 function ns.CreateMainFrame()
     local mf = CreateFrame("Frame", "WizardBuffFrame", UIParent)
     ns.mainFrame = mf
@@ -160,6 +221,8 @@ local function makeIconButton(name, parent)
     b.text = nil
 
     stripSecureActionChrome(b)
+    createGlow(b)
+    createTimer(b)
     return b
 end
 

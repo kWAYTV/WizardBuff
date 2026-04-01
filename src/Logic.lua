@@ -94,6 +94,19 @@ function ns.HasAnyArmorBuff()
     return false
 end
 
+function ns.GetSelfArmorRemaining()
+    local best
+    for _, buffName in ipairs(ArmorBuffNames) do
+        if buffName then
+            local rem = ns.GetBuffTimeRemaining("player", buffName)
+            if rem then
+                if not best or rem < best then best = rem end
+            end
+        end
+    end
+    return best
+end
+
 function ns.GetArmorSpell()
     local armorType = db.armorType or "auto"
     if armorType == "frost" then
