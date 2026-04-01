@@ -293,7 +293,9 @@ function ns.ScanRoster()
         local hasStrongerBrill = ns.HasStrongerBrilliance(unit)
         local hasInt = ns.UnitHasBuff(unit, intName)
         local hasBrill = ns.UnitHasBuff(unit, brillName)
-        local needsInt = db.buffIntellect and not hasStrongerBrill and not hasInt and not hasBrill
+        local recentlyBuffed = ns._recentlyBuffed and ns._recentlyBuffed[unit]
+            and (GetTime() - ns._recentlyBuffed[unit]) < 4
+        local needsInt = db.buffIntellect and not hasStrongerBrill and not hasInt and not hasBrill and not recentlyBuffed
         if not roster[class] then
             roster[class] = {}
         end
@@ -324,7 +326,9 @@ function ns.ScanRoster()
         local hasStrongerBrill = ns.HasStrongerBrilliance(petUnit)
         local hasInt = ns.UnitHasBuff(petUnit, intName)
         local hasBrill = ns.UnitHasBuff(petUnit, brillName)
-        local needsInt = db.buffIntellect and not hasStrongerBrill and not hasInt and not hasBrill
+        local recentlyBuffed = ns._recentlyBuffed and ns._recentlyBuffed[petUnit]
+            and (GetTime() - ns._recentlyBuffed[petUnit]) < 4
+        local needsInt = db.buffIntellect and not hasStrongerBrill and not hasInt and not hasBrill and not recentlyBuffed
         if not roster["PET"] then
             roster["PET"] = {}
         end

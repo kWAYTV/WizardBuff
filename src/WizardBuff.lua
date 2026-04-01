@@ -207,6 +207,7 @@ function WizardBuff:OnEnable()
     self:RegisterEvent("PLAYER_REGEN_DISABLED")
     self:RegisterEvent("BAG_UPDATE")
     self:RegisterEvent("PLAYER_TARGET_CHANGED")
+    self:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
     ns.ScheduleUpdate()
     ns.Print("|cff666666v" .. ns.VERSION .. "|r — /wbuff config · mage buff HUD")
 end
@@ -288,7 +289,7 @@ function WizardBuff:GROUP_ROSTER_UPDATE()
 end
 
 function WizardBuff:UNIT_AURA(_, unit)
-    if unit == "player" or unit:match("^party") or unit:match("^raid") then
+    if unit == "player" or unit == "pet" or unit:match("^party") or unit:match("^raid") then
         ns.ScheduleUpdate()
     end
 end
@@ -311,5 +312,23 @@ function WizardBuff:BAG_UPDATE()
 end
 
 function WizardBuff:PLAYER_TARGET_CHANGED()
+    ns.ScheduleUpdate()
+end
+
+ns._recentlyBuffed = {}
+
+function WizardBuff:UNIT_SPELLCAST_SUCCEEDED(_, unit, _, spellId)
+    if not unit or not spellId then return end
+    local isOurBuff = false
+    for _, list in pairs(ns.SpellIDs) do
+        if type(list) == "table" then
+            for _, id in ipairs(list) do
+                if id == spellId then isOurBuff = true; break end
+            end
+        end
+        if isOurBuff then break end
+    end
+    if not isOurBuff then return end
+    ns._recentlyBuffed[unit] = GetTime()
     ns.ScheduleUpdate()
 end
