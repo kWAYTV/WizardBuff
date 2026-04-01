@@ -18,6 +18,8 @@ jobs:
 
       - name: Bump version and tag
         run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
           latest=$(git tag -l --sort=-v:refname | grep -E '^[0-9]+\.[0-9]+(\.[0-9]+)?$' | head -1)
           if [ -z "$latest" ]; then
             next="1.0.0"
