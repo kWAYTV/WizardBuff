@@ -18,14 +18,6 @@ local ICON = {
     notLearned = "Interface\\Icons\\INV_Misc_QuestionMark",
 }
 
-local COL = {
-    armor    = {0.18, 0.32, 0.48, 0.92},
-    int      = {0.22, 0.18, 0.35, 0.92},
-    shield   = {0.15, 0.22, 0.38, 0.92},
-    ok       = {0.12, 0.32, 0.12, 0.92},
-    brill    = {0.26, 0.16, 0.38, 0.92},
-    disabled = {0.14, 0.1, 0.18, 0.92},
-}
 
 local function resolveSpellIcon(spellId, fallbackPath)
     if not spellId then
@@ -62,8 +54,13 @@ local function applyButtonSpec(btn, spec)
         btn:SetAttribute("macrotext", nil)
     end
     btn.icon:SetTexture(spec.icon)
-    local c = spec.bg
-    btn.bg:SetColorTexture(c[1], c[2], c[3], c[4])
+    if spec.needsAction then
+        btn.icon:SetDesaturated(false)
+        btn.icon:SetAlpha(1)
+    else
+        btn.icon:SetDesaturated(false)
+        btn.icon:SetAlpha(0.85)
+    end
     btn.tooltipLine2 = spec.tooltipLine2
     btn._isIntCast = spec.isIntCast or false
     ns.SetButtonTimer(btn, spec.timerSec)
@@ -102,7 +99,6 @@ local function resolveAutoSpec(ctx)
             spellName = armorSpell,
             unit = "player",
             icon = resolveSpellIcon(sid, ICON.armor),
-            bg = COL.armor,
             tooltipLine2 = "Self-cast armor.",
             needsAction = true,
             soundKind = "self",
@@ -117,7 +113,6 @@ local function resolveAutoSpec(ctx)
             spellName = intToUse,
             unit = nextIntUnit,
             icon = isBrill and resolveSpellIcon(brillSid, ICON.brill) or resolveSpellIcon(intSid, ICON.int),
-            bg = isBrill and COL.brill or COL.int,
             tooltipLine2 = nextIntName .. " needs buff.",
             needsAction = true,
             soundKind = "group",
@@ -131,7 +126,6 @@ local function resolveAutoSpec(ctx)
             spellName = intToUse,
             unit = nextIntPetUnit,
             icon = resolveSpellIcon(intSid, ICON.int),
-            bg = COL.int,
             tooltipLine2 = (nextIntPetName or "Pet") .. " needs buff.",
             needsAction = true,
             soundKind = "group",
@@ -146,7 +140,6 @@ local function resolveAutoSpec(ctx)
             spellName = bubbleSpell,
             unit = "player",
             icon = resolveSpellIcon(sid, ICON.shield),
-            bg = COL.shield,
             tooltipLine2 = "Emergency shield — HP below threshold.",
             needsAction = true,
             soundKind = nil,
@@ -157,7 +150,6 @@ local function resolveAutoSpec(ctx)
 
     return {
         icon = ICON.selfIdle,
-        bg = COL.ok,
         tooltipLine2 = "All buffed!",
         needsAction = false,
         soundKind = nil,
@@ -185,7 +177,6 @@ local function resolveGroupSpec(ctx)
     if not intToUse then
         return {
             icon = ICON.notLearned,
-            bg = COL.disabled,
             tooltipLine2 = "Learn Arcane Intellect to use this slot.",
             needsAction = false,
             timerSec = nil,
@@ -198,7 +189,6 @@ local function resolveGroupSpec(ctx)
             spellName = intToUse,
             unit = nextIntUnit,
             icon = isBrill and resolveSpellIcon(brillSid, ICON.brill) or resolveSpellIcon(intSid, ICON.int),
-            bg = isBrill and COL.brill or COL.int,
             tooltipLine2 = nextIntName .. " needs buff.",
             needsAction = true,
             timerSec = selfIntTimer,
@@ -210,7 +200,6 @@ local function resolveGroupSpec(ctx)
             spellName = intToUse,
             unit = nextIntPetUnit,
             icon = resolveSpellIcon(intSid, ICON.int),
-            bg = COL.int,
             tooltipLine2 = (nextIntPetName or "Pet") .. " needs buff.",
             needsAction = true,
             timerSec = selfIntTimer,
@@ -229,7 +218,6 @@ local function resolveGroupSpec(ctx)
             spellName = intToUse,
             unit = "target",
             icon = idleIcon,
-            bg = COL.ok,
             tooltipLine2 = "Click to buff target.",
             needsAction = false,
             timerSec = selfIntTimer,
@@ -238,7 +226,6 @@ local function resolveGroupSpec(ctx)
 
     return {
         icon = idleIcon,
-        bg = COL.ok,
         tooltipLine2 = "Group buffed.",
         needsAction = false,
         timerSec = selfIntTimer,
@@ -372,8 +359,8 @@ function ns.UpdateButtons()
     updateSoundReminder(autoSpec.soundKind, groupSpec.needsAction)
 
     local needN = countNeedingInt(roster)
-    local BAR_H = ns.UI_BAR_H or 38
-    local BAR_W = ns.UI_FRAME_W or 72
+    local BAR_H = ns.UI_BAR_H or 28
+    local BAR_W = ns.UI_FRAME_W or 54
     local showNeed = db.showHudNeedCount
     local needH = 0
 
@@ -381,17 +368,17 @@ function ns.UpdateButtons()
         hideUnusedGridCells(1)
         if mainFrame.needLine then mainFrame.needLine:SetText("") end
         autoBuffButton:ClearAllPoints()
-        autoBuffButton:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", 3, -3)
+        autoBuffButton:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", 2, -2)
         mainFrame:SetSize(BAR_W, BAR_H)
         mainFrame:Show()
         if ns.ApplyHudFade then ns.ApplyHudFade() end
         return
     end
 
-    local CW = ns.GRID_CELL_W or 24
-    local CH = ns.GRID_CELL_H or 12
-    local CG = ns.GRID_GAP or 1
-    local PER_ROW = ns.GRID_PER_ROW or 4
+    local CW = ns.GRID_CELL_W or 20
+    local CH = ns.GRID_CELL_H or 20
+    local CG = ns.GRID_GAP or 2
+    local PER_ROW = ns.GRID_PER_ROW or 5
 
     local gridPlayers = {}
     for _, class in ipairs(CLASS_ORDER) do
@@ -413,20 +400,20 @@ function ns.UpdateButtons()
 
     local cols = math.min(#gridPlayers, PER_ROW)
     local gridPxW = cols > 0 and (cols * CW + (cols - 1) * CG) or 0
-    local iconPairW = 32 * 2 + 2
-    local FRAME_W = math.max(iconPairW + 6, gridPxW + 6)
+    local iconPairW = 24 * 2 + 2
+    local FRAME_W = math.max(iconPairW + 4, gridPxW + 4)
 
-    local xPad = math.max(3, math.floor((FRAME_W - iconPairW) / 2))
+    local xPad = math.max(2, math.floor((FRAME_W - iconPairW) / 2))
     autoBuffButton:ClearAllPoints()
-    autoBuffButton:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", xPad, -3)
+    autoBuffButton:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", xPad, -2)
 
-    local yAfterIcons = -(3 + 32 + 2)
+    local yAfterIcons = -(2 + 24 + 2)
 
     if showNeed and mainFrame.needLine then
-        needH = 11
+        needH = 10
         mainFrame.needLine:ClearAllPoints()
-        mainFrame.needLine:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", 3, yAfterIcons)
-        mainFrame.needLine:SetPoint("RIGHT", mainFrame, "RIGHT", -3, 0)
+        mainFrame.needLine:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", 2, yAfterIcons)
+        mainFrame.needLine:SetPoint("RIGHT", mainFrame, "RIGHT", -2, 0)
         mainFrame.needLine:SetJustifyH("CENTER")
         mainFrame.needLine:SetText(
             needN > 0
@@ -438,8 +425,8 @@ function ns.UpdateButtons()
         mainFrame.needLine:SetText("")
     end
 
-    local gridYStart = yAfterIcons - 2
-    local gridXStart = math.max(3, math.floor((FRAME_W - gridPxW) / 2))
+    local gridYStart = yAfterIcons - 1
+    local gridXStart = math.max(2, math.floor((FRAME_W - gridPxW) / 2))
     local maxRow = 0
 
     for i, p in ipairs(gridPlayers) do

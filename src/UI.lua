@@ -2,20 +2,20 @@ local _, ns = ...
 ns = ns or _G.WizardBuffAddon
 assert(ns, "WizardBuff: load WizardBuff.lua before UI.lua")
 
-local ICON = 32
-local PAD = 3
-local GAP = 2
+local ICON = 24
+local PAD  = 2
+local GAP  = 2
 
 ns.UI_FRAME_W = PAD + ICON + GAP + ICON + PAD
 ns.UI_BAR_H   = PAD + ICON + PAD
 
-local CELL_W = 28
-local CELL_H = 28
-local CELL_GAP = 2
-ns.GRID_CELL_W = CELL_W
-ns.GRID_CELL_H = CELL_H
-ns.GRID_GAP    = CELL_GAP
-ns.GRID_PER_ROW = 5
+local CELL       = 20
+local CELL_BORDER = 2
+local CELL_GAP   = 2
+ns.GRID_CELL_W  = CELL
+ns.GRID_CELL_H  = CELL
+ns.GRID_GAP      = CELL_GAP
+ns.GRID_PER_ROW  = 5
 
 function ns.ApplyHudScale()
     local mf = ns.mainFrame
@@ -45,7 +45,10 @@ local function scheduleHudLeaveCheck(mf)
     end)
 end
 
-local GLOW_R, GLOW_G, GLOW_B = 1, 0.75, 0.2
+---------------------------------------------------------------------------
+-- Glow (pulsing border highlight for action-needed buttons)
+---------------------------------------------------------------------------
+local GLOW_R, GLOW_G, GLOW_B = 1, 0.82, 0.3
 local GLOW_THICK = 2
 
 local function createGlow(btn)
@@ -58,40 +61,30 @@ local function createGlow(btn)
         e:Hide()
         edges[i] = e
     end
-    local top, bottom, left, right = edges[1], edges[2], edges[3], edges[4]
-    top:SetPoint("TOPLEFT", btn, "TOPLEFT", -GLOW_THICK, GLOW_THICK)
-    top:SetPoint("TOPRIGHT", btn, "TOPRIGHT", GLOW_THICK, GLOW_THICK)
+    local top, bot, left, right = edges[1], edges[2], edges[3], edges[4]
+    top:SetPoint("TOPLEFT", btn, -GLOW_THICK, GLOW_THICK)
+    top:SetPoint("TOPRIGHT", btn, GLOW_THICK, GLOW_THICK)
     top:SetHeight(GLOW_THICK)
-
-    bottom:SetPoint("BOTTOMLEFT", btn, "BOTTOMLEFT", -GLOW_THICK, -GLOW_THICK)
-    bottom:SetPoint("BOTTOMRIGHT", btn, "BOTTOMRIGHT", GLOW_THICK, -GLOW_THICK)
-    bottom:SetHeight(GLOW_THICK)
-
-    left:SetPoint("TOPLEFT", top, "BOTTOMLEFT", 0, 0)
-    left:SetPoint("BOTTOMLEFT", bottom, "TOPLEFT", 0, 0)
+    bot:SetPoint("BOTTOMLEFT", btn, -GLOW_THICK, -GLOW_THICK)
+    bot:SetPoint("BOTTOMRIGHT", btn, GLOW_THICK, -GLOW_THICK)
+    bot:SetHeight(GLOW_THICK)
+    left:SetPoint("TOPLEFT", top, "BOTTOMLEFT")
+    left:SetPoint("BOTTOMLEFT", bot, "TOPLEFT")
     left:SetWidth(GLOW_THICK)
-
-    right:SetPoint("TOPRIGHT", top, "BOTTOMRIGHT", 0, 0)
-    right:SetPoint("BOTTOMRIGHT", bottom, "TOPRIGHT", 0, 0)
+    right:SetPoint("TOPRIGHT", top, "BOTTOMRIGHT")
+    right:SetPoint("BOTTOMRIGHT", bot, "TOPRIGHT")
     right:SetWidth(GLOW_THICK)
-
     btn.glowEdges = edges
     btn._glowPhase = 0
     btn._glowing = false
 end
 
-local GLOW_SPEED = 2.5
-local GLOW_MIN = 0.5
-local GLOW_MAX = 1.0
-
 local function updateGlows(self, elapsed)
     for _, btn in ipairs(self._glowButtons) do
         if btn._glowing and btn.glowEdges then
-            btn._glowPhase = (btn._glowPhase or 0) + elapsed * GLOW_SPEED
-            local a = GLOW_MIN + (GLOW_MAX - GLOW_MIN) * (0.5 + 0.5 * math.sin(btn._glowPhase))
-            for _, e in ipairs(btn.glowEdges) do
-                e:SetAlpha(a)
-            end
+            btn._glowPhase = (btn._glowPhase or 0) + elapsed * 2.5
+            local a = 0.5 + 0.5 * (0.5 + 0.5 * math.sin(btn._glowPhase))
+            for _, e in ipairs(btn.glowEdges) do e:SetAlpha(a) end
         end
     end
 end
@@ -114,26 +107,24 @@ function ns.SetButtonGlow(btn, on)
     if not btn or not btn.glowEdges then return end
     local d = ns.db
     if not d or not d.showGlow then on = false end
-
     btn._glowing = on
-
     if on then
         for _, e in ipairs(btn.glowEdges) do e:Show() end
         btn._glowPhase = btn._glowPhase or 0
         if ns._glowFrame then ns._glowFrame:Show() end
     else
-        for _, e in ipairs(btn.glowEdges) do
-            e:SetAlpha(0)
-            e:Hide()
-        end
+        for _, e in ipairs(btn.glowEdges) do e:SetAlpha(0); e:Hide() end
         btn._glowPhase = 0
     end
 end
 
+---------------------------------------------------------------------------
+-- Timer overlay (shows remaining buff duration on icons)
+---------------------------------------------------------------------------
 local function createTimer(btn)
     local t = btn:CreateFontString(nil, "OVERLAY")
-    t:SetFont(STANDARD_TEXT_FONT, 10, "OUTLINE")
-    t:SetPoint("TOP", btn, "TOP", 0, -1)
+    t:SetFont(STANDARD_TEXT_FONT, 9, "OUTLINE")
+    t:SetPoint("BOTTOM", btn, "BOTTOM", 0, 1)
     t:SetTextColor(1, 1, 1, 0.95)
     t:SetShadowOffset(1, -1)
     t:SetText("")
@@ -153,52 +144,29 @@ end
 local function refreshTimerText(btn)
     if not btn or not btn.timerText then return end
     local d = ns.db
-    if not d or not d.showTimers then
-        btn.timerText:SetText("")
-        return
-    end
+    if not d or not d.showTimers then btn.timerText:SetText(""); return end
     local exp = btn._expiresAt
-    if not exp then
-        btn.timerText:SetText("")
-        return
-    end
+    if not exp then btn.timerText:SetText(""); return end
     local sec = exp - GetTime()
-    if sec <= 0 then
-        btn.timerText:SetText("")
-        return
-    end
+    if sec <= 0 then btn.timerText:SetText(""); return end
     local text, isLong = formatTimer(sec)
     btn.timerText:SetText(text)
-    if isLong then
-        btn.timerText:SetTextColor(1, 1, 1, 0.95)
-    else
-        btn.timerText:SetTextColor(1, 0.6, 0.3)
-    end
+    btn.timerText:SetTextColor(isLong and 1 or 1, isLong and 1 or 0.6, isLong and 1 or 0.3)
 end
 
 function ns.SetButtonTimer(btn, sec)
     if not btn then return end
-    if sec and sec > 0 then
-        btn._expiresAt = GetTime() + sec
-    else
-        btn._expiresAt = nil
-    end
+    btn._expiresAt = (sec and sec > 0) and (GetTime() + sec) or nil
     refreshTimerText(btn)
 end
 
+---------------------------------------------------------------------------
+-- Main frame — transparent container, no backdrop
+---------------------------------------------------------------------------
 function ns.CreateMainFrame()
-    local mf = CreateFrame("Frame", "WizardBuffFrame", UIParent, "BackdropTemplate")
+    local mf = CreateFrame("Frame", "WizardBuffFrame", UIParent)
     ns.mainFrame = mf
     mf:SetSize(ns.UI_FRAME_W, ns.UI_BAR_H)
-
-    mf:SetBackdrop({
-        bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
-        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-        tile = true, tileSize = 16, edgeSize = 12,
-        insets = { left = 2, right = 2, top = 2, bottom = 2 },
-    })
-    mf:SetBackdropColor(0, 0, 0, 0.8)
-    mf:SetBackdropBorderColor(0.3, 0.5, 0.8, 0.6)
 
     local pos = ns.db and ns.db.hudPos
     if pos and pos.point and pos.relPoint and pos.x and pos.y then
@@ -229,7 +197,7 @@ function ns.CreateMainFrame()
     end)
 
     local needLine = mf:CreateFontString(nil, "OVERLAY")
-    needLine:SetFont(STANDARD_TEXT_FONT, 9, "OUTLINE")
+    needLine:SetFont(STANDARD_TEXT_FONT, 8, "OUTLINE")
     needLine:SetShadowOffset(1, -1)
     needLine:SetText("")
     mf.needLine = needLine
@@ -237,7 +205,10 @@ function ns.CreateMainFrame()
     ns.ApplyHudScale()
 end
 
-local HANDLE_SIZE = 16
+---------------------------------------------------------------------------
+-- Handle — invisible; ADD highlight only on hover (Decursive style)
+---------------------------------------------------------------------------
+local HANDLE_H = 6
 local autoLockTimer
 
 local function cancelAutoLock()
@@ -262,51 +233,38 @@ function ns.CreateHandle()
     local mf = ns.mainFrame
     local h = CreateFrame("Button", "WizardBuffHandle", mf)
     ns.handle = h
-    h:SetSize(HANDLE_SIZE, HANDLE_SIZE)
+
+    h:SetHeight(HANDLE_H)
     h:SetPoint("BOTTOMLEFT", mf, "TOPLEFT", 0, 0)
+    h:SetPoint("BOTTOMRIGHT", mf, "TOPRIGHT", 0, 0)
     h:SetFrameStrata("MEDIUM")
     h:SetFrameLevel(mf:GetFrameLevel() + 5)
     h:EnableMouse(true)
     h:RegisterForDrag("LeftButton")
     h:RegisterForClicks("AnyUp")
 
-    local bg = h:CreateTexture(nil, "BACKGROUND")
-    bg:SetAllPoints()
-    bg:SetColorTexture(0.12, 0.12, 0.16, 0.6)
-    h.bg = bg
-
     local hl = h:CreateTexture(nil, "HIGHLIGHT")
     hl:SetAllPoints()
-    hl:SetColorTexture(1, 1, 1, 0.15)
+    hl:SetColorTexture(1, 1, 1, 0.12)
     hl:SetBlendMode("ADD")
-
-    local grip = h:CreateTexture(nil, "OVERLAY")
-    grip:SetSize(8, 2)
-    grip:SetPoint("CENTER", 0, 1)
-    grip:SetColorTexture(0.7, 0.7, 0.7, 0.5)
-    local grip2 = h:CreateTexture(nil, "OVERLAY")
-    grip2:SetSize(8, 2)
-    grip2:SetPoint("CENTER", 0, -2)
-    grip2:SetColorTexture(0.7, 0.7, 0.7, 0.5)
 
     h:SetScript("OnEnter", function(self)
         ns._hudMouseOver = true
         ns.ApplyHudFade()
-
         GameTooltip:SetOwner(self, "ANCHOR_TOP")
         GameTooltip:AddLine("Wizard Buff", 0.6, 0.8, 1)
         local locked = ns.db and ns.db.locked
         if locked then
-            GameTooltip:AddLine("Right-click: config", 0.6, 0.6, 0.6)
-            GameTooltip:AddLine("Shift+click: unlock", 0.6, 0.6, 0.6)
+            GameTooltip:AddLine("Right-click \194\183 config", 0.55, 0.55, 0.55)
+            GameTooltip:AddLine("Shift+click \194\183 unlock", 0.55, 0.55, 0.55)
         else
-            GameTooltip:AddLine("Drag to move", 0.6, 0.6, 0.6)
-            GameTooltip:AddLine("Right-click: config", 0.6, 0.6, 0.6)
-            GameTooltip:AddLine("Shift+click: lock", 0.6, 0.6, 0.6)
+            GameTooltip:AddLine("Drag to move", 0.55, 0.55, 0.55)
+            GameTooltip:AddLine("Right-click \194\183 config", 0.55, 0.55, 0.55)
+            GameTooltip:AddLine("Shift+click \194\183 lock", 0.55, 0.55, 0.55)
         end
         GameTooltip:Show()
     end)
-    h:SetScript("OnLeave", function(self)
+    h:SetScript("OnLeave", function()
         GameTooltip:Hide()
         scheduleHudLeaveCheck(mf)
     end)
@@ -323,9 +281,7 @@ function ns.CreateHandle()
             local point, _, relPoint, x, y = mf:GetPoint(1)
             ns.db.hudPos = { point = point, relPoint = relPoint, x = x, y = y }
         end
-        if ns.db and not ns.db.locked then
-            scheduleAutoLock()
-        end
+        if ns.db and not ns.db.locked then scheduleAutoLock() end
     end)
 
     h:SetScript("OnClick", function(_, button)
@@ -355,6 +311,9 @@ function ns.UpdateHandleVisibility()
     end
 end
 
+---------------------------------------------------------------------------
+-- Secure icon buttons — clean floating icons, thin dark surround
+---------------------------------------------------------------------------
 local function stripSecureActionChrome(b)
     local nt = b:GetNormalTexture()
     if nt then nt:SetTexture(nil); nt:SetAlpha(0) end
@@ -378,18 +337,23 @@ local function makeIconButton(name, parent)
     b:SetSize(ICON, ICON)
     b:RegisterForClicks("AnyUp", "AnyDown")
     b:SetAttribute("type", "macro")
+    stripSecureActionChrome(b)
 
-    local bg = b:CreateTexture(nil, "BACKGROUND")
-    bg:SetAllPoints()
-    bg:SetColorTexture(0.06, 0.06, 0.08, 0.9)
-    b.bg = bg
+    local shadow = b:CreateTexture(nil, "BACKGROUND")
+    shadow:SetPoint("TOPLEFT", -1, 1)
+    shadow:SetPoint("BOTTOMRIGHT", 1, -1)
+    shadow:SetColorTexture(0, 0, 0, 0.6)
+    b.shadow = shadow
 
     local icon = b:CreateTexture(nil, "ARTWORK")
-    icon:SetPoint("TOPLEFT", 1, -1)
-    icon:SetPoint("BOTTOMRIGHT", -1, 1)
+    icon:SetAllPoints()
     b.icon = icon
 
-    stripSecureActionChrome(b)
+    local hl = b:CreateTexture(nil, "HIGHLIGHT")
+    hl:SetAllPoints()
+    hl:SetColorTexture(1, 1, 1, 0.15)
+    hl:SetBlendMode("ADD")
+
     createGlow(b)
     createTimer(b)
     return b
@@ -403,19 +367,15 @@ function ns.CreateAutoBuffButton()
     b.icon:SetTexture("Interface\\Icons\\Spell_Holy_MagicalSentry")
 
     b:SetScript("OnEnter", function(self)
-        if not InCombatLockdown() then self.bg:SetColorTexture(0.10, 0.10, 0.14, 1) end
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
         GameTooltip:AddLine("Auto Buff", 0.85, 0.92, 1)
         if self.tooltipLine2 and self.tooltipLine2 ~= "" then
             GameTooltip:AddLine(self.tooltipLine2, 0.6, 0.6, 0.6, true)
         end
-        GameTooltip:AddLine("/click WizardBuffAutoBuffButton", 0.4, 0.4, 0.4)
+        GameTooltip:AddLine("/click WizardBuffAutoBuffButton", 0.35, 0.35, 0.35)
         GameTooltip:Show()
     end)
-    b:SetScript("OnLeave", function(self)
-        if not InCombatLockdown() then self.bg:SetColorTexture(0.06, 0.06, 0.08, 0.9) end
-        GameTooltip:Hide()
-    end)
+    b:SetScript("OnLeave", function() GameTooltip:Hide() end)
     hookSecureHover(b, mf)
     ns.RegisterGlowButton(b)
 
@@ -423,9 +383,7 @@ function ns.CreateAutoBuffButton()
         if not InCombatLockdown() then
             if self._isIntCast then
                 local unit = self:GetAttribute("unit")
-                if unit then
-                    ns._recentlyBuffed[unit] = GetTime()
-                end
+                if unit then ns._recentlyBuffed[unit] = GetTime() end
             end
             ns.ScheduleUpdate(true)
         end
@@ -440,19 +398,15 @@ function ns.CreateBrillianceButton()
     b.icon:SetTexture("Interface\\Icons\\Spell_Nature_Regeneration")
 
     b:SetScript("OnEnter", function(self)
-        if not InCombatLockdown() then self.bg:SetColorTexture(0.10, 0.08, 0.14, 1) end
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
         GameTooltip:AddLine("Group", 0.9, 0.85, 1)
         if self.tooltipLine2 and self.tooltipLine2 ~= "" then
             GameTooltip:AddLine(self.tooltipLine2, 0.6, 0.6, 0.6, true)
         end
-        GameTooltip:AddLine("/click WizardBuffBrillianceButton", 0.4, 0.4, 0.4)
+        GameTooltip:AddLine("/click WizardBuffBrillianceButton", 0.35, 0.35, 0.35)
         GameTooltip:Show()
     end)
-    b:SetScript("OnLeave", function(self)
-        if not InCombatLockdown() then self.bg:SetColorTexture(0.06, 0.06, 0.08, 0.9) end
-        GameTooltip:Hide()
-    end)
+    b:SetScript("OnLeave", function() GameTooltip:Hide() end)
     hookSecureHover(b, mf)
     ns.RegisterGlowButton(b)
 
@@ -465,54 +419,67 @@ function ns.CreateBrillianceButton()
     end)
 end
 
+---------------------------------------------------------------------------
+-- Grid cells — Decursive-style micro-unit frames
+-- Four thin border strips (class-colored) + center fill
+---------------------------------------------------------------------------
 function ns.CreateGridCell(index)
     local mf = ns.mainFrame
     local btn = CreateFrame("Button", "WizardBuffCell" .. index, mf, "SecureActionButtonTemplate")
-    btn:SetSize(CELL_W, CELL_H)
+    btn:SetSize(CELL, CELL)
     btn:RegisterForClicks("AnyUp", "AnyDown")
     btn:SetAttribute("type", "spell")
     stripSecureActionChrome(btn)
 
-    local border = btn:CreateTexture(nil, "BACKGROUND")
-    border:SetAllPoints()
-    border:SetColorTexture(0, 0, 0, 0.8)
-    btn.border = border
+    local INNER = CELL - CELL_BORDER * 2
 
-    local fill = btn:CreateTexture(nil, "ARTWORK")
-    fill:SetPoint("TOPLEFT", 1, -1)
-    fill:SetPoint("BOTTOMRIGHT", -1, 1)
+    local edges = {}
+    for i = 1, 4 do
+        edges[i] = btn:CreateTexture(nil, "BORDER")
+        edges[i]:SetColorTexture(0, 0, 0, 0.8)
+    end
+    edges[1]:SetPoint("TOPLEFT"); edges[1]:SetPoint("TOPRIGHT"); edges[1]:SetHeight(CELL_BORDER)
+    edges[2]:SetPoint("BOTTOMLEFT"); edges[2]:SetPoint("BOTTOMRIGHT"); edges[2]:SetHeight(CELL_BORDER)
+    edges[3]:SetPoint("TOPLEFT", edges[1], "BOTTOMLEFT"); edges[3]:SetPoint("BOTTOMLEFT", edges[2], "TOPLEFT"); edges[3]:SetWidth(CELL_BORDER)
+    edges[4]:SetPoint("TOPRIGHT", edges[1], "BOTTOMRIGHT"); edges[4]:SetPoint("BOTTOMRIGHT", edges[2], "TOPRIGHT"); edges[4]:SetWidth(CELL_BORDER)
+    btn.edges = edges
+
+    local fill = btn:CreateTexture(nil, "BACKGROUND")
+    fill:SetPoint("TOPLEFT", CELL_BORDER, -CELL_BORDER)
+    fill:SetPoint("BOTTOMRIGHT", -CELL_BORDER, CELL_BORDER)
+    fill:SetColorTexture(0.15, 0.15, 0.15, 0.9)
     btn.fill = fill
 
     local initial = btn:CreateFontString(nil, "OVERLAY")
-    initial:SetFont(STANDARD_TEXT_FONT, 10, "OUTLINE")
+    initial:SetFont(STANDARD_TEXT_FONT, 9, "OUTLINE")
     initial:SetPoint("CENTER", 0, 0)
     initial:SetShadowOffset(1, -1)
     btn.initial = initial
 
+    local hl = btn:CreateTexture(nil, "HIGHLIGHT")
+    hl:SetPoint("TOPLEFT", CELL_BORDER, -CELL_BORDER)
+    hl:SetPoint("BOTTOMRIGHT", -CELL_BORDER, CELL_BORDER)
+    hl:SetColorTexture(1, 1, 1, 0.18)
+    hl:SetBlendMode("ADD")
+
     btn:SetScript("OnEnter", function(self)
         ns._hudMouseOver = true
         ns.ApplyHudFade()
-        if self.fill then
-            local cr, cg, cb = 1, 1, 1
-            if self.classColor then cr, cg, cb = unpack(self.classColor) end
-            self.fill:SetColorTexture(cr * 0.6, cg * 0.6, cb * 0.6, 1)
-        end
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
         local cr, cg, cb = 1, 1, 1
         if self.classColor then cr, cg, cb = unpack(self.classColor) end
         GameTooltip:AddLine(self.playerName or "?", cr, cg, cb)
         if self.ownerName then
-            GameTooltip:AddLine("Pet \194\183 " .. self.ownerName, 0.55, 0.55, 0.55)
+            GameTooltip:AddLine("Pet \194\183 " .. self.ownerName, 0.5, 0.5, 0.5)
         end
         if self.needsInt then
-            GameTooltip:AddLine("Needs Intellect — click to buff", 1, 0.4, 0.4)
+            GameTooltip:AddLine("Needs Intellect", 1, 0.4, 0.4)
         else
-            GameTooltip:AddLine("Buffed — click to rebuff", 0.4, 1, 0.4)
+            GameTooltip:AddLine("Buffed", 0.4, 1, 0.4)
         end
         GameTooltip:Show()
     end)
     btn:SetScript("OnLeave", function(self)
-        ns.ApplyGridCellColor(self)
         GameTooltip:Hide()
         scheduleHudLeaveCheck(mf)
     end)
@@ -536,10 +503,10 @@ function ns.ApplyGridCellColor(btn)
     if btn.needsInt then
         btn.fill:SetColorTexture(r * 0.45, g * 0.45, b * 0.45, 0.95)
         btn.initial:SetTextColor(1, 1, 1, 1)
-        btn.border:SetColorTexture(r * 0.8, g * 0.8, b * 0.8, 1)
+        for _, e in ipairs(btn.edges) do e:SetColorTexture(r, g, b, 0.9) end
     else
-        btn.fill:SetColorTexture(r * 0.15, g * 0.15, b * 0.15, 0.8)
-        btn.initial:SetTextColor(r * 0.5, g * 0.5, b * 0.5, 0.7)
-        btn.border:SetColorTexture(0, 0, 0, 0.6)
+        btn.fill:SetColorTexture(r * 0.12, g * 0.12, b * 0.12, 0.7)
+        btn.initial:SetTextColor(r * 0.4, g * 0.4, b * 0.4, 0.6)
+        for _, e in ipairs(btn.edges) do e:SetColorTexture(0, 0, 0, 0.4) end
     end
 end
