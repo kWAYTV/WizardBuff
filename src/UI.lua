@@ -140,23 +140,50 @@ local function createTimer(btn)
     btn.timerText = t
 end
 
-function ns.SetButtonTimer(btn, sec)
+local function formatTimer(sec)
+    if sec >= 3600 then
+        return string.format("%dh", math.floor(sec / 3600)), true
+    elseif sec >= 60 then
+        return string.format("%dm", math.ceil(sec / 60)), true
+    else
+        return string.format("%ds", math.floor(sec)), false
+    end
+end
+
+local function refreshTimerText(btn)
     if not btn or not btn.timerText then return end
     local d = ns.db
-    if not d or not d.showTimers or not sec or sec <= 0 then
+    if not d or not d.showTimers then
         btn.timerText:SetText("")
         return
     end
-    if sec >= 3600 then
-        btn.timerText:SetText(string.format("%dh", math.floor(sec / 3600)))
-    elseif sec >= 60 then
-        btn.timerText:SetText(string.format("%dm", math.floor(sec / 60)))
-    else
-        btn.timerText:SetText(string.format("%ds", math.floor(sec)))
-        btn.timerText:SetTextColor(1, 0.6, 0.3)
+    local exp = btn._expiresAt
+    if not exp then
+        btn.timerText:SetText("")
         return
     end
-    btn.timerText:SetTextColor(1, 1, 1, 0.95)
+    local sec = exp - GetTime()
+    if sec <= 0 then
+        btn.timerText:SetText("")
+        return
+    end
+    local text, isLong = formatTimer(sec)
+    btn.timerText:SetText(text)
+    if isLong then
+        btn.timerText:SetTextColor(1, 1, 1, 0.95)
+    else
+        btn.timerText:SetTextColor(1, 0.6, 0.3)
+    end
+end
+
+function ns.SetButtonTimer(btn, sec)
+    if not btn then return end
+    if sec and sec > 0 then
+        btn._expiresAt = GetTime() + sec
+    else
+        btn._expiresAt = nil
+    end
+    refreshTimerText(btn)
 end
 
 function ns.CreateMainFrame()
@@ -182,6 +209,15 @@ function ns.CreateMainFrame()
         ns.ApplyHudFade()
     end)
     mf:SetScript("OnLeave", function() scheduleHudLeaveCheck(mf) end)
+
+    local timerElapsed = 0
+    mf:SetScript("OnUpdate", function(_, dt)
+        timerElapsed = timerElapsed + dt
+        if timerElapsed < 1 then return end
+        timerElapsed = 0
+        if ns.autoBuffButton then refreshTimerText(ns.autoBuffButton) end
+        if ns.brillianceButton then refreshTimerText(ns.brillianceButton) end
+    end)
 
     local needLine = mf:CreateFontString(nil, "OVERLAY")
     needLine:SetFont(STANDARD_TEXT_FONT, 9, "OUTLINE")
