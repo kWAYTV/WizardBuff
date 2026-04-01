@@ -32,244 +32,339 @@ function ns.RegisterOptions(addon)
     local options = {
         type = "group",
         name = "Wizard Buff",
+        childGroups = "tab",
         get  = get,
         set  = set,
         args = {
-            core = {
-                order  = 1,
-                type   = "group",
-                name   = "General",
-                inline = true,
-                args   = {
-                    enabled = {
-                        type = "toggle", name = "Enabled", order = 1,
-                        width = 1.0, disabled = inCombat,
+
+            ---------- TAB 1: General ----------
+            general = {
+                order = 1,
+                type  = "group",
+                name  = "General",
+                args  = {
+                    core = {
+                        order  = 1,
+                        type   = "group",
+                        name   = "Core",
+                        inline = true,
+                        args   = {
+                            enabled = {
+                                type = "toggle", name = "Enabled", order = 1,
+                                width = "full", disabled = inCombat,
+                            },
+                            showWhenSolo = {
+                                type = "toggle", name = "Show when solo", order = 2,
+                                width = "full",
+                            },
+                            locked = {
+                                type = "toggle", name = "Lock position", order = 3,
+                                width = "full",
+                            },
+                        },
                     },
-                    locked = {
-                        type = "toggle", name = "Lock position", order = 2,
-                        width = 1.0,
+                    display = {
+                        order  = 2,
+                        type   = "group",
+                        name   = "HUD Elements",
+                        inline = true,
+                        args   = {
+                            showTimers = {
+                                type = "toggle", name = "Buff timers", order = 1,
+                                width = "full",
+                            },
+                            showGlow = {
+                                type = "toggle", name = "Glow alerts", order = 2,
+                                width = "full",
+                            },
+                            showHudNeedCount = {
+                                type = "toggle", name = "Need count text", order = 3,
+                                width = "full",
+                            },
+                            showClassRows = {
+                                type = "toggle", name = "Buff grid (class rows)", order = 4,
+                                width = "full", disabled = inCombat,
+                            },
+                            showDragHandle = {
+                                type = "toggle", name = "Show drag handle", order = 5,
+                                width = "full",
+                                set = function(_, v)
+                                    addon.db.profile.showDragHandle = v
+                                    if ns.UpdateHandleVisibility then ns.UpdateHandleVisibility() end
+                                end,
+                            },
+                            minimapHide = {
+                                type = "toggle", name = "Hide minimap icon", order = 6,
+                                width = "full",
+                                get = function() return addon.db.profile.minimap.hide end,
+                                set = function(_, v)
+                                    addon.db.profile.minimap.hide = v
+                                    local icon = LibStub("LibDBIcon-1.0", true)
+                                    if icon then
+                                        if v then icon:Hide("WizardBuff") else icon:Show("WizardBuff") end
+                                    end
+                                end,
+                            },
+                        },
                     },
-                    showWhenSolo = {
-                        type = "toggle", name = "Show solo", order = 3,
-                        width = 1.0,
-                    },
-                    showHudNeedCount = {
-                        type = "toggle", name = "Need count", order = 4,
-                        width = 1.0,
-                    },
-                    showTimers = {
-                        type = "toggle", name = "Buff timers", order = 5,
-                        width = 1.0,
-                    },
-                    showGlow = {
-                        type = "toggle", name = "Glow alerts", order = 6,
-                        width = 1.0,
-                    },
-                    showSound = {
-                        type = "toggle", name = "Sound alert", order = 7,
-                        width = 1.0,
-                    },
-                    testSound = {
-                        type = "execute", name = "Test self sound", order = 7.5,
-                        width = 0.7,
-                        func = function()
-                            PlaySoundFile("Sound\\Interface\\AlarmClockWarning3.ogg", "Master")
-                        end,
-                    },
-                    testSound2 = {
-                        type = "execute", name = "Test group sound", order = 7.6,
-                        width = 0.7,
-                        func = function()
-                            PlaySoundFile("Sound\\Interface\\iQuestUpdate.ogg", "Master")
-                        end,
-                    },
-                    showClassRows = {
-                        type = "toggle", name = "Buff grid", order = 8,
-                        width = 1.0, disabled = inCombat,
-                    },
-                    minimapHide = {
-                        type = "toggle", name = "Hide minimap icon", order = 9,
-                        width = 1.0,
-                        get = function() return addon.db.profile.minimap.hide end,
-                        set = function(_, v)
-                            addon.db.profile.minimap.hide = v
-                            local icon = LibStub("LibDBIcon-1.0", true)
-                            if icon then
-                                if v then icon:Hide("WizardBuff") else icon:Show("WizardBuff") end
-                            end
-                        end,
+                    sound = {
+                        order  = 3,
+                        type   = "group",
+                        name   = "Sound",
+                        inline = true,
+                        args   = {
+                            showSound = {
+                                type = "toggle", name = "Enable sound alerts", order = 1,
+                                width = "full",
+                            },
+                            testSound = {
+                                type = "execute", name = "Test self sound", order = 2,
+                                width = 0.8,
+                                disabled = function() return not addon.db.profile.showSound end,
+                                func = function()
+                                    PlaySoundFile("Sound\\Interface\\AlarmClockWarning3.ogg", "Master")
+                                end,
+                            },
+                            testSound2 = {
+                                type = "execute", name = "Test group sound", order = 3,
+                                width = 0.8,
+                                disabled = function() return not addon.db.profile.showSound end,
+                                func = function()
+                                    PlaySoundFile("Sound\\Interface\\iQuestUpdate.ogg", "Master")
+                                end,
+                            },
+                        },
                     },
                 },
             },
+
+            ---------- TAB 2: Appearance ----------
             appearance = {
-                order  = 2,
-                type   = "group",
-                name   = "Appearance",
-                inline = true,
-                args   = {
-                    hudScale = {
-                        type = "range", name = "Scale", order = 1,
-                        width = 1.5,
-                        min = 0.5, max = 2, step = 0.05, isPercent = true,
-                        disabled = inCombat,
+                order = 2,
+                type  = "group",
+                name  = "Appearance",
+                args  = {
+                    scale = {
+                        order  = 1,
+                        type   = "group",
+                        name   = "Scale & Opacity",
+                        inline = true,
+                        args   = {
+                            hudScale = {
+                                type = "range", name = "HUD scale", order = 1,
+                                width = "full",
+                                min = 0.5, max = 2, step = 0.05, isPercent = true,
+                                disabled = inCombat,
+                            },
+                            hudAlphaIdle = {
+                                type = "range", name = "Idle opacity", order = 2,
+                                width = "full",
+                                min = 0, max = 1, step = 0.05, isPercent = true,
+                            },
+                            hudAlphaHover = {
+                                type = "range", name = "Hover opacity", order = 3,
+                                width = "full",
+                                min = 0.3, max = 1, step = 0.05, isPercent = true,
+                            },
+                        },
                     },
-                    hudAlphaIdle = {
-                        type = "range", name = "Idle opacity", order = 2,
-                        width = 1.5,
-                        min = 0, max = 1, step = 0.05, isPercent = true,
+                    combat = {
+                        order  = 2,
+                        type   = "group",
+                        name   = "Combat",
+                        inline = true,
+                        args   = {
+                            hideHudInCombat = {
+                                type = "toggle", name = "Fade HUD in combat", order = 1,
+                                width = "full",
+                            },
+                        },
                     },
-                    hudAlphaHover = {
-                        type = "range", name = "Hover opacity", order = 3,
-                        width = 1.5,
-                        min = 0.3, max = 1, step = 0.05, isPercent = true,
-                    },
-                    hideHudInCombat = {
-                        type = "toggle", name = "Fade in combat", order = 4,
-                        width = 1.0,
-                    },
-                    resetPosition = {
-                        type = "execute", name = "Reset position", order = 5,
-                        disabled = inCombat,
-                        func = function()
-                            if ns.mainFrame then
-                                ns.mainFrame:ClearAllPoints()
-                                ns.mainFrame:SetPoint("CENTER", 0, 200)
-                            end
-                            if addon.db.profile then
-                                addon.db.profile.hudPos = nil
-                            end
-                        end,
-                    },
-                    showDragHandle = {
-                        type = "toggle", name = "Show drag handle", order = 6,
-                        width = 1.0,
-                        set = function(_, v)
-                            addon.db.profile.showDragHandle = v
-                            if ns.UpdateHandleVisibility then ns.UpdateHandleVisibility() end
-                        end,
+                    position = {
+                        order  = 3,
+                        type   = "group",
+                        name   = "Position",
+                        inline = true,
+                        args   = {
+                            resetPosition = {
+                                type = "execute", name = "Reset position to center", order = 1,
+                                disabled = inCombat,
+                                func = function()
+                                    if ns.mainFrame then
+                                        ns.mainFrame:ClearAllPoints()
+                                        ns.mainFrame:SetPoint("CENTER", 0, 200)
+                                    end
+                                    if addon.db.profile then
+                                        addon.db.profile.hudPos = nil
+                                    end
+                                end,
+                            },
+                        },
                     },
                 },
             },
+
+            ---------- TAB 3: Buffs ----------
             buffs = {
-                order  = 3,
-                type   = "group",
-                name   = "Buffs",
-                inline = true,
-                args   = {
-                    buffArmor = {
-                        type = "toggle", name = "Armor", order = 1,
-                        width = 1.0,
+                order = 3,
+                type  = "group",
+                name  = "Buffs",
+                args  = {
+                    selfBuffs = {
+                        order  = 1,
+                        type   = "group",
+                        name   = "Self Buffs (Left Button)",
+                        inline = true,
+                        args   = {
+                            buffArmor = {
+                                type = "toggle", name = "Armor", order = 1,
+                                width = 1.0,
+                            },
+                            armorType = {
+                                type = "select", name = "Armor type", order = 2,
+                                width = 1.0,
+                                values = { auto = "Auto", ice = "Ice", mage = "Mage", frost = "Frost" },
+                                disabled = function() return not addon.db.profile.buffArmor end,
+                            },
+                            spacer1 = { order = 3, type = "description", name = "" },
+                            enableBubble = {
+                                type = "toggle", name = "Emergency shield", order = 4,
+                                width = 1.0,
+                            },
+                            bubbleType = {
+                                type = "select", name = "Shield type", order = 5,
+                                width = 1.0,
+                                values = { auto = "Auto", icebarrier = "Ice Barrier", manashield = "Mana Shield", none = "Off" },
+                                disabled = function() return not addon.db.profile.enableBubble end,
+                            },
+                            bubbleThreshold = {
+                                type = "range", name = "Shield HP% threshold", order = 6,
+                                width = "full",
+                                min = 5, max = 100, step = 5,
+                                disabled = function() return not addon.db.profile.enableBubble end,
+                            },
+                        },
                     },
-                    armorType = {
-                        type = "select", name = "Armor type", order = 2,
-                        width = 1.0,
-                        values = { auto = "Auto", ice = "Ice", mage = "Mage", frost = "Frost" },
-                        disabled = function() return not addon.db.profile.buffArmor end,
+                    groupBuffs = {
+                        order  = 2,
+                        type   = "group",
+                        name   = "Group Buffs (Right Button)",
+                        inline = true,
+                        args   = {
+                            buffIntellect = {
+                                type = "toggle", name = "Intellect", order = 1,
+                                width = 1.0,
+                            },
+                            useArcaneBrilliance = {
+                                type = "toggle", name = "Prefer Arcane Brilliance", order = 2,
+                                width = 1.0,
+                                disabled = function() return not addon.db.profile.buffIntellect end,
+                            },
+                            buffPets = {
+                                type = "toggle", name = "Buff pets", order = 3,
+                                width = "full",
+                                disabled = function() return not addon.db.profile.buffIntellect end,
+                            },
+                        },
                     },
-                    buffIntellect = {
-                        type = "toggle", name = "Intellect", order = 3,
-                        width = 1.0,
-                    },
-                    useArcaneBrilliance = {
-                        type = "toggle", name = "Prefer Brilliance", order = 4,
-                        width = 1.0,
-                        disabled = function() return not addon.db.profile.buffIntellect end,
-                    },
-                    buffPets = {
-                        type = "toggle", name = "Buff pets", order = 5,
-                        width = 1.0,
-                        disabled = function() return not addon.db.profile.buffIntellect end,
-                    },
-                    enableBubble = {
-                        type = "toggle", name = "Emergency shield", order = 6,
-                        width = 1.0,
-                    },
-                    bubbleType = {
-                        type = "select", name = "Shield type", order = 7,
-                        width = 1.0,
-                        values = { auto = "Auto", icebarrier = "Ice Barrier", manashield = "Mana Shield", none = "Off" },
-                        disabled = function() return not addon.db.profile.enableBubble end,
-                    },
-                    bubbleThreshold = {
-                        type = "range", name = "Shield HP%", order = 8,
-                        width = 1.5,
-                        min = 5, max = 100, step = 5,
-                        disabled = function() return not addon.db.profile.enableBubble end,
-                    },
-                    refreshFloorSec = {
-                        type = "range", name = "Min remaining (sec)", order = 9,
-                        desc = "Don't refresh buffs with more than this many seconds remaining",
-                        width = 1.5,
-                        min = 0, max = 600, step = 30,
+                    refreshGuard = {
+                        order  = 3,
+                        type   = "group",
+                        name   = "Refresh Guard",
+                        inline = true,
+                        args   = {
+                            refreshDesc = {
+                                order = 1, type = "description",
+                                name = "Don't refresh buffs that still have more than this many seconds remaining. Set to 0 to disable.",
+                            },
+                            refreshFloorSec = {
+                                type = "range", name = "Min remaining (seconds)", order = 2,
+                                width = "full",
+                                min = 0, max = 600, step = 30,
+                            },
+                        },
                     },
                 },
             },
+
+            ---------- TAB 4: Profiles ----------
             profiles = {
-                order  = 50,
-                type   = "group",
-                name   = "Profiles",
-                inline = true,
-                args   = {
+                order = 10,
+                type  = "group",
+                name  = "Profiles",
+                args  = {
                     current = {
                         order = 1, type = "description", fontSize = "medium",
                         name = function()
                             return "Active: |cffffd100" .. addon.db:GetCurrentProfile() .. "|r"
                         end,
                     },
-                    choose = {
-                        order = 2, type = "select", name = "Switch",
-                        width = 1.0,
-                        get = function() return addon.db:GetCurrentProfile() end,
-                        set = function(_, v) addon.db:SetProfile(v); refresh() end,
-                        values = profileList(false),
+                    manage = {
+                        order  = 2,
+                        type   = "group",
+                        name   = "Manage",
+                        inline = true,
+                        args   = {
+                            choose = {
+                                order = 1, type = "select", name = "Switch profile",
+                                width = 1.2,
+                                get = function() return addon.db:GetCurrentProfile() end,
+                                set = function(_, v) addon.db:SetProfile(v); refresh() end,
+                                values = profileList(false),
+                            },
+                            new = {
+                                order = 2, type = "input", name = "New profile",
+                                width = 1.2,
+                                get = false,
+                                set = function(_, v)
+                                    if v and v:trim() ~= "" then
+                                        addon.db:SetProfile(v:trim()); refresh()
+                                    end
+                                end,
+                            },
+                            copy = {
+                                order = 3, type = "select", name = "Copy from",
+                                width = 1.2,
+                                get = false,
+                                set = function(_, v) addon.db:CopyProfile(v); refresh() end,
+                                values = profileList(true),
+                                confirm = true,
+                                confirmText = "Overwrite current settings with the selected profile?",
+                            },
+                            delete = {
+                                order = 4, type = "select", name = "Delete",
+                                width = 1.2,
+                                get = false,
+                                set = function(_, v) addon.db:DeleteProfile(v) end,
+                                values = profileList(true),
+                                confirm = true,
+                                confirmText = "Delete the selected profile?",
+                            },
+                        },
                     },
-                    new = {
-                        order = 3, type = "input", name = "New",
-                        width = 1.0,
-                        get = false,
-                        set = function(_, v)
-                            if v and v:trim() ~= "" then
-                                addon.db:SetProfile(v:trim()); refresh()
-                            end
-                        end,
-                    },
-                    copy = {
-                        order = 4, type = "select", name = "Copy from",
-                        width = 1.0,
-                        get = false,
-                        set = function(_, v) addon.db:CopyProfile(v); refresh() end,
-                        values = profileList(true),
-                        confirm = true,
-                        confirmText = "Overwrite current settings with the selected profile?",
-                    },
-                    delete = {
-                        order = 5, type = "select", name = "Delete",
-                        width = 1.0,
-                        get = false,
-                        set = function(_, v) addon.db:DeleteProfile(v) end,
-                        values = profileList(true),
-                        confirm = true,
-                        confirmText = "Delete the selected profile?",
-                    },
-                    reset = {
-                        order = 6, type = "execute", name = "Reset to defaults",
-                        width = 1.0,
-                        func = function() addon.db:ResetProfile(); refresh() end,
-                        confirm = true,
-                        confirmText = "Reset current profile to defaults?",
-                    },
-                    spacer = {
-                        order = 9, type = "description", name = "",
-                    },
-                    export = {
-                        order = 10, type = "execute", name = "Export",
-                        width = 0.6,
-                        func = function() ns.ShowProfileExport() end,
-                    },
-                    import = {
-                        order = 11, type = "execute", name = "Import",
-                        width = 0.6,
-                        func = function() ns.ShowProfileImport() end,
+                    actions = {
+                        order  = 3,
+                        type   = "group",
+                        name   = " ",
+                        inline = true,
+                        args   = {
+                            reset = {
+                                order = 1, type = "execute", name = "Reset to defaults",
+                                func = function() addon.db:ResetProfile(); refresh() end,
+                                confirm = true,
+                                confirmText = "Reset current profile to defaults?",
+                            },
+                            export = {
+                                order = 2, type = "execute", name = "Export",
+                                width = 0.6,
+                                func = function() ns.ShowProfileExport() end,
+                            },
+                            import = {
+                                order = 3, type = "execute", name = "Import",
+                                width = 0.6,
+                                func = function() ns.ShowProfileImport() end,
+                            },
+                        },
                     },
                 },
             },
