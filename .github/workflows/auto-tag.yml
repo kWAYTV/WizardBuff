@@ -1,4 +1,4 @@
-name: Auto Tag
+name: Auto Tag & Release
 
 on:
   push:
@@ -8,8 +8,12 @@ on:
 permissions:
   contents: write
 
+env:
+  CF_API_KEY: ${{ secrets.CF_API_KEY }}
+  GITHUB_OAUTH: ${{ secrets.GITHUB_TOKEN }}
+
 jobs:
-  tag:
+  tag-and-release:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6.0.2
@@ -17,6 +21,7 @@ jobs:
           fetch-depth: 0
 
       - name: Bump version and tag
+        id: tag
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -31,3 +36,11 @@ jobs:
           echo "Tagging $next"
           git tag -a "$next" -m "Release $next"
           git push origin "$next"
+          echo "tag=$next" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@v6.0.2
+        with:
+          ref: ${{ steps.tag.outputs.tag }}
+          fetch-depth: 0
+
+      - uses: BigWigsMods/packager@v2.5.1
