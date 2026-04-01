@@ -54,6 +54,19 @@ From [CurseForge](https://www.curseforge.com/wow/addons/wizard-buff), or copy `W
 **Buffs** — armor type, Intellect, Brilliance, pets, shield threshold, refresh guard
 **Profiles** — switch, copy, delete, import/export
 
+## Project Structure
+
+```
+src/
+  Core/           Bootstrap, compat shims, constants, slash commands, migration
+  Data/           Spell tables, profile defaults, class colors
+  Logic/          Buff queries, spell selection, roster scanning
+  UI/             Main frame, glow, timers, handle, icon buttons, grid cells
+  Controller/     Button state machine, grid layout, sound alerts, update loop
+  Config/         AceConfig options panel, profile import/export
+  Broker/         LibDataBroker minimap icon
+```
+
 ## Packaging
 
 Automated via GitHub Actions:
