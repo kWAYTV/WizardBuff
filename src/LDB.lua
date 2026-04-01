@@ -31,7 +31,7 @@ function WizardBuff_RegisterLDB(addon)
         tooltip:SmartAnchorTo(frame)
         tooltip:SetAutoHideDelay(0.15, frame)
 
-        tooltip:AddHeader("|cff8eb4d4Wizard Buff|r")
+        tooltip:AddHeader("|cff8eb4d4Wizard Buff|r |cff666666v" .. ns.VERSION .. "|r")
         tooltip:AddSeparator()
 
         local d = ns.db

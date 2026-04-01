@@ -1,5 +1,6 @@
 local addonName, ns = ...
 ns.addonName = addonName
+ns.VERSION = GetAddOnMetadata(addonName, "Version") or "dev"
 
 ns.REFRESH_THRESHOLD = 0.33
 
@@ -165,7 +166,7 @@ function WizardBuff:OnEnable()
     self:RegisterEvent("UPDATE_BINDINGS")
     self:RegisterEvent("BAG_UPDATE")
     ns.ScheduleUpdate()
-    print("|cff9ab8d4Wizard Buff|r — /wb config · mage buff HUD")
+    print("|cff9ab8d4Wizard Buff|r |cff666666v" .. ns.VERSION .. "|r — /wb config · mage buff HUD")
 end
 
 function WizardBuff:OnDisable()
