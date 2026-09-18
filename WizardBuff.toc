@@ -1,4 +1,4 @@
-## Interface: 20505
+## Interface: 20506
 ## Title: Wizard Buff
 ## Notes: Mage group buff HUD (Intellect, armor, shields). Bindings.xml must stay in addon root and NOT in this TOC (auto-loaded).
 ## Author: kWAYTV
@@ -9,34 +9,61 @@
 
 embeds.xml
 
-src/Core/Compat.lua
-src/Data/Spells.lua
-src/Data/Defaults.lua
-src/Core/Constants.lua
-src/Core/Bootstrap.lua
-src/Core/Migration.lua
-src/Core/SlashCommands.lua
+# addon — client shims, runtime slots, lifecycle
+src/addon/Compat.lua
+src/addon/State.lua
+src/addon/Scheduler.lua
 
-src/Logic/BuffQuery.lua
-src/Logic/SpellSelect.lua
-src/Logic/SpellCycle.lua
-src/Logic/CastFeedback.lua
-src/Logic/Roster.lua
+# settings + roster identity (needed before domain logic)
+src/settings/Defaults.lua
+src/roster/Classes.lua
+src/hud/Metrics.lua
 
-src/UI/Glow.lua
-src/UI/Timers.lua
-src/UI/MainFrame.lua
-src/UI/MessageFrame.lua
-src/UI/Handle.lua
-src/UI/IconButtons.lua
-src/UI/GridCells.lua
+# buffs — catalog and shared aura/rank/mode machinery
+src/buffs/Catalog.lua
+src/buffs/Auras.lua
+src/buffs/Ranks.lua
+src/buffs/Modes.lua
 
-src/Controller/ButtonState.lua
-src/Controller/GridLayout.lua
-src/Controller/SoundAlerts.lua
-src/Controller/UpdateLoop.lua
+# armor / intellect / shield
+src/armor/Auras.lua
+src/armor/Select.lua
+src/intellect/Select.lua
+src/intellect/Modes.lua
+src/shield/Auras.lua
+src/shield/Select.lua
+src/shield/Modes.lua
 
-src/Config/Options.lua
-src/Config/ProfileIO.lua
+# roster
+src/roster/Recent.lua
+src/roster/Scan.lua
+src/roster/Target.lua
+src/roster/Report.lua
 
-src/Broker/LDB.lua
+# button specs (domain decisions)
+src/autobuff/Modes.lua
+src/autobuff/Spec.lua
+src/intellect/Spec.lua
+src/shield/Spec.lua
+
+# hud + grid
+src/hud/Secure.lua
+src/hud/Glow.lua
+src/hud/Timers.lua
+src/hud/Messages.lua
+src/hud/Sound.lua
+src/hud/CastFeedback.lua
+src/hud/Handle.lua
+src/hud/Icons.lua
+src/grid/Cells.lua
+src/grid/Players.lua
+src/grid/Layout.lua
+src/hud/Frame.lua
+src/hud/Refresh.lua
+
+# settings UI, minimap, slash, boot
+src/settings/Profiles.lua
+src/settings/Options.lua
+src/broker/Minimap.lua
+src/addon/Slash.lua
+src/addon/Bootstrap.lua
