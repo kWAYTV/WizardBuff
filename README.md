@@ -77,9 +77,9 @@ Full AceDB profile system: create, switch, copy, delete, reset to defaults, and 
 Bind these to keys or toolbar slots for one-press buffing:
 
 ```
-/click WizardBuffAutoBuffButton
-/click WizardBuffBrillianceButton
-/click WizardBuffShieldButton
+/click WizardBuffAutoBuffButton LeftButton
+/click WizardBuffBrillianceButton LeftButton
+/click WizardBuffShieldButton LeftButton
 ```
 
 ## Key Bindings
@@ -108,7 +108,7 @@ Download from [CurseForge](https://www.curseforge.com/wow/addons/wizard-buff), o
 
 ## Interface Version
 
-`20505` — TBC Anniversary (2025/2026)
+`20506` — TBC Anniversary (2025/2026)
 
 ## Libraries
 
