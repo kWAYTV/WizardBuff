@@ -32,18 +32,19 @@ jobs:
           fi
           echo "Tagging $next"
           sed -i "s/^## Version: .*/## Version: $next/" WizardBuff.toc
-          if git diff --quiet -- WizardBuff.toc; then
-            echo "TOC already stamped $next"
+          git add WizardBuff.toc
+          # TOC may already be stamped (manual commit); don't fail the job
+          if git diff --cached --quiet; then
+            echo "TOC already at $next; skipping stamp commit"
           else
-            git add WizardBuff.toc
             git commit -m "chore: stamp version $next"
           fi
-          if git rev-parse "refs/tags/$next" >/dev/null 2>&1; then
+          if git rev-parse -q --verify "refs/tags/$next" >/dev/null; then
             echo "Tag $next already exists"
           else
             git tag -a "$next" -m "Release $next"
           fi
-          git push origin HEAD:master --tags
+          git push origin master --tags
           echo "tag=$next" >> "$GITHUB_OUTPUT"
 
       - name: Trigger release workflow
