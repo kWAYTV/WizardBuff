@@ -27,7 +27,7 @@ local function readInt(rec)
     end
     -- A predicted buff that hasn't shown up yet stays until it would expire.
     if state == "no" and prev and prev.predicted and (ns.Remaining(prev.expires) or 0) > 0
-        and GetTime() - prev.predicted < 5 then
+        and GetTime() - prev.predicted < 10 then
         state, expires, duration = "yes", prev.expires, prev.duration
         lastSeen[rec.guid] = prev
     end

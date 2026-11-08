@@ -58,25 +58,25 @@ local function build()
     category, layout = Settings.RegisterVerticalLayoutCategory("Wizard Buff")
 
     header(layout, "General")
-    checkbox("enabled", "Show the HUD", "Turn Wizard Buff's HUD on or off.")
-    checkbox("showSolo", "Show when solo", "Keep the HUD visible when you are not in a group.")
-    checkbox("locked", "Lock position", "Stop the HUD from being dragged.")
+    checkbox("enabled", "Show Wizard Buff", "Turn the icon bar and grid on or off.")
+    checkbox("showSolo", "Show when solo", "Keep the icon bar visible when you are not in a group.")
+    checkbox("locked", "Lock position", "Unlock to show a mover you can drag. Right-click it to lock again.")
     checkbox("showPets", "Include pets", "Show and buff group members' pets.")
 
     header(layout, "Buffs")
-    dropdown("armor", "Armor", "Armor kept up by the Buff button. Auto picks Mage Armor in dungeons and raids, Ice Armor elsewhere.", {
+    dropdown("armor", "Armor", "Armor on the armor icon. Auto picks Mage Armor in dungeons and raids, Ice Armor elsewhere.", {
         { "auto", "Auto" }, { "mage", "Mage Armor" }, { "ice", "Ice Armor" },
         { "frost", "Frost Armor" }, { "none", "None" },
     })
-    checkbox("useBrilliance", "Use Arcane Brilliance", "Let the Buff button cast Brilliance when several people need Intellect.")
+    checkbox("useBrilliance", "Suggest Arcane Brilliance", "Light up the Brilliance icon (and let the keybind cast it) when several people need Intellect.")
     slider("brillianceMin", "Brilliance when this many need it",
-        "Below this count the Buff button casts single-target Intellect to save Arcane Powder.", 1, 10, 1, plain)
+        "Below this count, single-target Intellect is suggested to save Arcane Powder.", 1, 10, 1, plain)
     slider("rebuffMinutes", "Rebuff under (minutes)",
         "Treat buffs with less time left than this as missing.", 0, 30, 1, plain)
-    dropdown("shield", "Shield", "Spell on the Shield button.", {
+    dropdown("shield", "Shield", "Spell on the shield icon.", {
         { "auto", "Auto" }, { "barrier", "Ice Barrier" }, { "mana", "Mana Shield" }, { "none", "None" },
     })
-    slider("shieldHealth", "Shield alert below health %", "The Shield button glows when your health drops below this.",
+    slider("shieldHealth", "Shield alert below health %", "The shield icon glows when your health drops below this.",
         10, 100, 5, function(v) return plain(v) .. "%" end)
 
     header(layout, "Grid clicks")
@@ -87,14 +87,15 @@ local function build()
     dropdown("layout", "Grid layout", "How raid groups are arranged.", {
         { "rows", "One row per group" }, { "columns", "One column per group" },
     })
-    slider("cellWidth", "Cell width", nil, 20, 80, 2, plain)
+    slider("iconSize", "Icon size", nil, 24, 64, 2, plain)
+    slider("cellWidth", "Cell width", nil, 30, 120, 2, plain)
     slider("cellHeight", "Cell height", nil, 14, 40, 2, plain)
     slider("scale", "Scale", nil, 0.5, 2, 0.05, percent)
-    slider("alpha", "Opacity", "Opacity when the mouse is not over the HUD.", 0.2, 1, 0.05, percent)
+    slider("alpha", "Opacity", "Opacity when the mouse is not over it.", 0.2, 1, 0.05, percent)
     slider("combatAlpha", "Opacity in combat", nil, 0, 1, 0.05, percent)
 
     header(layout, "Alerts")
-    checkbox("glow", "Glow", "Pulse buttons and cells that need a buff.")
+    checkbox("glow", "Glow", "Glow icons and cells that need a buff.")
     checkbox("sound", "Sound", "Play a sound when someone you cover needs a buff.")
     checkbox("readyCheck", "Ready check reminder", "On a ready check, tell you who still needs Intellect.")
 

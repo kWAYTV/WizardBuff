@@ -1,5 +1,37 @@
 local _, ns = ...
 
+local function yesno(v) return v and "yes" or "no" end
+
+function ns.Debug()
+    local build, _, _, iface = GetBuildInfo()
+    ns.Print("debug " .. ns.version .. " · build " .. tostring(build) .. " · interface " .. tostring(iface))
+    local secret = C_Secrets and C_Secrets.ShouldAurasBeSecret and ns.SafeCall(C_Secrets.ShouldAurasBeSecret)
+    print("  combat=" .. yesno(InCombatLockdown()) .. "  aurasSecret=" .. tostring(secret)
+        .. "  indexAPI=" .. yesno(C_UnitAuras and C_UnitAuras.GetAuraDataByIndex)
+        .. "  nameAPI=" .. yesno(C_UnitAuras and C_UnitAuras.GetAuraDataBySpellName))
+    local keys = {}
+    for key in pairs(ns.SPELLS) do keys[#keys + 1] = key end
+    table.sort(keys)
+    local parts = {}
+    for _, key in ipairs(keys) do
+        local ids = ns.KnownIDs(key)
+        if #ids > 0 then parts[#parts + 1] = key .. "=" .. table.concat(ids, ",") end
+    end
+    print("  known: " .. (#parts > 0 and table.concat(parts, "  ") or "none"))
+    local armor, exp = ns.ReadArmor()
+    local left = ns.Remaining(exp)
+    print("  armor: " .. tostring(armor) .. (left and (" " .. ns.FormatTime(left)) or ""))
+    ns.DebugAuras("player")
+    if UnitExists("target") and not ns.SafeCall(UnitIsUnit, "target", "player") then ns.DebugAuras("target") end
+    if not IsInRaid() then
+        for i = 1, math.min(GetNumSubgroupMembers(), 4) do ns.DebugAuras("party" .. i) end
+    end
+    local p = ns.plan
+    local n = p.next
+    print("  next: " .. (n and (tostring(n.label) .. " > " .. tostring(n.target)) or "nothing")
+        .. "  need=" .. tostring(p.needMine) .. "  members=" .. #ns.members)
+end
+
 local function report()
     local total, buffed, missing = 0, 0, {}
     for _, rec in ipairs(ns.members) do
@@ -33,12 +65,13 @@ end
 
 function ns.PrintHelp()
     ns.Print("Commands:")
-    print("  /wbuff - show or hide the HUD")
+    print("  /wbuff - show or hide")
     print("  /wbuff config - open settings")
-    print("  /wbuff lock - lock or unlock the HUD")
+    print("  /wbuff lock - unlock to move, lock again")
     print("  /wbuff mages - raid assignments between mages")
     print("  /wbuff report - post who is missing Intellect to group chat")
-    print("  /wbuff reset - move the HUD back to the center")
+    print("  /wbuff reset - move it back to the default spot")
+    print("  /wbuff debug - print what the game reports about buffs (paste this in bug reports)")
 end
 
 local COMMANDS = {
@@ -53,8 +86,9 @@ local COMMANDS = {
         ns.db.pos = nil
         if InCombatLockdown() then ns.Print("Leave combat first."); return end
         ns.RestorePosition()
-        ns.Print("HUD moved to the center.")
+        ns.Print("Moved back to the default spot.")
     end,
+    debug    = function() ns.Debug() end,
     help     = function() ns.PrintHelp() end,
 }
 

@@ -4,8 +4,10 @@ ns.name = addonName
 _G.WizardBuff = ns
 
 BINDING_HEADER_WIZARDBUFF = "Wizard Buff"
-_G["BINDING_NAME_CLICK WizardBuffBuffButton:LeftButton"] = "Buff next target"
-_G["BINDING_NAME_CLICK WizardBuffBuffButton:RightButton"] = "Arcane Brilliance"
+_G["BINDING_NAME_CLICK WizardBuffBuffButton:LeftButton"] = "Cast whatever is needed next"
+_G["BINDING_NAME_CLICK WizardBuffIntButton:LeftButton"] = "Arcane Intellect (next target)"
+_G["BINDING_NAME_CLICK WizardBuffBrillButton:LeftButton"] = "Arcane Brilliance"
+_G["BINDING_NAME_CLICK WizardBuffArmorButton:LeftButton"] = "Armor"
 _G["BINDING_NAME_CLICK WizardBuffShieldButton:LeftButton"] = "Shield"
 
 local version = C_AddOns and C_AddOns.GetAddOnMetadata(addonName, "Version")

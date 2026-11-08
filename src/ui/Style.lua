@@ -37,7 +37,8 @@ end
 function UI.Text(parent, size, layer)
     local fs = parent:CreateFontString(nil, layer or "OVERLAY")
     fs:SetFont(UI.FONT, size or 11, "OUTLINE")
-    fs:SetShadowOffset(0, 0)
+    fs:SetShadowColor(0, 0, 0, 0.8)
+    fs:SetShadowOffset(1, -1)
     fs:SetWordWrap(false)
     return fs
 end
@@ -83,6 +84,35 @@ function UI.SetGlow(frame, on)
     elseif not on and g:IsShown() then
         g.anim:Stop(); g:Hide()
     end
+end
+
+-- Blizzard's spell-alert (proc) glow, the one action bars use. Falls back
+-- to the pulsing border when the client doesn't offer it.
+local function blizzGlow(btn, on)
+    local mgr = _G.ActionButtonSpellAlertManager
+    if mgr and mgr.ShowAlert then
+        if on then mgr:ShowAlert(btn) else mgr:HideAlert(btn) end
+        return true
+    end
+    if _G.ActionButton_ShowOverlayGlow then
+        if on then _G.ActionButton_ShowOverlayGlow(btn) else _G.ActionButton_HideOverlayGlow(btn) end
+        return true
+    end
+    return false
+end
+
+function UI.SetProcGlow(btn, on)
+    on = (on and ns.db.glow) and true or false
+    if btn.procOn == on then return end
+    btn.procOn = on
+    if not btn.noBlizzGlow then
+        local ok, done = pcall(blizzGlow, btn, on)
+        if ok and done then return end
+        btn.noBlizzGlow = true
+        if not on then pcall(blizzGlow, btn, false) end
+    end
+    if not btn.glow then UI.AddGlow(btn, 2) end
+    UI.SetGlow(btn, on)
 end
 
 -- Small flat button with a texture or a text label.

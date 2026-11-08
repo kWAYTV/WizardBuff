@@ -1,7 +1,13 @@
 local _, ns = ...
 
--- Turns the roster and self auras into a plan: what the Buff and Shield
--- buttons cast next, and which grid cells need attention.
+-- Turns the roster and your own auras into a plan: what each bar slot
+-- shows and casts, and what the keybind ("smart") button casts next.
+--
+-- plan.armor  { key, spell, need, left, dur }
+-- plan.int    { spell, unit, guid, target, outOfRange, count, topUp }
+-- plan.brill  { spell, unit, powder, count, ready }
+-- plan.shield { spell, key, low }
+-- plan.next   { spell, unit, guid, label, target, isInt }   (smart button)
 
 ns.plan = {}
 
@@ -9,7 +15,7 @@ local function rebuffSeconds()
     return (ns.db.rebuffMinutes or 5) * 60
 end
 
--- Does this member need Intellect from us right now?
+-- Does this member need Intellect right now?
 function ns.MemberNeeds(rec)
     if rec.dead or rec.offline or rec.int == "unknown" then return false end
     if rec.int == "no" then return true end
@@ -17,25 +23,38 @@ function ns.MemberNeeds(rec)
     return left ~= nil and left < rebuffSeconds()
 end
 
-local armorState = { key = nil, expires = 0 }
+-- Last armor reading; kept through combat.
+local armorState = { key = nil, expires = 0, duration = 0 }
 
 local function readSelf()
-    local key, exp = ns.ReadArmor()
+    local key, exp, dur = ns.ReadArmor()
     if key ~= "unknown" then
-        armorState.key, armorState.expires = key, exp or 0
+        armorState.key, armorState.expires, armorState.duration = key, exp or 0, dur or 0
     end
 end
 
-local function armorNeed()
+-- Our own armor cast landed: trust it until the next reading.
+function ns.PredictArmor(key, duration)
+    armorState.key = key
+    armorState.duration = duration or 1800
+    armorState.expires = GetTime() + armorState.duration
+end
+
+local function armorPlan()
     local want = ns.ArmorKey()
     if not want then return nil end
     local have = armorState.key
-    if not have then return want end
-    -- Respect a manual pick in settings; on "auto" any armor is fine.
-    if ns.db.armor ~= "auto" and have ~= want then return want end
-    local left = ns.Remaining(armorState.expires)
-    if left and left < rebuffSeconds() then return have end
-    return nil
+    local p = { key = want, spell = ns.Best(want) }
+    if have and (ns.db.armor == "auto" or have == want) then
+        p.key = have
+        p.spell = ns.Best(have) or p.spell
+        p.left = ns.Remaining(armorState.expires)
+        p.dur = armorState.duration
+        p.need = p.left ~= nil and p.left < rebuffSeconds()
+    else
+        p.need = true
+    end
+    return p
 end
 
 function ns.ArmorRemaining()
@@ -68,60 +87,75 @@ function ns.BuildPlan()
         if rec.mine then mine[#mine + 1] = rec end
     end
     plan.needMine, plan.needAll = #needMine, needAll
-    plan.powder = ns.PowderCount()
 
-    -- Order: our own armor, our own Intellect, players, then pets.
+    -- Intellect target: yourself, then players, then pets.
     local selfNeed, players, pets = nil, {}, {}
     for _, rec in ipairs(needMine) do
         if rec.isMe then selfNeed = rec
         elseif rec.isPet then pets[#pets + 1] = rec
         else players[#players + 1] = rec end
     end
-
-    local armor = armorNeed()
-    local useBrill = ns.db.useBrilliance and ns.Knows("BRILLIANCE") and plan.powder > 0
-        and inRangeNeed >= (ns.db.brillianceMin or 3)
-
     local target = selfNeed or pick(players) or pick(pets)
 
-    if armor then
-        plan.buff = { spell = ns.Best(armor), unit = "player", label = ns.SpellName(armor), target = "you" }
-    elseif target then
-        local spell
-        if useBrill and (target.level or 0) >= 46 then
-            spell = ns.Best("BRILLIANCE")
-            plan.brilliance = true
-        else
-            spell = ns.BestForLevel("INTELLECT", target.level)
+    if ns.Knows("INTELLECT") then
+        local p = { count = #needMine }
+        local t = target
+        if not t then
+            -- Nobody needs it: a click tops up whoever has the least time left.
+            local best, bestLeft
+            for _, rec in ipairs(mine) do
+                local left = ns.IntRemaining(rec)
+                if rec.inRange and not rec.dead and not rec.offline and left and (not bestLeft or left < bestLeft) then
+                    best, bestLeft = rec, left
+                end
+            end
+            t = best
+            p.topUp = true
         end
-        if spell then
-            plan.buff = {
-                spell = spell, unit = target.unit, guid = target.guid,
-                label = C_Spell.GetSpellName(spell), target = target.isMe and "you" or target.name,
-                outOfRange = not target.inRange, isInt = true,
-            }
+        if t then
+            p.spell = ns.BestForLevel("INTELLECT", t.level)
+            p.unit, p.guid = t.unit, t.guid
+            p.target = t.isMe and "you" or t.name
+            p.outOfRange = not t.inRange
         end
+        plan.int = p
     end
 
-    -- Right-click on the Buff button: Brilliance on the best target.
+    plan.powder = ns.PowderCount()
     if ns.Knows("BRILLIANCE") then
         local any = target or pick(mine) or ns.byGuid[UnitGUID("player")]
-        plan.brillUnit = any and any.unit or "player"
+        plan.brill = {
+            spell = ns.Best("BRILLIANCE"),
+            unit = any and any.unit or "player",
+            powder = plan.powder,
+            count = inRangeNeed,
+            ready = ns.db.useBrilliance and plan.powder > 0 and inRangeNeed >= (ns.db.brillianceMin or 3),
+        }
     end
+
+    plan.armor = armorPlan()
 
     local shield = ns.ShieldKey()
     if shield then
-        local hp = ns.PlayerHealthPercent()
-        plan.shield = {
-            spell = ns.Best(shield), label = ns.SpellName(shield),
-            low = hp ~= nil and hp < (ns.db.shieldHealth or 60),
+        plan.shield = { spell = ns.Best(shield), key = shield, low = ns.ShieldIsLow() }
+    end
+
+    -- The smart button: armor, then Brilliance when worth it, then Intellect.
+    local a, b, i = plan.armor, plan.brill, plan.int
+    if a and a.need and a.spell then
+        plan.next = { spell = a.spell, unit = "player", label = ns.SpellName(a.key), target = "you" }
+    elseif b and b.ready and target and (target.level or 0) >= 46 then
+        plan.next = { spell = b.spell, unit = b.unit, label = ns.SpellName("BRILLIANCE"), target = "group" }
+    elseif i and not i.topUp and i.spell then
+        plan.next = {
+            spell = i.spell, unit = i.unit, guid = i.guid, isInt = true,
+            label = C_Spell.GetSpellName(i.spell), target = i.target, outOfRange = i.outOfRange,
         }
     end
 
     return plan
 end
 
--- Cheap in-combat update for the shield glow.
 function ns.ShieldIsLow()
     local hp = ns.PlayerHealthPercent()
     return hp ~= nil and hp < (ns.db.shieldHealth or 60)

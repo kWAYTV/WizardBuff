@@ -1,9 +1,12 @@
 local _, ns = ...
 local UI = ns.UI
 
--- Decursive-style grid: one secure cell per group member, laid out by raid
--- group. Left-click casts Intellect (right rank for the target's level),
--- right-click casts Brilliance, Shift / Ctrl clicks are configurable.
+-- Click-to-cast group grid. One secure cell per member, one row per raid
+-- group. The class-coloured fill is the Intellect time left: a full bar is
+-- a fresh buff, an empty dark-red cell needs one.
+--   Left-click: Arcane Intellect (right rank for the target's level)
+--   Right-click: Arcane Brilliance
+--   Shift / Ctrl: configurable
 -- Cells are bound out of combat and stay clickable during fights.
 
 local GAP = 2
@@ -25,12 +28,12 @@ end
 local function statusText(rec)
     if rec.dead then return "Dead", ns.COLORS.muted end
     if rec.offline then return "Offline", ns.COLORS.muted end
-    if rec.int == "unknown" then return "Can't read buffs right now", ns.COLORS.muted end
+    if rec.int == "unknown" then return "Buffs can't be read right now", ns.COLORS.muted end
     local left = ns.IntRemaining(rec)
     if rec.int == "yes" then
         if left then
             local c = rec.needs and ns.COLORS.warn or ns.COLORS.good
-            return "Intellect: " .. string.format("%d:%02d", math.floor(left / 60), math.floor(left % 60)) .. " left", c
+            return "Intellect: " .. ns.FormatTime(left) .. " left", c
         end
         return "Intellect: active", ns.COLORS.good
     end
@@ -84,21 +87,23 @@ end
 local function createCell(i, parent)
     local b = CreateFrame("Button", "WizardBuffCell" .. i, parent, "SecureActionButtonTemplate")
     UI.RegisterSecureClicks(b)
-    UI.Skin(b, { 0.1, 0.1, 0.12, 0.95 })
+    UI.Skin(b, { 0.07, 0.07, 0.09, 0.9 }, { 0, 0, 0, 1 })
+
+    local fill = b:CreateTexture(nil, "ARTWORK")
+    fill:SetPoint("TOPLEFT", 1, -1)
+    fill:SetPoint("BOTTOMLEFT", 1, 1)
+    fill:SetColorTexture(1, 1, 1, 1)
+    b.fill = fill
 
     local name = UI.Text(b, 10)
-    name:SetPoint("CENTER", 0, 1)
+    name:SetPoint("LEFT", 4, 0)
+    name:SetPoint("RIGHT", -3, 0)
+    name:SetJustifyH("LEFT")
     b.name = name
-
-    local bar = b:CreateTexture(nil, "ARTWORK")
-    bar:SetPoint("BOTTOMLEFT", 1, 1)
-    bar:SetHeight(2)
-    bar:SetColorTexture(1, 1, 1, 1)
-    b.bar = bar
 
     local hl = b:CreateTexture(nil, "HIGHLIGHT")
     hl:SetAllPoints()
-    hl:SetColorTexture(1, 1, 1, 0.14)
+    hl:SetColorTexture(1, 1, 1, 0.12)
 
     UI.AddGlow(b, 1)
     b:SetScript("OnEnter", onEnter)
@@ -132,9 +137,25 @@ local function bindCell(cell, rec)
     end
 end
 
+local function hideAll()
+    for li = 1, #labels do labels[li]:Hide() end
+    for _, cell in ipairs(cells) do
+        cell.rec = nil
+        cell:SetAttribute("unit", nil)
+        cell:Hide()
+    end
+    wipe(cellFor)
+end
+
+-- The grid only shows in a group; solo, the bar says it all.
+function ns.GridVisible()
+    return IsInGroup() and #ns.members > 0
+end
+
 -- Lays the grid out at (left, top) from the parent's top-left corner.
 -- Out of combat only. Returns the grid's width and height.
 function ns.LayoutGrid(parent, left, top)
+    if not ns.GridVisible() then hideAll(); return 0, 0 end
     local W, H = ns.db.cellWidth, ns.db.cellHeight
     local byRow, rowKeys = {}, {}
     for _, rec in ipairs(ns.members) do
@@ -147,21 +168,22 @@ function ns.LayoutGrid(parent, left, top)
     wipe(cellFor)
     local columns = ns.db.layout == "columns"
     local showLabels = IsInRaid() or byRow[99] ~= nil
-    local offset = showLabels and LABEL_W or 0
+    local offset = (showLabels and not columns) and LABEL_W or 0
+    local labelH = (showLabels and columns) and 12 or 0
     local n, maxW, maxH = 0, 0, 0
 
     for li = 1, #labels do labels[li]:Hide() end
 
     for r, key in ipairs(rowKeys) do
         local recs = byRow[key]
-        local fs = label(r, parent)
         if showLabels then
+            local fs = label(r, parent)
             fs:SetText(key == 99 and "P" or tostring(key))
             fs:ClearAllPoints()
             if columns then
                 fs:SetPoint("TOP", parent, "TOPLEFT", left + (r - 1) * (W + GAP) + W / 2, -top)
             else
-                fs:SetPoint("LEFT", parent, "TOPLEFT", left, -top - (r - 1) * (H + GAP) - H / 2)
+                fs:SetPoint("CENTER", parent, "TOPLEFT", left + LABEL_W / 2 - 1, -top - (r - 1) * (H + GAP) - H / 2)
             end
             fs:Show()
         end
@@ -173,7 +195,7 @@ function ns.LayoutGrid(parent, left, top)
             cell:ClearAllPoints()
             local x, y
             if columns then
-                x, y = (r - 1) * (W + GAP), top + (showLabels and 12 or 0) + (c - 1) * (H + GAP)
+                x, y = (r - 1) * (W + GAP), top + labelH + (c - 1) * (H + GAP)
             else
                 x, y = offset + (c - 1) * (W + GAP), top + (r - 1) * (H + GAP)
             end
@@ -181,7 +203,7 @@ function ns.LayoutGrid(parent, left, top)
             maxW = math.max(maxW, x + W)
             maxH = math.max(maxH, y + H - top)
             cell.rec = rec
-            cell.name:SetText(shortName(rec.name, math.max(1, math.floor((W - 4) / 7))))
+            cell.name:SetText(shortName(rec.name, math.max(1, math.floor((W - 6) / 6))))
             bindCell(cell, rec)
             cell:Show()
             cellFor[rec.guid] = cell
@@ -206,36 +228,40 @@ function ns.PaintGrid()
         local rec = cell.rec
         if rec and cell:IsShown() then
             local r, g, b = UI.ClassColor(rec.class)
-            local needs = ns.MemberNeeds(rec)
+            local needs = rec.needs
             local glow = false
-            if rec.dead or rec.offline then
-                cell.skinFill:SetColorTexture(0.08, 0.08, 0.08, 0.9)
-                cell.name:SetTextColor(0.4, 0.4, 0.4)
-            elseif needs and rec.mine then
-                local dim = rec.inRange and 0.65 or 0.3
-                cell.skinFill:SetColorTexture(r * dim, g * dim, b * dim, 1)
-                cell.name:SetTextColor(1, 1, 1, rec.inRange and 1 or 0.6)
-                glow = rec.inRange
-            elseif needs then
-                cell.skinFill:SetColorTexture(r * 0.25, g * 0.25, b * 0.25, 0.9)
-                cell.name:SetTextColor(r, g, b, 0.6)
-            else
-                cell.skinFill:SetColorTexture(r * 0.12, g * 0.12, b * 0.12, 0.92)
-                cell.name:SetTextColor(r, g, b, rec.mine and 0.9 or 0.45)
-            end
-            cell:SetAlpha(rec.mine and 1 or 0.6)
-
             local left = ns.IntRemaining(rec)
-            local dur = rec.duration or 0
-            if left and dur > 0 and not rec.dead then
-                local frac = math.min(1, left / dur)
-                cell.bar:SetWidth(math.max(1, (W - 2) * frac))
-                if left < rebuff then cell.bar:SetColorTexture(1, 0.6, 0.2, 0.9)
-                else cell.bar:SetColorTexture(0.41, 0.8, 0.94, 0.8) end
-                cell.bar:Show()
-            else
-                cell.bar:Hide()
+            local frac = 0
+            if rec.int == "yes" then
+                frac = (left and (rec.duration or 0) > 0) and math.min(1, left / rec.duration) or 1
             end
+
+            if rec.dead or rec.offline then
+                cell.skinFill:SetColorTexture(0.06, 0.06, 0.06, 0.9)
+                cell.name:SetTextColor(0.45, 0.45, 0.45)
+                frac = 0
+            elseif needs then
+                cell.skinFill:SetColorTexture(0.32, 0.06, 0.06, 0.95)
+                cell.name:SetTextColor(1, 1, 1)
+                glow = rec.mine and rec.inRange
+            else
+                cell.skinFill:SetColorTexture(0.07, 0.07, 0.09, 0.9)
+                cell.name:SetTextColor(1, 1, 1)
+            end
+
+            if frac > 0 then
+                cell.fill:SetWidth(math.max(1, (W - 2) * frac))
+                local dim = (left and left < rebuff) and 0.45 or 0.7
+                cell.fill:SetColorTexture(r * dim, g * dim, b * dim, 1)
+                cell.fill:Show()
+            else
+                cell.fill:Hide()
+            end
+
+            local alpha = 1
+            if not rec.mine then alpha = 0.35
+            elseif not rec.inRange and not rec.isMe then alpha = 0.5 end
+            cell:SetAlpha(alpha)
             UI.SetGlow(cell, glow)
         end
     end

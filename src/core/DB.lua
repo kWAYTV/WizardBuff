@@ -1,6 +1,9 @@
 local _, ns = ...
 
+ns.DB_VERSION = 2
+
 ns.defaults = {
+    dbVersion      = ns.DB_VERSION,
     enabled        = true,
     showSolo       = true,
     locked         = false,
@@ -8,8 +11,9 @@ ns.defaults = {
     alpha          = 1.0,
     combatAlpha    = 0.6,
     layout         = "rows",      -- rows: one row per raid group; columns: one column per group
-    cellWidth      = 42,
-    cellHeight     = 20,
+    iconSize       = 36,
+    cellWidth      = 64,
+    cellHeight     = 18,
     showPets       = true,
 
     armor          = "auto",      -- auto | mage | ice | frost | none
@@ -48,7 +52,8 @@ end
 function ns.LoadDB()
     local db = _G.WizardBuffDB
     -- Old AceDB data (profiles) is not compatible; start fresh.
-    if type(db) ~= "table" or db.profiles or db.profileKeys then
+    -- 2.0.0 settings predate the icon bar; start over.
+    if type(db) ~= "table" or db.profiles or db.profileKeys or db.dbVersion ~= ns.DB_VERSION then
         db = {}
     end
     fill(db, ns.defaults)

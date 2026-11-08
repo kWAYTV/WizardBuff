@@ -1,7 +1,11 @@
 <Bindings>
     <Binding name="CLICK WizardBuffBuffButton:LeftButton" header="WIZARDBUFF" category="ADDONS">
     </Binding>
-    <Binding name="CLICK WizardBuffBuffButton:RightButton" category="ADDONS">
+    <Binding name="CLICK WizardBuffIntButton:LeftButton" category="ADDONS">
+    </Binding>
+    <Binding name="CLICK WizardBuffBrillButton:LeftButton" category="ADDONS">
+    </Binding>
+    <Binding name="CLICK WizardBuffArmorButton:LeftButton" category="ADDONS">
     </Binding>
     <Binding name="CLICK WizardBuffShieldButton:LeftButton" category="ADDONS">
     </Binding>

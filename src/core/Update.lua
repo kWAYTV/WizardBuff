@@ -1,39 +1,45 @@
 local _, ns = ...
 
 -- Refresh pipeline.
---   Out of combat: rescan roster and auras, rebuild the plan, rebind
---   secure buttons and, when the roster shape changed, lay out the HUD.
---   In combat: secure frames are frozen, so only repaint from the last
---   known state and remember to do a full pass when combat ends.
+--   Out of combat: rescan roster and auras, rebuild the plan, rebind the
+--   secure buttons and, when the shape changed, lay out the HUD. This also
+--   runs every second, so a buff that lands is seen even if UNIT_AURA
+--   doesn't reach us.
+--   In combat: secure frames are frozen; repaint from the last known state
+--   and do a full pass when combat ends.
 
 local pending, pendingLayout = false, false
 local timer
 local lastShape
 
 local function shape()
-    local parts = { tostring(ns.ShouldShow()), tostring(ns.shieldButton and ns.shieldButton:IsShown()) }
+    local parts = { tostring(ns.ShouldShow()), ns.BarShape(), tostring(IsInRaid()), tostring(ns.owners ~= nil) }
     for _, rec in ipairs(ns.members) do
         parts[#parts + 1] = rec.unit .. rec.guid .. rec.group .. (rec.level or 0)
     end
     return table.concat(parts, "|")
 end
 
-local function lightRefresh()
-    ns.BuildPlan()
+local function paint()
+    ns.PaintBar()
     ns.PaintGrid()
     ns.RefreshStatus()
-    ns.RefreshShieldGlow()
 end
 
-local hadBuff, lastSound = false, 0
+local function lightRefresh()
+    ns.BuildPlan()
+    paint()
+end
+
+local hadNeed, lastSound = false, 0
 
 local function alerts(plan)
-    local has = plan.buff ~= nil and not plan.buff.outOfRange
-    if has and not hadBuff and ns.db.sound and GetTime() - lastSound > 20 then
+    local has = plan.next ~= nil and not plan.next.outOfRange
+    if has and not hadNeed and ns.db.sound and GetTime() - lastSound > 20 then
         lastSound = GetTime()
         PlaySound(SOUNDKIT and SOUNDKIT.ALARM_CLOCK_WARNING_3 or 12889, "Master")
     end
-    hadBuff = has
+    hadNeed = has
 end
 
 function ns.Update(force)
@@ -49,7 +55,7 @@ function ns.Update(force)
     ns.ScanRoster()
     ns.RecomputeOwners()
     local plan = ns.BuildPlan()
-    ns.ApplyButtons(plan)
+    ns.ApplyBar(plan)
 
     local s = shape()
     if force or pendingLayout or s ~= lastShape then
@@ -76,43 +82,53 @@ function ns.OnCombatEnd()
     ns.Update(pendingLayout)
 end
 
--- Once a second: timers and, out of combat, range.
 function ns.StartTicker()
     C_Timer.NewTicker(1, function()
-        if not ns.frame or not ns.frame:IsShown() then return end
-        if not InCombatLockdown() then
-            ns.UpdateRange()
-            ns.ApplyButtons(ns.BuildPlan())
-            ns.RefreshStatus()
+        if not ns.frame then return end
+        if InCombatLockdown() then
+            if ns.frame:IsShown() then lightRefresh() end
+        else
+            ns.Update(false)
         end
-        ns.PaintGrid()
-        if ns.buffButton then ns.RefreshButtonTimer(ns.buffButton) end
     end)
 end
 
 function ns.ToggleEnabled()
     ns.db.enabled = not ns.db.enabled
-    ns.Print(ns.db.enabled and "HUD shown." or "HUD hidden. Type /wbuff to show it again.")
+    ns.Print(ns.db.enabled and "Shown." or "Hidden. Type /wbuff to show it again.")
     if InCombatLockdown() then ns.Print("It will update when combat ends.") end
     ns.Update(true)
 end
 
 ---------------------------------------------------------------------------
--- Cast tracking: lets the grid update right after a cast, even in combat.
+-- Cast tracking: update right after our own casts, even in combat.
 ---------------------------------------------------------------------------
 
-local INT_IDS, BRILL_IDS = {}, {}
-for _, id in ipairs(ns.SPELLS.INTELLECT) do INT_IDS[id] = true end
-for _, id in ipairs(ns.SPELLS.BRILLIANCE) do BRILL_IDS[id] = true end
+local SPELL_KEY = {}
+for key, ids in pairs(ns.SPELLS) do
+    for _, id in ipairs(ids) do SPELL_KEY[id] = key end
+end
+
+local ARMOR = { FROST_ARMOR = true, ICE_ARMOR = true, MAGE_ARMOR = true }
 
 function ns.OnSpellcastSucceeded(_, _, spellID)
     if ns.IsSecret(spellID) then return end
-    if BRILL_IDS[spellID] or spellID == ns.Best("BRILLIANCE") then
+    local key = SPELL_KEY[spellID]
+    if not key then
+        for k in pairs(ns.SPELLS) do
+            for _, id in ipairs(ns.KnownIDs(k)) do
+                if id == spellID then key = k end
+            end
+        end
+    end
+    if key == "BRILLIANCE" then
         ns.PredictIntellectAll()
-    elseif INT_IDS[spellID] then
+    elseif key == "INTELLECT" then
         local guid, unit = ns.LastCastClick()
         guid = guid or (unit and ns.SafeCall(UnitGUID, unit))
         if guid then ns.PredictIntellect(guid) end
+    elseif key and ARMOR[key] then
+        ns.PredictArmor(key)
     else
         return
     end

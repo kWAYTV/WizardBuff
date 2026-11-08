@@ -2,7 +2,7 @@
 ## Title: Wizard Buff
 ## Notes: Mage buff helper: one-click Intellect, Brilliance, armor and shields, a click-to-cast group grid, and raid assignments shared between mages.
 ## Author: kWAYTV
-## Version: 2.0.0
+## Version: 2.0.1
 ## X-Curse-Project-ID: 1501057
 ## SavedVariables: WizardBuffDB
 ## IconTexture: Interface\AddOns\WizardBuff\Media\icon
@@ -22,7 +22,7 @@ src/sync/Sync.lua
 src/buffs/Planner.lua
 
 src/ui/Style.lua
-src/ui/Buttons.lua
+src/ui/Bar.lua
 src/ui/Grid.lua
 src/ui/Frame.lua
 src/ui/Assign.lua

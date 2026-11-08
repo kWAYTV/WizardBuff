@@ -48,6 +48,7 @@ function ns.RefreshKnownSpells()
         end
         known[key] = list
     end
+    if ns.ResetAuraMatchers then ns.ResetAuraMatchers() end
     ns.Fire("SPELLS_CHANGED")
 end
 
@@ -62,6 +63,10 @@ end
 
 function ns.SpellIcon(id)
     return (id and C_Spell.GetSpellTexture(id)) or ns.ICONS.unknown
+end
+
+function ns.KnownIDs(key)
+    return known[key] or {}
 end
 
 function ns.Knows(key)
