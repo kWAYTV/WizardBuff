@@ -1,127 +1,95 @@
-# Wizard Buff for World of Warcraft
+# Wizard Buff
 
-Wizard Buff is a mage buff management addon for WoW Classic (TBC Anniversary). It provides a compact HUD with one-click buffing for armor, Intellect, Arcane Brilliance, shields, and per-player grid cells — so you never miss a buff in dungeons or raids.
+A mage buff helper for **World of Warcraft: Forever**. One button keeps your armor and the group's Intellect up. A click-to-cast grid shows who needs what, and raid groups are split between mages automatically, the way PallyPower does it for paladins.
 
-## Documentation
+No libraries, no setup: install, log in on a mage, and it works.
 
-Type `/wbuff config` or right-click the drag handle to open the configuration panel.
-
-`/wbuff` — [Slash commands](#slash-commands) · [Macros](#macros) · [Key Bindings](#key-bindings) · [Settings](#settings)
-
-## Key Benefits
-
-### Works out of the box
-
-Wizard Buff detects your known spells, highest ranks, and reagent supply automatically. Install it, log in, and you're ready — no setup required.
-
-### One-click smart buffing
-
-- **Auto Buff** (left icon) — cascading priority: armor → self Intellect → next unbuffed group member → pets.
-- **Group Buff** (middle icon) — Intellect or Arcane Brilliance on the next unbuffed member or pet; falls back to your friendly target if everyone is covered.
-- **Self** (right icon) — keeps Ice Barrier or Mana Shield up on yourself; glows when the buff is missing.
-- **Mouse wheel** on any icon button cycles between spell modes (e.g. lock to Frost Armor, force single-target Intellect, pick Ice Barrier vs Mana Shield).
-
-### Buff grid (Decursive-style micro-frames)
-
-Per-player click-to-cast cells grouped by class. Each cell shows the player's initial colored by class, lights up when they need Intellect, dims when out of range, and goes grey when dead or offline. Grid column count is configurable.
-
-### Don't waste time
-
-- **Refresh guard** prevents re-casting buffs that still have significant duration remaining.
-- **Reagent counter** shows your Arcane Powder supply on the HUD and minimap tooltip so you never run dry mid-raid.
-- **Recently-buffed tracking** suppresses targets you just cast on, avoiding double-casts while the server catches up.
-- Dead, offline, and out-of-range members are visually distinguished so you focus on targets you can actually buff.
-- **Out-of-range feedback** — icon buttons desaturate and dim when the next target is too far, so you know to move closer before clicking.
-- **Rich tooltips** — hover any icon button to see the queued spell, target name, status, and current mode.
-- **Floating messages** — status and feedback text appears near the HUD and fades out (like Decursive), so you don't have to watch chat.
-- **Cast failure feedback** — clicking a dead, offline, out-of-range, or already-buffed target tells you why nothing happened instead of failing silently.
-
-### React faster
-
-- **Glow alerts** — pulsing gold border on icons when a buff needs casting.
-- **Sound alerts** — distinct sounds for self buffs vs group buffs (optional, with test buttons in settings).
-- **Live timers** — countdown overlaid on buff icons, shifts orange when running low.
-
-### Integration in any interface
-
-- **Minimap icon** via LibDataBroker / LibDBIcon — left-click toggle, right-click settings, shift+click lock.
-- **Drag handle** above the HUD for repositioning (auto-locks after 30 seconds).
-- **Key Bindings** through the standard WoW Key Bindings menu.
-- **Combat-aware** — fades during combat to avoid distraction, prevents taint, queues updates until combat ends.
-- Fully adjustable scale, idle/hover opacity, and combat fade.
-
-### Profiles
-
-Full AceDB profile system: create, switch, copy, delete, reset to defaults, and import/export profiles as text strings to share settings between characters or with other players.
-
-## Slash Commands
-
-`/wbuff` or `/wizardbuff`:
-
-| Command | Action |
-|---------|--------|
-| *(no argument)* | Enable / disable the addon |
-| `config` | Open settings panel |
-| `lock` | Lock / unlock HUD position |
-| `grid` | Toggle the buff grid |
-| `armor` | Toggle armor buffing |
-| `int` | Toggle Intellect buffing |
-| `brilliance` | Toggle Arcane Brilliance preference |
-| `pets` | Toggle pet buffing |
-| `bubble` | Toggle emergency shield |
-| `report` | Print buff status to party/raid chat |
-| `macro` | Show `/click` macro syntax |
-
-## Macros
-
-Bind these to keys or toolbar slots for one-press buffing:
+## The HUD
 
 ```
-/click WizardBuffAutoBuffButton LeftButton
-/click WizardBuffBrillianceButton LeftButton
+┌ Wizard Buff ─────────── 3 need  12 powder  🔒 Mages ⚙ ┐
+│ [Buff] [Shield]  Arcane Intellect > Thrall            │
+│                  Your groups: 1, 3, 5                 │
+│ 1 [Thral][Jaina][Uther][Sylva][Garro]                 │
+│ 2 [Rexxa][Cairn][Varia][Magni][Tyran]                 │
+│ P [Imp  ][Wolf ]                                      │
+└───────────────────────────────────────────────────────┘
+```
+
+- **Buff**: casts the next thing you need, in this order: your armor, your own Intellect, the next player in your groups, then pets. When enough people need it (3 by default) and you carry Arcane Powder, it casts Arcane Brilliance instead. Right-click it to cast Brilliance directly.
+- **Shield**: Ice Barrier or Mana Shield on yourself. Glows when your health drops below the alert threshold.
+- **Grid**: one cell per group member, one row per raid group.
+  - Bright cell with a gold pulse: needs Intellect and is yours to buff.
+  - Faded: out of range, or covered by another mage.
+  - Grey: dead or offline.
+  - The thin bar along the bottom shows how much buff time is left and turns orange when it's time to rebuff.
+- **Clicks on a cell**: left = Arcane Intellect (picks the right rank for the target's level), right = Arcane Brilliance, Shift = Dampen Magic, Ctrl = Amplify Magic. You can change Shift and Ctrl in settings.
+- **Header**: drag to move, lock icon, **Mages** (raid assignments), gear (settings). It also shows how many of your people need Intellect and your Arcane Powder count.
+
+Hover anything for a tooltip that says exactly what a click will do.
+
+## Working with other mages
+
+Every mage running Wizard Buff finds the others automatically. Raid groups are split evenly between them, the same way on every client, so nobody double-buffs. Your grid highlights only your groups, and your Buff button only targets them.
+
+Open **Mages** in the header (or `/wbuff mages`) to change the split. Click a box to give that group to that mage, or click **Auto split** to go back to even. Changes reach every mage with the addon. Mages without the addon show up too, so you can hand a group to someone who buffs by hand.
+
+## How Forever's addon rules affect it
+
+Forever runs the modern client with Midnight's addon restrictions:
+
+- **Buffs on other players can't be read in combat.** The grid keeps the last reading and counts down from it. Your own casts update it right away, and everything is re-read the moment combat ends.
+- **Clicks still work in combat.** Grid cells and buttons are set up out of combat and stay clickable during a fight. The Buff button keeps its last target until combat ends.
+- **Addon messages pause during boss encounters.** Assignment changes are queued and sent afterwards.
+
+## Commands
+
+`/wbuff` or `/wizardbuff`
+
+| Command | Action |
+|---|---|
+| *(none)* | Show or hide the HUD |
+| `config` | Open settings |
+| `lock` | Lock or unlock the HUD |
+| `mages` | Raid assignments |
+| `report` | Post who is missing Intellect to group chat |
+| `reset` | Move the HUD back to the center |
+
+## Key bindings and macros
+
+**Options → Keybindings → AddOns → Wizard Buff**: *Buff next target*, *Arcane Brilliance*, *Shield*.
+
+Or macros:
+
+```
+/click WizardBuffBuffButton LeftButton
+/click WizardBuffBuffButton RightButton
 /click WizardBuffShieldButton LeftButton
 ```
 
-## Key Bindings
-
-Open **Game Menu → Key Bindings → Addons → Wizard Buff** to bind:
-
-- **Auto Buff** — armor, intellect, pets cascade
-- **Group Buff** — Intellect / Arcane Brilliance on next target
-- **Self** — Ice Barrier / Mana Shield
-
 ## Settings
 
-Four tabs accessible via `/wbuff config` or right-clicking the drag handle:
+**Esc → Options → AddOns → Wizard Buff**, the gear icon, or right-click the header or minimap button.
 
-**General** — core toggle, solo mode, lock, buff timers, glow, sound alerts, buff grid, grid columns, drag handle, minimap icon.
+- **General**: show the HUD, show when solo, lock, include pets.
+- **Buffs**: armor (Auto picks Mage Armor in instances and Ice Armor elsewhere), Brilliance on/off and how many people must need it, rebuff window, shield spell and health alert.
+- **Grid clicks**: Shift and Ctrl spells.
+- **Look**: rows or columns, cell size, scale, opacity, combat opacity.
+- **Alerts**: glow, sound, ready-check reminder.
+- **Coordination**: share work with other mages, minimap button.
 
-**Appearance** — HUD scale, idle/hover opacity, combat fade, position reset.
-
-**Buffs** — armor type selection (Auto / Ice / Mage / Frost), emergency shield type and HP threshold, Intellect toggle, Arcane Brilliance preference, pet buffing, refresh guard duration.
-
-**Profiles** — switch, create, copy, delete, reset, import/export.
+Wizard Buff also appears in the minimap addon compartment.
 
 ## Install
 
-Download from [CurseForge](https://www.curseforge.com/wow/addons/wizard-buff), or copy the `WizardBuff` folder into your `Interface\AddOns\` directory.
+From [CurseForge](https://www.curseforge.com/wow/addons/wizard-buff), or copy the `WizardBuff` folder into `World of Warcraft\_forever_\Interface\AddOns\`.
 
-## Interface Version
+## Development
 
-`20506` — TBC Anniversary (2025/2026)
-
-## Libraries
-
-Bundled at build time via `.pkgmeta`:
-
-Ace3 (AceAddon, AceConfig, AceConfigDialog, AceConsole, AceDB, AceDBOptions, AceEvent, AceGUI, AceLocale) · LibStub · CallbackHandler · LibDataBroker-1.1 · LibDBIcon-1.0
-
-## Packaging
-
-Automated via GitHub Actions. Pushing to `master` auto-tags the next patch version, which triggers [BigWigsMods/packager](https://github.com/BigWigsMods/packager) to build and release on CurseForge and GitHub. The `@project-version@` token in the `.toc` is replaced with the tag at build time.
+- Interface `16001` (WoW Forever). No embedded libraries.
+- Source layout: `src/core` (events, settings storage, update loop, slash), `src/spells` (spell catalog, aura reads), `src/roster`, `src/sync` (mage coordination), `src/buffs` (what to cast next), `src/ui`.
+- Pushing to `master` auto-tags the next patch version, which triggers [BigWigsMods/packager](https://github.com/BigWigsMods/packager) to build and release.
 
 ## License
 
 All Rights Reserved © kWAYTV
-
-For suggestions, feature requests, or bug reports use the [CurseForge project page](https://www.curseforge.com/wow/addons/wizard-buff) or the GitHub issue tracker.

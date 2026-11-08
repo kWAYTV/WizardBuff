@@ -1,69 +1,34 @@
-## Interface: 20506
+## Interface: 16001
 ## Title: Wizard Buff
-## Notes: Mage group buff HUD (Intellect, armor, shields). Bindings.xml must stay in addon root and NOT in this TOC (auto-loaded).
+## Notes: Mage buff helper: one-click Intellect, Brilliance, armor and shields, a click-to-cast group grid, and raid assignments shared between mages.
 ## Author: kWAYTV
 ## Version: 1.2.19
-## DefaultState: enabled
 ## X-Curse-Project-ID: 1501057
 ## SavedVariables: WizardBuffDB
+## IconTexture: Interface\AddOns\WizardBuff\Media\icon
+## AddonCompartmentFunc: WizardBuff_OnCompartmentClick
+## AddonCompartmentFuncOnEnter: WizardBuff_OnCompartmentEnter
+## AddonCompartmentFuncOnLeave: WizardBuff_OnCompartmentLeave
 
-embeds.xml
+# Bindings.xml loads automatically from the addon folder; keep it out of this list.
 
-# addon — client shims, runtime slots, lifecycle
-src/addon/Compat.lua
-src/addon/State.lua
-src/addon/Scheduler.lua
+src/core/Init.lua
+src/core/DB.lua
 
-# settings + roster identity (needed before domain logic)
-src/settings/Defaults.lua
-src/roster/Classes.lua
-src/hud/Metrics.lua
+src/spells/Catalog.lua
+src/spells/Auras.lua
+src/roster/Roster.lua
+src/sync/Sync.lua
+src/buffs/Planner.lua
 
-# buffs — catalog and shared aura/rank/mode machinery
-src/buffs/Catalog.lua
-src/buffs/Auras.lua
-src/buffs/Ranks.lua
-src/buffs/Modes.lua
+src/ui/Style.lua
+src/ui/Buttons.lua
+src/ui/Grid.lua
+src/ui/Frame.lua
+src/ui/Assign.lua
+src/ui/Minimap.lua
+src/ui/Settings.lua
 
-# armor / intellect / shield
-src/armor/Auras.lua
-src/armor/Select.lua
-src/intellect/Select.lua
-src/intellect/Modes.lua
-src/shield/Auras.lua
-src/shield/Select.lua
-src/shield/Modes.lua
-
-# roster
-src/roster/Recent.lua
-src/roster/Scan.lua
-src/roster/Target.lua
-src/roster/Report.lua
-
-# button specs (domain decisions)
-src/autobuff/Modes.lua
-src/autobuff/Spec.lua
-src/intellect/Spec.lua
-src/shield/Spec.lua
-
-# hud + grid
-src/hud/Secure.lua
-src/hud/Glow.lua
-src/hud/Timers.lua
-src/hud/Messages.lua
-src/hud/Sound.lua
-src/hud/CastFeedback.lua
-src/hud/Handle.lua
-src/hud/Icons.lua
-src/grid/Cells.lua
-src/grid/Players.lua
-src/grid/Layout.lua
-src/hud/Frame.lua
-src/hud/Refresh.lua
-
-# settings UI, minimap, slash, boot
-src/settings/Profiles.lua
-src/settings/Options.lua
-src/broker/Minimap.lua
-src/addon/Slash.lua
-src/addon/Bootstrap.lua
+src/core/Update.lua
+src/core/Events.lua
+src/core/Slash.lua
