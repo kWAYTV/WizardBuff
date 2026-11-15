@@ -1,34 +1,12 @@
 ## Interface: 16001
 ## Title: Wizard Buff
-## Notes: Mage buff helper: one-click Intellect, Brilliance, armor and shields, a click-to-cast group grid, and raid assignments shared between mages.
+## Notes: Two icons for mages: who is missing Arcane Intellect and whether your armor is up. Click to fix it.
 ## Author: kWAYTV
-## Version: 2.0.1
+## Version: 3.0.0
 ## X-Curse-Project-ID: 1501057
 ## SavedVariables: WizardBuffDB
 ## IconTexture: Interface\AddOns\WizardBuff\Media\icon
-## AddonCompartmentFunc: WizardBuff_OnCompartmentClick
-## AddonCompartmentFuncOnEnter: WizardBuff_OnCompartmentEnter
-## AddonCompartmentFuncOnLeave: WizardBuff_OnCompartmentLeave
 
 # Bindings.xml loads automatically from the addon folder; keep it out of this list.
 
-src/core/Init.lua
-src/core/DB.lua
-
-src/spells/Catalog.lua
-src/spells/Auras.lua
-src/roster/Roster.lua
-src/sync/Sync.lua
-src/buffs/Planner.lua
-
-src/ui/Style.lua
-src/ui/Bar.lua
-src/ui/Grid.lua
-src/ui/Frame.lua
-src/ui/Assign.lua
-src/ui/Minimap.lua
-src/ui/Settings.lua
-
-src/core/Update.lua
-src/core/Events.lua
-src/core/Slash.lua
+WizardBuff.lua
