@@ -2,7 +2,7 @@
 ## Title: Wizard Buff
 ## Notes: Arcane Intellect and armor reminders for mages. Click to buff.
 ## Author: kWAYTV
-## Version: 3.0.0
+## Version: 3.0.1
 ## X-Curse-Project-ID: 1501057
 ## SavedVariables: WizardBuffDB
 ## IconTexture: Interface\AddOns\WizardBuff\Media\icon
