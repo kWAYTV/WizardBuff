@@ -1,12 +1,47 @@
 ## Interface: 16001
 ## Title: Wizard Buff
-## Notes: Two icons for mages: who is missing Arcane Intellect and whether your armor is up. Click to fix it.
+## Notes: Arcane Intellect and armor reminders for mages. Click to buff.
 ## Author: kWAYTV
 ## Version: 3.0.0
 ## X-Curse-Project-ID: 1501057
 ## SavedVariables: WizardBuffDB
 ## IconTexture: Interface\AddOns\WizardBuff\Media\icon
+## AddonCompartmentFunc: WizardBuff_OnCompartmentClick
+## AddonCompartmentFuncOnEnter: WizardBuff_OnCompartmentEnter
+## AddonCompartmentFuncOnLeave: WizardBuff_OnCompartmentLeave
 
-# Bindings.xml loads automatically from the addon folder; keep it out of this list.
+# Bindings.xml loads on its own; keep it out of this list.
 
-WizardBuff.lua
+app\Namespace.lua
+
+client\Secrets.lua
+client\Spellbook.lua
+client\Auras.lua
+client\Range.lua
+client\Pixel.lua
+
+icons\Text.lua
+icons\Glow.lua
+icons\Frame.lua
+icons\Button.lua
+
+intellect\Spells.lua
+intellect\Group.lua
+intellect\Scan.lua
+intellect\Plan.lua
+intellect\Icon.lua
+intellect\ReadyCheck.lua
+
+armor\Spells.lua
+armor\State.lua
+armor\Icon.lua
+
+settings\Saved.lua
+settings\Panel.lua
+settings\AddonButton.lua
+settings\Commands.lua
+settings\Debug.lua
+
+app\Keybind.lua
+app\Refresh.lua
+app\Events.lua
