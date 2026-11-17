@@ -25,6 +25,8 @@ function ns.loadSaved()
         brilliance = old.brilliance ~= false,
         brillianceMin = tonumber(old.brillianceMin) or 3,
         readyCheck = old.readyCheck ~= false,
+        sound = old.sound ~= false,
+        fade = old.fade == true,
         armor = ns.armor.lines[old.armor] and old.armor or nil,
         pos = {
             point = pos.point or default.point, relPoint = pos.relPoint or default.relPoint,
@@ -32,4 +34,8 @@ function ns.loadSaved()
         },
     }
     WizardBuffDB = ns.db
+
+    -- One line after an update; nothing on a fresh install.
+    if old.version and old.version ~= ns.version then ns.say("Updated to " .. ns.version .. ".") end
+    ns.db.version = ns.version
 end

@@ -1,6 +1,6 @@
 local _, ns = ...
 
--- What you grab to move everything: Alt-drag it, right-click for settings,
+-- What you grab to move everything: Alt-drag it, right-click for a menu,
 -- hover for a summary. In the list it's the title bar; in the frames layout
 -- a thin bar above the cells.
 
@@ -16,8 +16,10 @@ local function tooltip(self)
         grid.line("All buffed, " .. grid.timeText(found.soonest) .. " left", grid.GREEN)
     end
     if found.stale then grid.line("In combat, last known", grid.ORANGE) end
+    local powder = ns.intellect.powder()
+    if powder then grid.line("Arcane Powder: " .. powder, ns.intellect.powderLow() and grid.RED or nil) end
     grid.line("Alt-drag: move")
-    grid.line("Right-click: settings")
+    grid.line("Right-click: menu")
     GameTooltip:Show()
 end
 
@@ -51,7 +53,7 @@ function grid.createHandle()
     end
     handle:SetScript("OnMouseUp", drop)
     handle:SetScript("OnHide", drop)
-    handle:SetScript("OnClick", function() ns.openSettings() end)
+    handle:SetScript("OnClick", function(self) grid.openMenu(self) end)
     handle:SetScript("OnEnter", tooltip)
     handle:SetScript("OnLeave", function() GameTooltip:Hide() end)
     grid.handle = handle
@@ -77,12 +79,20 @@ function grid.fitHandle(width)
     handle.count:SetShown(titled and true or false)
 end
 
--- The right-hand text of the title bar: how many need a buff.
-function grid.summary(missing)
-    if missing > 0 then
-        handle.count:SetText(missing .. " missing")
-        handle.count:SetTextColor(1, 0.4, 0.4)
+-- The title bar. Right: how many of the people who can be judged have the
+-- buff. Left: the name, or a warning when Arcane Powder is running low.
+function grid.summary(have, total)
+    handle.count:SetText(total > 0 and (have .. "/" .. total) or "")
+    if have < total then handle.count:SetTextColor(1, 0.4, 0.4) else handle.count:SetTextColor(0.55, 0.85, 0.6) end
+
+    if ns.intellect.testing() then
+        handle.title:SetText("Test")
+        handle.title:SetTextColor(1, 0.8, 0.3)
+    elseif ns.intellect.powderLow() then
+        handle.title:SetText("Powder " .. ns.intellect.powder())
+        handle.title:SetTextColor(1, 0.4, 0.4)
     else
-        handle.count:SetText("")
+        handle.title:SetText("Wizard Buff")
+        handle.title:SetTextColor(0.6, 0.6, 0.6)
     end
 end

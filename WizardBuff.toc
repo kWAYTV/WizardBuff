@@ -16,6 +16,7 @@
 app\Namespace.lua
 
 client\Secrets.lua
+client\Names.lua
 client\Spellbook.lua
 client\Auras.lua
 client\Range.lua
@@ -28,14 +29,21 @@ grid\Cell.lua
 grid\Frames.lua
 grid\List.lua
 grid\Handle.lua
+grid\Menu.lua
+grid\Fade.lua
 grid\Unlock.lua
 
 intellect\Spells.lua
 intellect\Group.lua
+intellect\Ignore.lua
+intellect\Test.lua
 intellect\Scan.lua
 intellect\Plan.lua
 intellect\Cells.lua
 intellect\ReadyCheck.lua
+intellect\Alert.lua
+intellect\Report.lua
+intellect\Powder.lua
 
 armor\Spells.lua
 armor\State.lua

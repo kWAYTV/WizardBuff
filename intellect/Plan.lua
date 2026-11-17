@@ -9,7 +9,7 @@ function intellect.plan()
     local found, cast = intellect.found, intellect.cast
     local target = found.missing[1]
     cast.spell, cast.unit = nil, "player"
-    if not target then return end
+    if not target or intellect.testing() then return end
 
     -- Brilliance hits the raid, so it pays off once enough people it can
     -- land on are missing Intellect. Cast on yourself.

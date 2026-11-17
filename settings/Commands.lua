@@ -29,6 +29,9 @@ local COMMANDS = {
     reset = reset,
     scale = scale,
     debug = function() ns.debug() end,
+    report = function() ns.intellect.report() end,
+    test = function() ns.intellect.nextTest() end,
+    version = function() ns.say(ns.version) end,
 }
 COMMANDS.options, COMMANDS.settings = COMMANDS.config, COMMANDS.config
 
@@ -38,5 +41,5 @@ SlashCmdList.WIZARDBUFF = function(msg)
     local cmd, arg = strsplit(" ", strlower(strtrim(msg or "")), 2)
     local run = COMMANDS[cmd]
     if run then return run(arg) end
-    ns.say("/wb (show / hide), /wb config, /wb scale 1.2, /wb reset, /wb debug")
+    ns.say("/wb (show / hide), config, report, test, scale 1.2, reset, version, debug")
 end

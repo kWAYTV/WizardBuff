@@ -7,6 +7,8 @@ local EVENTS = {
     "PLAYER_ENTERING_WORLD", "GROUP_ROSTER_UPDATE", "UNIT_AURA", "UNIT_CONNECTION",
     "PLAYER_REGEN_ENABLED", "PLAYER_REGEN_DISABLED", "SPELLS_CHANGED", "BAG_UPDATE_DELAYED",
     "PLAYER_UPDATE_RESTING", "READY_CHECK", "ENCOUNTER_START", "ENCOUNTER_END",
+    "PLAYER_MOUNT_DISPLAY_CHANGED", "UNIT_ENTERED_VEHICLE", "UNIT_EXITED_VEHICLE",
+    "PLAYER_DEAD", "PLAYER_ALIVE", "PLAYER_UNGHOST",
 }
 
 local driver = CreateFrame("Frame")
@@ -27,6 +29,7 @@ local function start()
     ns.createKeybind()
     ns.createMinimapButton()
     ns.grid.place()
+    ns.grid.startFade()
     ns.buildSettings()
     -- A moment later: EllesmereUI sets its unlock mode up after loading.
     C_Timer.After(1, ns.grid.joinUnlockMode)
@@ -52,6 +55,7 @@ driver:SetScript("OnEvent", function(_, event, arg)
         ns.intellect.onReadyCheck()
     elseif event == "PLAYER_ENTERING_WORLD" then
         ns.askLayout()
+        ns.intellect.forgetIgnored()
         dirty = true
     else
         dirty = true

@@ -10,13 +10,19 @@ local function visible()
     local db = ns.db
     if not db.shown then return false end
     if db.hideResting and IsResting() then return false end
+    -- Nothing to do from a corpse, a vehicle or the air.
+    if ns.cantCast or yes(UnitInVehicle("player")) then return false end
+    if IsMounted() and IsFlying and IsFlying() then return false end
     if db.onlyNeeded and not (ns.intellect.needed() or ns.armor.needed()) then return false end
     return true
 end
 
 function ns.refresh()
     ns.cantCast = yes(UnitIsDeadOrGhost("player")) or yes(UnitOnTaxi("player"))
-    if ns.intellect.scan() then ns.intellect.plan() end
+    if ns.intellect.scan() then
+        ns.intellect.plan()
+        ns.intellect.alert()
+    end
     ns.armor.scan()
 
     if not InCombatLockdown() then
@@ -29,5 +35,5 @@ function ns.refresh()
 
     ns.intellect.paintCells()
     ns.armor.paint()
-    ns.grid.summary(#ns.intellect.found.missing)
+    ns.grid.summary(ns.intellect.found.have, ns.intellect.found.total)
 end

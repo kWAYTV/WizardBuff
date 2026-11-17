@@ -44,6 +44,7 @@ function ns.createMinimapButton()
     icon:SetSize(20, 20)
     icon:SetPoint("CENTER")
     icon:SetTexture("Interface\\AddOns\\WizardBuff\\Media\\icon")
+    button.icon = icon  -- minimap addons look for this to find the picture
 
     local ring = button:CreateTexture(nil, "OVERLAY")
     ring:SetSize(53, 53)
@@ -62,6 +63,10 @@ function ns.createMinimapButton()
     ns.updateMinimapButton()
 end
 
+-- Show and Hide, not SetShown: minimap addons (EllesmereUI's button bag
+-- among them) hook those two to learn whether a button wants to be seen.
 function ns.updateMinimapButton()
-    if button then button:SetShown(ns.db.minimap) end
+    if not button or button.wanted == ns.db.minimap then return end
+    button.wanted = ns.db.minimap
+    if ns.db.minimap then button:Show() else button:Hide() end
 end

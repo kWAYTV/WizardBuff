@@ -10,13 +10,13 @@ local cells = {}  -- unit token -> cell
 
 local LABEL = {
     missing = "No Intellect", soon = "Runs out soon", has = "Intellect",
-    none = "No mana", far = "Out of range", gone = "Dead or offline",
+    none = "No mana", far = "Out of range", gone = "Dead or offline", skip = "Ignored",
 }
 
 local function tooltip(self)
     local rec = self.rec
     if not rec then return end
-    grid.tip(self, rec.name, grid.classColor(rec.class))
+    grid.tip(self, rec.full or rec.name, grid.classColor(rec.class))
     local label = LABEL[rec.state]
     if rec.left and (rec.state == "has" or rec.state == "soon") then
         label = "Intellect " .. grid.timeText(rec.left)
@@ -29,6 +29,9 @@ local function tooltip(self)
     if ns.spellbook.knows(intellect.brilliance) then
         grid.line("Right-click: " .. (ns.spellbook.name(intellect.brilliance) or "Arcane Brilliance"))
     end
+    if rec.guid and rec.wants then
+        grid.line("Middle-click: " .. (rec.state == "skip" and "stop ignoring" or "ignore"))
+    end
     GameTooltip:Show()
 end
 
@@ -40,6 +43,10 @@ local function cell(unit)
     b:SetAttribute("type1", "spell")
     b:SetAttribute("type2", "spell")
     b:SetScript("OnEnter", tooltip)
+    -- No cast is tied to the middle button, so this is all it does.
+    b:HookScript("PostClick", function(self, button)
+        if button == "MiddleButton" then intellect.toggleIgnore(self.rec) end
+    end)
     cells[unit] = b
     return b
 end
@@ -76,8 +83,9 @@ function intellect.paintCells()
             local timed = rec.left and (rec.state == "has" or rec.state == "soon")
             local fraction = timed and rec.total and rec.total > 0 and rec.left / rec.total or nil
             -- The list has room for the time; the frames show it as a line.
-            local side = timed and grid.style and grid.style.plate and grid.timeText(rec.left) or nil
-            grid.paint(b, rec.state, rec.name, r, g, bl, side, fraction)
+            local wide = grid.style and grid.style.plate
+            local side = timed and wide and grid.timeText(rec.left) or nil
+            grid.paint(b, rec.state, wide and rec.full or rec.name, r, g, bl, side, fraction)
         end
     end
 end

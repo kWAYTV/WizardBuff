@@ -35,9 +35,10 @@ function intellect.members()
         if yes(UnitExists(unit)) then
             local _, class = UnitClass(unit)
             rec.class = plain(class)
-            rec.isMe = plain(UnitGUID(unit)) == me
+            rec.isMe = plain(UnitGUID(unit)) == me and me ~= nil
             if rec.isMe then myGroup = rec.group end
-            rec.name = plain(UnitName(unit)) or unit
+            rec.guid = plain(UnitGUID(unit))
+            rec.name, rec.full = ns.names(unit)
             rec.level = plain(UnitLevel(unit)) or 0
             rec.wants = intellect.wants[rec.class or ""] or false
             rec.gone = not yes(UnitIsConnected(unit)) or yes(UnitIsDeadOrGhost(unit))

@@ -19,6 +19,7 @@ grid.LOOK = {
                 row = CLEAR, side = { 0.55, 0.85, 0.6 } },
     none    = { back = { 0.08, 0.08, 0.08, 0.90 }, edge = BLACK, text = 0.55, row = CLEAR, side = GREY },
     far     = { back = { 0.08, 0.08, 0.08, 0.50 }, edge = BLACK, text = 0.40, row = CLEAR, side = GREY, word = "far" },
+    skip    = { back = { 0.08, 0.08, 0.08, 0.50 }, edge = BLACK, text = 0.40, row = CLEAR, side = GREY, word = "skip" },  -- ignored
     gone    = { back = { 0.08, 0.08, 0.08, 0.50 }, edge = BLACK, text = 0.30, row = CLEAR, side = GREY, word = "gone" },
 }
 
