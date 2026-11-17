@@ -2,7 +2,7 @@
 ## Title: Wizard Buff
 ## Notes: Who in your group has Arcane Intellect, as a list or small frames. Click to buff.
 ## Author: kWAYTV
-## Version: 4.0.1
+## Version: 4.0.2
 ## X-Curse-Project-ID: 1501057
 ## SavedVariables: WizardBuffDB
 ## OptionalDeps: EllesmereUI
