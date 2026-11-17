@@ -3,20 +3,20 @@ local _, ns = ...
 local armor = ns.armor
 
 -- up: index into armor.lines, false for none, nil for can't tell.
-armor.found = { up = nil, left = nil }
+armor.found = { up = nil, left = nil, total = nil }
 
 function armor.scan()
     local found, unknown = armor.found, false
     for line = #armor.lines, 1, -1 do
-        local has, left = ns.auras.has("player", armor.lines[line])
+        local has, left, total = ns.auras.has("player", armor.lines[line])
         if has then
-            found.up, found.left = line, left
+            found.up, found.left, found.total = line, left, total
             ns.db.armor = line  -- remembered: this is the one to recast
             return
         end
         if has == nil then unknown = true end
     end
-    if not unknown then found.up, found.left = false, nil end
+    if not unknown then found.up, found.left, found.total = false, nil, nil end
 end
 
 -- Down, or about to be.

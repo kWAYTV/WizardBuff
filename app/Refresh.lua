@@ -1,17 +1,17 @@
 local _, ns = ...
 
--- One pass: look, decide, point the buttons, draw. Buttons can only be
--- re-pointed, shown or hidden out of combat; in combat they keep what they
--- had and only the drawing updates.
+-- One pass: look, decide, point the cells, draw. Cells can only be
+-- re-pointed, moved, shown or hidden out of combat; in combat they keep what
+-- they had and only the colours update.
 
 local yes = ns.yes
 
-local function arrange()
-    local onlyNeeded = ns.db.onlyNeeded
-    ns.icons.arrange({
-        [ns.intellect.button] = ns.intellect.rank() ~= nil and (not onlyNeeded or ns.intellect.needed()),
-        [ns.armor.button] = ns.armor.choice() ~= nil and (not onlyNeeded or ns.armor.needed()),
-    })
+local function visible()
+    local db = ns.db
+    if not db.shown then return false end
+    if db.hideResting and IsResting() then return false end
+    if db.onlyNeeded and not (ns.intellect.needed() or ns.armor.needed()) then return false end
+    return true
 end
 
 function ns.refresh()
@@ -20,13 +20,13 @@ function ns.refresh()
     ns.armor.scan()
 
     if not InCombatLockdown() then
-        ns.icons.fit()
-        ns.intellect.bind()
-        ns.armor.bind()
+        local rows = ns.intellect.bindCells()
+        local first = ns.armor.bind()
         ns.bindKeybind()
-        arrange()
+        ns.grid.fit()
+        ns.grid.layout(first, rows, visible())
     end
 
-    ns.intellect.paint()
+    ns.intellect.paintCells()
     ns.armor.paint()
 end

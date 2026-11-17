@@ -2,19 +2,12 @@ local _, ns = ...
 
 local intellect = ns.intellect
 
--- What a left-click does.
-intellect.cast = {
-    spell = nil,
-    unit = "player",
-    target = nil,   -- the member it is for
-    topUp = false,  -- nobody needs it; this refreshes whoever runs out first
-}
+-- What the "Buff next" key casts.
+intellect.cast = { spell = nil, unit = "player" }
 
 function intellect.plan()
     local found, cast = intellect.found, intellect.cast
-    local target = found.missing[1] or found.soonestOn
-    cast.target = target
-    cast.topUp = found.missing[1] == nil
+    local target = found.missing[1]
     cast.spell, cast.unit = nil, "player"
     if not target then return end
 

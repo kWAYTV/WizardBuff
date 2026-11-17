@@ -15,7 +15,6 @@ function ns.loadSaved()
     ns.db = {
         shown = old.shown ~= false and old.enabled ~= false,
         scale = tonumber(old.scale) or 1,
-        timers = old.timers ~= false,
         onlyNeeded = old.onlyNeeded == true,
         hideResting = old.hideResting == true,
         remind = tonumber(old.remind) or 0,

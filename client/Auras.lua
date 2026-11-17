@@ -45,7 +45,8 @@ function auras.names(family)
     return list
 end
 
--- true (and seconds left, if timed), false, or nil when it can't be read.
+-- true (and seconds left and full duration, if timed), false, or nil when
+-- it can't be read.
 function auras.has(unit, family)
     if not auras.readable(family) then return nil end
     local names = auras.names(family)
@@ -55,7 +56,7 @@ function auras.has(unit, family)
         if not ok or issecret(aura) then return nil end
         if aura then
             local expires = plain(aura.expirationTime)
-            if expires and expires > 0 then return true, expires - GetTime() end
+            if expires and expires > 0 then return true, expires - GetTime(), plain(aura.duration) end
             return true
         end
     end

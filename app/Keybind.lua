@@ -7,7 +7,9 @@ local button
 
 function ns.createKeybind()
     button = CreateFrame("Button", "WizardBuffBuffButton", UIParent, "SecureActionButtonTemplate")
-    button:RegisterForClicks("AnyUp", "AnyDown")
+    button:RegisterForClicks("AnyUp")
+    button:SetAttribute("useOnKeyDown", false)
+    button:SetAttribute("type1", "spell")
     button:SetSize(1, 1)
     button:SetPoint("TOPRIGHT", UIParent, "TOPLEFT", -50, 50)
 end
@@ -15,13 +17,8 @@ end
 -- Out of combat only.
 function ns.bindKeybind()
     local cast = ns.intellect.cast
-    local spell, unit
-    if ns.armor.needed() then
-        spell, unit = ns.armor.choice(), "player"
-    elseif not cast.topUp then
-        spell, unit = cast.spell, cast.unit
-    end
-    ns.icons.set(button, "type", "spell")
-    ns.icons.set(button, "spell", spell)
-    ns.icons.set(button, "unit", unit or "player")
+    local spell, unit = cast.spell, cast.unit
+    if ns.armor.needed() then spell, unit = ns.armor.choice(), "player" end
+    ns.grid.set(button, "spell1", spell)
+    ns.grid.set(button, "unit1", unit or "player")
 end

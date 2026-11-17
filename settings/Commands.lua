@@ -12,7 +12,7 @@ local function reset()
     if InCombatLockdown() then return ns.say("Not in combat.") end
     ns.db.pos = ns.defaultPosition()
     ns.db.scale, ns.db.shown = 1, true
-    ns.icons.place()
+    ns.grid.place()
     ns.lookAgain()
 end
 

@@ -4,8 +4,15 @@ local yes, plain = ns.yes, ns.plain
 local spellbook = {}
 ns.spellbook = spellbook
 
+-- The old globals (IsSpellKnown, IsPlayerSpell) only exist while a
+-- compatibility setting is on, so they are a last resort.
 function spellbook.knows(id)
-    if C_SpellBook and C_SpellBook.IsSpellKnown and yes(C_SpellBook.IsSpellKnown(id)) then return true end
+    local book = C_SpellBook
+    if book and book.IsSpellKnown and yes(book.IsSpellKnown(id)) then return true end
+    if book and book.IsSpellInSpellBook and Enum and Enum.SpellBookSpellBank
+        and yes(book.IsSpellInSpellBook(id, Enum.SpellBookSpellBank.Player, false)) then
+        return true
+    end
     return IsPlayerSpell ~= nil and yes(IsPlayerSpell(id))
 end
 

@@ -4,8 +4,8 @@ local intellect = ns.intellect
 
 -- What the last look at the group found.
 intellect.found = {
-    missing = {},    -- people near you who need it, next target first
-    far = {},        -- names of people too far to judge
+    members = {},    -- everyone, each with a state (see grid.STATE)
+    missing = {},    -- those near you who need it, next target first
     soonest = nil,   -- seconds until the first one near you runs out
     soonestOn = nil, -- and who that is
     stale = false,   -- couldn't read buffs; this is the last reading
@@ -21,19 +21,25 @@ function intellect.scan()
     end
 
     local remind = ns.db.remind * 60
-    local missing, far, soonest, soonestOn = {}, {}, nil, nil
+    local missing, soonest, soonestOn = {}, nil, nil
     local members, myGroup = intellect.members()
     for _, rec in ipairs(members) do
-        if rec.near then
-            local has, left = ns.auras.has(rec.unit, intellect.family)
+        if not rec.wants then
+            rec.state = "none"
+        elseif rec.gone then
+            rec.state = "gone"
+        elseif not rec.near then
+            rec.state = "far"
+        else
+            local has, left, total = ns.auras.has(rec.unit, intellect.family)
             if has == nil then
                 found.stale = true
                 return false
             end
+            rec.left, rec.total = left, total
+            rec.state = (not has and "missing") or (left and left < remind and "soon") or "has"
             if left and (not soonest or left < soonest) then soonest, soonestOn = left, rec end
-            if not has or (left and left < remind) then missing[#missing + 1] = rec end
-        else
-            far[#far + 1] = rec.name
+            if rec.state ~= "has" then missing[#missing + 1] = rec end
         end
     end
 
@@ -43,7 +49,7 @@ function intellect.scan()
     end
     table.sort(missing, function(a, b) return a.order < b.order end)
 
-    found.missing, found.far = missing, far
+    found.members, found.missing = members, missing
     found.soonest, found.soonestOn = soonest, soonestOn
     found.stale = false
     return true

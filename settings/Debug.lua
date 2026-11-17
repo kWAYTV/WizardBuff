@@ -17,7 +17,7 @@ local function family(label, fam)
 end
 
 function ns.debug()
-    local intellect, armor, timeText = ns.intellect, ns.armor, ns.icons.timeText
+    local intellect, armor, timeText = ns.intellect, ns.armor, ns.grid.timeText
     ns.say("debug")
     print("  in combat:", show(InCombatLockdown()), " auras restricted:", show(ns.auras.restricted()))
     family("Intellect", intellect.family)
@@ -34,6 +34,10 @@ function ns.debug()
     end
 
     print("  armor:", show(armor.found.up), timeText(armor.found.left), " remembered:", show(ns.db.armor))
-    print("  left-click casts", show(intellect.button:GetAttribute("spell1")), "on",
-        show(intellect.button:GetAttribute("unit1")))
+    local mine = intellect.cell("player") or intellect.cell("raid1")
+    if mine then
+        print("  cell", show(mine:GetAttribute("unit")), "left:", show(mine:GetAttribute("spell1")),
+            "right:", show(mine:GetAttribute("spell2")))
+    end
+    print("  Buff next casts", show(intellect.cast.spell), "on", show(intellect.cast.unit))
 end

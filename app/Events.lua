@@ -6,7 +6,7 @@ local _, ns = ...
 local EVENTS = {
     "PLAYER_ENTERING_WORLD", "GROUP_ROSTER_UPDATE", "UNIT_AURA", "UNIT_CONNECTION",
     "PLAYER_REGEN_ENABLED", "PLAYER_REGEN_DISABLED", "SPELLS_CHANGED", "BAG_UPDATE_DELAYED",
-    "PLAYER_UPDATE_RESTING", "READY_CHECK",
+    "PLAYER_UPDATE_RESTING", "READY_CHECK", "ENCOUNTER_START", "ENCOUNTER_END",
 }
 
 local driver = CreateFrame("Frame")
@@ -21,12 +21,14 @@ local function inGroup(unit)
 end
 
 local function start()
-    ns.icons.createFrame()
-    ns.intellect.createIcon()
-    ns.armor.createIcon()
+    ns.grid.createFrame()
+    ns.grid.createHandle()
+    ns.armor.createCell()
     ns.createKeybind()
-    ns.icons.place()
+    ns.grid.place()
     ns.buildSettings()
+    -- A moment later: EllesmereUI sets its unlock mode up after loading.
+    C_Timer.After(1, ns.grid.joinUnlockMode)
     for _, event in ipairs(EVENTS) do driver:RegisterEvent(event) end
     driver:SetScript("OnUpdate", function(_, elapsed)
         waited = waited + elapsed

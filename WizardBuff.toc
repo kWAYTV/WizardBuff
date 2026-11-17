@@ -1,10 +1,11 @@
 ## Interface: 16001
 ## Title: Wizard Buff
-## Notes: Arcane Intellect and armor reminders for mages. Click to buff.
+## Notes: Small group frames for mages: who has Arcane Intellect, click to buff.
 ## Author: kWAYTV
-## Version: 3.0.1
+## Version: 4.0.0
 ## X-Curse-Project-ID: 1501057
 ## SavedVariables: WizardBuffDB
+## OptionalDeps: EllesmereUI
 ## IconTexture: Interface\AddOns\WizardBuff\Media\icon
 ## AddonCompartmentFunc: WizardBuff_OnCompartmentClick
 ## AddonCompartmentFuncOnEnter: WizardBuff_OnCompartmentEnter
@@ -20,21 +21,24 @@ client\Auras.lua
 client\Range.lua
 client\Pixel.lua
 
-icons\Text.lua
-icons\Glow.lua
-icons\Frame.lua
-icons\Button.lua
+grid\Colors.lua
+grid\Tooltip.lua
+grid\Frame.lua
+grid\Cell.lua
+grid\Handle.lua
+grid\Layout.lua
+grid\Unlock.lua
 
 intellect\Spells.lua
 intellect\Group.lua
 intellect\Scan.lua
 intellect\Plan.lua
-intellect\Icon.lua
+intellect\Cells.lua
 intellect\ReadyCheck.lua
 
 armor\Spells.lua
 armor\State.lua
-armor\Icon.lua
+armor\Cell.lua
 
 settings\Saved.lua
 settings\Panel.lua

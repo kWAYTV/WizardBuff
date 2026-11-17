@@ -7,7 +7,7 @@ local category
 local function resetPosition()
     if InCombatLockdown() then return ns.say("Not in combat.") end
     ns.db.pos = ns.defaultPosition()
-    ns.icons.place()
+    ns.grid.place()
 end
 
 local function build()
@@ -31,19 +31,18 @@ local function build()
     local function whole(v) return tostring(math.floor(v + 0.5)) end
     local function percent(v) return math.floor(v * 100 + 0.5) .. "%" end
 
-    checkbox("shown", "Show icons", "/wb does the same.")
-    checkbox("onlyNeeded", "Only when needed", "Hide an icon while its buff is up.")
+    checkbox("shown", "Show", "/wb does the same.")
+    checkbox("onlyNeeded", "Only when needed", "Hide while nobody needs a buff.")
     checkbox("hideResting", "Hide in cities", "Hide while resting.")
-    checkbox("timers", "Timers", "Time left under each icon.")
     slider("scale", "Size", nil, 0.5, 2, 0.05, percent)
     slider("remind", "Rebuff early (min)", "Ask for a rebuff this many minutes before it runs out. 0 = off.",
         0, 15, 1, whole)
-    checkbox("brilliance", "Auto Brilliance", "Left-click casts Arcane Brilliance when enough people need "
-        .. "Intellect. Right-click always does.")
+    checkbox("brilliance", "Auto Brilliance", "The Buff next key casts Arcane Brilliance when enough people "
+        .. "need Intellect.")
     slider("brillianceMin", "Brilliance at", "How many people must need it.", 2, 10, 1, whole)
     checkbox("readyCheck", "Ready check alert", "On a ready check, list who has no Intellect.")
     layout:AddInitializer(CreateSettingsButtonInitializer("Position", "Reset", resetPosition,
-        "Back to the middle of the screen. Alt-drag an icon to move.", true))
+        "Back to the middle of the screen. Alt-drag the thin bar on top to move.", true))
 
     Settings.RegisterAddOnCategory(category)
 end
