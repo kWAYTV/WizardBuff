@@ -1,6 +1,6 @@
 ## Interface: 16001
 ## Title: Wizard Buff
-## Notes: Small group frames for mages: who has Arcane Intellect, click to buff.
+## Notes: Who in your group has Arcane Intellect, as a list or small frames. Click to buff.
 ## Author: kWAYTV
 ## Version: 4.0.0
 ## X-Curse-Project-ID: 1501057
@@ -25,8 +25,9 @@ grid\Colors.lua
 grid\Tooltip.lua
 grid\Frame.lua
 grid\Cell.lua
+grid\Frames.lua
+grid\List.lua
 grid\Handle.lua
-grid\Layout.lua
 grid\Unlock.lua
 
 intellect\Spells.lua
@@ -43,6 +44,8 @@ armor\Cell.lua
 settings\Saved.lua
 settings\Panel.lua
 settings\AddonButton.lua
+settings\MinimapButton.lua
+settings\FirstRun.lua
 settings\Commands.lua
 settings\Debug.lua
 

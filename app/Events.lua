@@ -25,6 +25,7 @@ local function start()
     ns.grid.createHandle()
     ns.armor.createCell()
     ns.createKeybind()
+    ns.createMinimapButton()
     ns.grid.place()
     ns.buildSettings()
     -- A moment later: EllesmereUI sets its unlock mode up after loading.
@@ -49,6 +50,9 @@ driver:SetScript("OnEvent", function(_, event, arg)
         if inGroup(ns.plain(arg)) then dirty = true end
     elseif event == "READY_CHECK" then
         ns.intellect.onReadyCheck()
+    elseif event == "PLAYER_ENTERING_WORLD" then
+        ns.askLayout()
+        dirty = true
     else
         dirty = true
     end

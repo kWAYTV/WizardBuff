@@ -1,7 +1,7 @@
 local _, ns = ...
 
--- One cell per group member: their name in class colour, a line for the
--- time left, red when Intellect is missing. A cell belongs to a unit token
+-- One cell per group member: their name in class colour, the time left,
+-- red when Intellect is missing. A cell belongs to a unit token
 -- (party2, raid17) for good; roster changes only show, hide and move cells.
 
 local intellect = ns.intellect
@@ -71,10 +71,13 @@ function intellect.paintCells()
     for _, rec in ipairs(intellect.found.members) do
         local b = cells[rec.unit]
         if b then
-            b.rec, b.state = rec, rec.state
+            b.rec = rec
             local r, g, bl = grid.classColor(rec.class)
-            local fraction = rec.left and rec.total and rec.total > 0 and rec.left / rec.total or nil
-            grid.paint(b, grid.LOOK[rec.state], rec.name, r, g, bl, nil, fraction)
+            local timed = rec.left and (rec.state == "has" or rec.state == "soon")
+            local fraction = timed and rec.total and rec.total > 0 and rec.left / rec.total or nil
+            -- The list has room for the time; the frames show it as a line.
+            local side = timed and grid.style and grid.style.plate and grid.timeText(rec.left) or nil
+            grid.paint(b, rec.state, rec.name, r, g, bl, side, fraction)
         end
     end
 end

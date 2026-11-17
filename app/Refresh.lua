@@ -29,4 +29,5 @@ function ns.refresh()
 
     ns.intellect.paintCells()
     ns.armor.paint()
+    ns.grid.summary(#ns.intellect.found.missing)
 end

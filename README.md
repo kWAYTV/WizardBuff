@@ -1,32 +1,46 @@
 # Wizard Buff
 
-Small group frames for mages on **WoW Forever**: one cell per member showing who has Arcane Intellect. Click a cell to buff that person. A bar on top for your armor.
+Who in your group has Arcane Intellect, for mages on **WoW Forever**. Click a name to buff that person. Your armor is on the first line.
+
+Two layouts. You pick one the first time you log in, and can switch in settings.
+
+**List** (default)
 
 ```
- ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬   ← Alt-drag to move, right-click for settings
-[ Ice Armor              28m ]  ← your armor
-[Kway  ][Anduin][Hamuul][Grom]  ← one cell per member, names in class colour
+ Wizard Buff      1 missing    ← Alt-drag to move, right-click for settings
+ Frost Armor            28m
+ Kway                   54m
+ Anduin             missing
+ Hamuul                 24m
+ Rexxar                 far
 ```
 
-In a raid there's one row per group.
+**Frames**
 
-## Reading a cell
+```
+ ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+[Frost 28m][Kway  ][Anduin][Hamuul]
+```
 
-| Cell | Means |
+In a raid the frames layout has one row per group; the list just gets longer.
+
+## Reading it
+
+| Looks like | Means |
 |---|---|
-| Red, with a red block | No Intellect, in range |
-| Orange border | Runs out soon (if "Rebuff early" is on) |
-| Green line under the name | Has it; the line shrinks as time runs out |
+| Red | No Intellect, in range |
+| Orange | Runs out soon (if "Rebuff early" is on) |
+| A time (list) or a green line (frames) | Has it |
 | Dim name | No mana (warriors, rogues) |
-| Faded | Out of range, dead or offline |
+| Faded, "far" or "gone" | Out of range, dead or offline |
 
-Hover a cell for the time left.
+Names are in class colour. Hover for details.
 
 ## Clicks
 
-- **Left-click a cell**: Arcane Intellect on that person, right rank for their level.
-- **Right-click a cell**: Arcane Brilliance (raid-wide on Forever).
-- **Armor bar**: left-click recasts the armor you used last, right-click swaps to another. It turns red when your armor is down.
+- **Left-click a name**: Arcane Intellect on that person, right rank for their level.
+- **Right-click a name**: Arcane Brilliance (raid-wide on Forever).
+- **Armor**: left-click recasts the armor you used last, right-click swaps to another. It turns red when your armor is down.
 
 ## Keybind
 
@@ -34,17 +48,19 @@ Options → Keybindings → AddOns → Wizard Buff → **Buff next**. Armor firs
 
 ## Settings
 
-Right-click the thin bar on top, `/wb config`, the minimap addon list, or Esc → Options → AddOns.
+Right-click the title bar, left-click the minimap button, `/wb config`, or Esc → Options → AddOns.
 
 | Setting | What it does |
 |---|---|
 | Show | Same as `/wb` |
+| Layout | List or Frames |
 | Only when needed | Hide while nobody needs a buff |
 | Hide in cities | Hide while resting |
 | Size | 50–200% |
 | Rebuff early | Ask for a rebuff N minutes before it runs out |
 | Auto Brilliance / Brilliance at | Whether **Buff next** may cast Brilliance, and at how many missing |
 | Ready check alert | List who has no Intellect on a ready check |
+| Minimap button | Show the button on the minimap; drag it along the rim |
 
 With EllesmereUI installed, the grid also shows up in its Unlock mode.
 
@@ -68,8 +84,8 @@ One folder per thing the addon is about. Files are small and do one job.
 |---|---|
 | `intellect/` | Spell data, who's in the group, who's missing it, what Buff next casts, the member cells, ready check alert |
 | `armor/` | Spell data, which armor is up and which to cast, the armor bar |
-| `grid/` | How cells look and where they go: holder, cell, handle, layout, colours, tooltips, EllesmereUI unlock mode |
-| `settings/` | Saved settings, options screen, addon list entry, `/wb`, debug |
+| `grid/` | How it is drawn: holder, cell, the two layouts (list, frames), handle, colours, tooltips, EllesmereUI unlock mode |
+| `settings/` | Saved settings, options screen, first-login layout prompt, minimap button, addon list entry, `/wb`, debug |
 | `client/` | Everything that asks the game something: hidden values, spellbook, buffs, range, pixel size |
 | `app/` | Wiring: startup, events, the refresh pass, the keybind |
 

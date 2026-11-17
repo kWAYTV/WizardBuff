@@ -1,7 +1,7 @@
 local _, ns = ...
 
--- The armor cell: first on the left, with the armor's short name ("Frost",
--- "Ice", "Mage") and time left. Red when it's down.
+-- The armor cell: the armor's name and time left, red when it's down. The
+-- frames layout only has room for the short name ("Frost", "Ice", "Mage").
 
 local armor = ns.armor
 local grid = ns.grid
@@ -37,7 +37,8 @@ end
 
 function armor.paint()
     local found = armor.found
-    local name = (ns.spellbook.name(armor.choice()) or "Armor"):match("^%S+")
+    local name = ns.spellbook.name(armor.choice()) or "Armor"
+    if not (grid.style and grid.style.plate) then name = name:match("^%S+") end
     local r, g, b = grid.ARMOR[1], grid.ARMOR[2], grid.ARMOR[3]
     local state, side
     if found.up == false then
@@ -48,9 +49,8 @@ function armor.paint()
         state, side = armor.needed() and "soon" or "has", grid.timeText(found.left)
     end
     if ns.cantCast and state ~= "has" then state = "none" end
-    cell.state = state
     local fraction = found.left and found.total and found.total > 0 and found.left / found.total or nil
-    grid.paint(cell, grid.LOOK[state], name, r, g, b, side, fraction)
+    grid.paint(cell, state, name, r, g, b, side, fraction)
 end
 
 -- Out of combat only. Returns the cell if there is an armor to cast.

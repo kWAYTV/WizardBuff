@@ -1,7 +1,8 @@
 local _, ns = ...
 
--- The thin bar above the cells. Alt-drag it to move everything, right-click
--- for settings, hover for a summary.
+-- What you grab to move everything: Alt-drag it, right-click for settings,
+-- hover for a summary. In the list it's the title bar; in the frames layout
+-- a thin bar above the cells.
 
 local grid = ns.grid
 local handle
@@ -25,12 +26,16 @@ function grid.createHandle()
     handle = CreateFrame("Button", nil, frame)
     handle:RegisterForClicks("RightButtonUp")
 
-    local bar = handle:CreateTexture(nil, "ARTWORK")
-    bar:SetAllPoints()
-    bar:SetColorTexture(0, 0, 0, 0.6)
+    handle.back = handle:CreateTexture(nil, "ARTWORK")
+    handle.back:SetAllPoints()
     local hover = handle:CreateTexture(nil, "HIGHLIGHT")
     hover:SetAllPoints()
-    hover:SetColorTexture(1, 1, 1, 0.35)
+    hover:SetColorTexture(1, 1, 1, 0.15)
+
+    handle.title = handle:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    handle.title:SetText("Wizard Buff")
+    handle.title:SetTextColor(0.6, 0.6, 0.6)
+    handle.count = handle:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
 
     handle:SetScript("OnMouseDown", function(_, button)
         if button == "LeftButton" and IsAltKeyDown() and not InCombatLockdown() then
@@ -53,7 +58,31 @@ function grid.createHandle()
 end
 
 function grid.fitHandle(width)
+    local px, titled = grid.px, grid.style.plate
     handle:ClearAllPoints()
-    handle:SetPoint("BOTTOMLEFT", grid.frame, "TOPLEFT", 0, grid.gap)
-    handle:SetSize(width, 4 * grid.px)
+    if titled then
+        handle:SetPoint("TOPLEFT", grid.frame, "TOPLEFT", px, -px)
+        handle:SetSize(width - 2 * px, grid.height)
+        handle.back:SetColorTexture(0.13, 0.13, 0.13, 1)
+        handle.title:SetFont(grid.font, grid.fontSize, "OUTLINE")
+        handle.title:SetPoint("LEFT", 5 * px, 0)
+        handle.count:SetFont(grid.font, grid.fontSize, "OUTLINE")
+        handle.count:SetPoint("RIGHT", -5 * px, 0)
+    else
+        handle:SetPoint("BOTTOMLEFT", grid.frame, "TOPLEFT", 0, grid.gap)
+        handle:SetSize(width, 4 * px)
+        handle.back:SetColorTexture(0, 0, 0, 0.6)
+    end
+    handle.title:SetShown(titled and true or false)
+    handle.count:SetShown(titled and true or false)
+end
+
+-- The right-hand text of the title bar: how many need a buff.
+function grid.summary(missing)
+    if missing > 0 then
+        handle.count:SetText(missing .. " missing")
+        handle.count:SetTextColor(1, 0.4, 0.4)
+    else
+        handle.count:SetText("")
+    end
 end

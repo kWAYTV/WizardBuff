@@ -17,7 +17,10 @@ local function build()
     local function setting(key, label)
         local s = Settings.RegisterAddOnSetting(category, "WIZARDBUFF_" .. key:upper(), key, ns.db,
             type(ns.db[key]), label, ns.db[key])
-        s:SetValueChangedCallback(ns.lookAgain)
+        s:SetValueChangedCallback(function()
+            ns.lookAgain()
+            ns.updateMinimapButton()
+        end)
         return s
     end
     local function checkbox(key, label, tip)
@@ -28,10 +31,20 @@ local function build()
         options:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right, format)
         Settings.CreateSlider(category, setting(key, label), options, tip)
     end
+    local function dropdown(key, label, tip, choices)
+        local function options()
+            local container = Settings.CreateControlTextContainer()
+            for _, choice in ipairs(choices) do container:Add(choice[1], choice[2]) end
+            return container:GetData()
+        end
+        Settings.CreateDropdown(category, setting(key, label), options, tip)
+    end
     local function whole(v) return tostring(math.floor(v + 0.5)) end
     local function percent(v) return math.floor(v * 100 + 0.5) .. "%" end
 
     checkbox("shown", "Show", "/wb does the same.")
+    dropdown("layout", "Layout", "List: one line per person. Frames: small cells side by side.",
+        { { "list", "List" }, { "frames", "Frames" } })
     checkbox("onlyNeeded", "Only when needed", "Hide while nobody needs a buff.")
     checkbox("hideResting", "Hide in cities", "Hide while resting.")
     slider("scale", "Size", nil, 0.5, 2, 0.05, percent)
@@ -41,8 +54,9 @@ local function build()
         .. "need Intellect.")
     slider("brillianceMin", "Brilliance at", "How many people must need it.", 2, 10, 1, whole)
     checkbox("readyCheck", "Ready check alert", "On a ready check, list who has no Intellect.")
+    checkbox("minimap", "Minimap button", "Drag it along the minimap's rim.")
     layout:AddInitializer(CreateSettingsButtonInitializer("Position", "Reset", resetPosition,
-        "Back to the middle of the screen. Alt-drag the thin bar on top to move.", true))
+        "Back to the middle of the screen. Alt-drag the title bar to move.", true))
 
     Settings.RegisterAddOnCategory(category)
 end
