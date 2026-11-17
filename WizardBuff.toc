@@ -28,6 +28,7 @@ grid\Frame.lua
 grid\Cell.lua
 grid\Frames.lua
 grid\List.lua
+grid\Compact.lua
 grid\Handle.lua
 grid\Menu.lua
 grid\Fade.lua

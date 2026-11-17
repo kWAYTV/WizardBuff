@@ -43,8 +43,9 @@ local function build()
     local function percent(v) return math.floor(v * 100 + 0.5) .. "%" end
 
     checkbox("shown", "Show", "/wb does the same.")
-    dropdown("layout", "Layout", "List: one line per person. Frames: small cells side by side.",
-        { { "list", "List" }, { "frames", "Frames" } })
+    dropdown("layout", "Layout", "List: one line per person. Frames: small cells with names. "
+        .. "Compact: small squares, best for raids.",
+        { { "list", "List" }, { "frames", "Frames" }, { "compact", "Compact" } })
     checkbox("onlyNeeded", "Only when needed", "Hide while nobody needs a buff.")
     checkbox("hideResting", "Hide in cities", "Hide while resting.")
     checkbox("fade", "Fade when idle", "Dim while nobody needs a buff. Full again on mouseover.")

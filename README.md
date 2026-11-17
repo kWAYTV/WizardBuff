@@ -2,7 +2,7 @@
 
 Who in your group has Arcane Intellect, for mages on **WoW Forever**. Click a name to buff that person. Your armor is on the first line.
 
-Two layouts. You pick one the first time you log in, and can switch in settings.
+Three layouts. You pick one the first time you log in, and can switch in settings or from the title bar menu.
 
 **List** (default)
 
@@ -22,7 +22,17 @@ Two layouts. You pick one the first time you log in, and can switch in settings.
 [Frost 28m][Kway  ][Anduin][Hamuul]
 ```
 
-In a raid the frames layout has one row per group; the list just gets longer.
+**Compact**
+
+```
+ ▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+[■] [■][■][■][■][■]     ← small squares, no text: the fill is the state,
+    [■][■][■][■][■]       the strip along the bottom the class colour
+```
+
+The first square is your armor. Hover a square for the name. Best for raids.
+
+In a raid, frames and compact have one row per group; the list just gets longer.
 
 ## Reading it
 
@@ -30,7 +40,7 @@ In a raid the frames layout has one row per group; the list just gets longer.
 |---|---|
 | Red | No Intellect, in range |
 | Orange | Runs out soon (if "Rebuff early" is on) |
-| A time (list) or a green line (frames) | Has it |
+| A time (list), a green line (frames) or a green square (compact) | Has it |
 | Dim name | No mana (warriors, rogues) |
 | Faded, "far" or "gone" | Out of range, dead or offline |
 | Faded, "skip" | You ignored them (middle-click) |
@@ -57,7 +67,7 @@ Right-click the title bar and pick Settings, left-click the minimap button, `/wb
 | Setting | What it does |
 |---|---|
 | Show | Same as `/wb` |
-| Layout | List or Frames |
+| Layout | List, Frames or Compact |
 | Only when needed | Hide while nobody needs a buff |
 | Hide in cities | Hide while resting |
 | Fade when idle | Dim while nobody needs a buff; full again on mouseover |
@@ -92,7 +102,7 @@ One folder per thing the addon is about. Files are small and do one job.
 |---|---|
 | `intellect/` | Spell data, who's in the group, who's missing it, what Buff next casts, the member cells, ignore, test group, sound, group report, powder count, ready check alert |
 | `armor/` | Spell data, which armor is up and which to cast, the armor bar |
-| `grid/` | How it is drawn: holder, cell, the two layouts (list, frames), handle and its menu, idle fade, colours, tooltips, EllesmereUI unlock mode |
+| `grid/` | How it is drawn: holder, cell, the three layouts (list, frames, compact), handle and its menu, idle fade, colours, tooltips, EllesmereUI unlock mode |
 | `settings/` | Saved settings, options screen, first-login layout prompt, minimap button, addon list entry, `/wb`, debug |
 | `client/` | Everything that asks the game something: hidden values, names, spellbook, buffs, range, pixel size |
 | `app/` | Wiring: startup, events, the refresh pass, the keybind |

@@ -15,7 +15,7 @@ function ns.loadSaved()
     ns.db = {
         shown = old.shown ~= false and old.enabled ~= false,
         scale = tonumber(old.scale) or 1,
-        layout = old.layout == "frames" and "frames" or "list",
+        layout = ns.grid.styles[old.layout] and old.layout or "list",
         layoutChosen = old.layoutChosen == true,
         minimap = old.minimap ~= false,
         minimapAngle = tonumber(old.minimapAngle) or 215,
